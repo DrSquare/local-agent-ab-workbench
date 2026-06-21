@@ -316,6 +316,8 @@ Deliverables:
 
 ### Module 9: Playground UI
 
+Status: implemented.
+
 Goal: make prompt/model/tool iteration ergonomic.
 
 Deliverables:
@@ -325,6 +327,9 @@ Deliverables:
 - Tool policy controls
 - Replay action
 - Candidate save action
+- Local prompt/defaults loading
+- Rendered result pane
+- Saved candidate restore flow
 
 ### Module 10: OpenClaw Adapter
 
@@ -414,11 +419,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add prompt editor controls for Playground messages.
-2. Add model and parameter controls.
-3. Add tool policy controls.
-4. Connect edited Playground state to the Module 6 replay endpoint.
-5. Add frontend verification for Playground edit and replay flows.
+1. Define the OpenClaw adapter boundary and config translation shape.
+2. Add an adapter-specific runner entry point that stays behind local safety gates.
+3. Wrap or ingest OpenClaw-style traces into the Module 3 trace contracts.
+4. Add a demo OpenClaw taskpack/config path without adding cloud-only dependencies.
+5. Add focused adapter tests that do not require real desktop automation by default.
 
 ## References
 

@@ -73,6 +73,17 @@ Module 8 expands only the trace visualizer UI:
 
 Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, external frontend services, desktop packaging, or graph dependencies inside Module 8.
 
+Module 9 expands only the Playground UI and local defaults loading:
+
+- Read-only Playground defaults endpoint for selected experiment variants
+- Prompt message editor
+- Model and generation parameter controls
+- Tool-policy override controls
+- Replay and save-candidate actions
+- Rendered replay result and saved candidate restore flow
+
+Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, external frontend services, desktop packaging, or frontend build tooling inside Module 9.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -96,4 +107,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 9: Playground UI.
+Implement Module 10: OpenClaw Adapter.

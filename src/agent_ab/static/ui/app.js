@@ -6,6 +6,8 @@ const state = {
   selectedRun: null,
   selectedTrace: null,
   selectedSpanId: null,
+  playgroundDefaults: null,
+  playgroundResult: null,
   collapsedSpanIds: new Set(),
   traceFilters: {
     kind: "",
@@ -41,7 +43,8 @@ function activateView(name) {
   });
 }
 
-async function loadAll() {
+async function loadAll(options = {}) {
+  const { refreshPlaygroundDefaults = true } = options;
   setApiStatus(false, "Loading");
   const [health, experiments, taskpacks, runs, views] = await Promise.all([
     fetchJson("/health"),
@@ -56,6 +59,9 @@ async function loadAll() {
   state.runs = runs.runs || [];
   state.views = views.views || [];
   renderAll();
+  if (refreshPlaygroundDefaults) {
+    await loadPlaygroundDefaults({ silent: true });
+  }
   setApiStatus(true, health.status || "Ready");
   $("#lastLoaded").textContent = new Date().toLocaleTimeString();
 }
@@ -69,6 +75,7 @@ function renderAll() {
   renderRuns();
   renderViews();
   renderTrace();
+  renderPlaygroundResult();
 }
 
 function renderExperiments() {
@@ -107,12 +114,12 @@ function renderRuns() {
 
 function renderViews() {
   $("#viewList").innerHTML = state.views.map((view) => `
-    <div class="list-item">
+    <button class="list-item saved-view" data-view-id="${escapeAttribute(view.id)}" type="button">
       <strong>${escapeHtml(view.label || view.id)}</strong>
       <span>${escapeHtml(view.task_id)} via ${escapeHtml(view.variant_id)}</span>
       <span>${escapeHtml(view.run_id)}</span>
-    </div>
-  `).join("") || `<div class="empty">No saved views</div>`;
+    </button>
+  `).join("") || `<div class="empty">No saved candidates</div>`;
 }
 
 function renderTrace() {
@@ -181,28 +188,267 @@ async function selectRun(runId) {
 async function submitPlayground(event) {
   event.preventDefault();
   const form = event.currentTarget;
-  const payload = {
-    experiment_path: form.experiment_path.value.trim(),
-    variant_id: form.variant_id.value.trim(),
-    task_id: form.task_id.value.trim(),
-    run_id: optionalValue(form.run_id.value),
-    save_view: $("#pgSaveView").checked,
-    view_id: optionalValue(form.view_id.value),
-    label: "UI replay",
-    overrides: {},
-  };
+  const saveCandidate = event.submitter?.dataset.action === "save";
 
-  $("#playgroundStatus").textContent = "Running replay";
+  $("#playgroundStatus").textContent = saveCandidate ? "Saving candidate" : "Running replay";
   try {
+    const payload = buildPlaygroundPayload(form, saveCandidate);
     const result = await fetchJson("/playground/runs", {
       method: "POST",
       body: JSON.stringify(payload),
     });
     $("#playgroundStatus").textContent = `${result.status}: ${result.run_id}`;
-    await loadAll();
+    state.playgroundResult = result;
+    renderPlaygroundResult();
+    await loadAll({ refreshPlaygroundDefaults: false });
     await selectRun(result.run_id);
   } catch (error) {
     $("#playgroundStatus").textContent = error.message;
+  }
+}
+
+function buildPlaygroundPayload(form, saveCandidate) {
+  return {
+    experiment_path: form.experiment_path.value.trim(),
+    variant_id: form.variant_id.value.trim(),
+    task_id: form.task_id.value.trim(),
+    run_id: optionalValue(form.run_id.value),
+    prompt_variables: parseJsonObject($("#pgPromptVariables").value, "Extra prompt variables JSON"),
+    save_view: saveCandidate,
+    view_id: saveCandidate ? optionalValue(form.view_id.value) : undefined,
+    label: saveCandidate ? optionalValue(form.label.value) : undefined,
+    overrides: collectPlaygroundOverrides(),
+  };
+}
+
+function collectPlaygroundOverrides() {
+  return {
+    messages: collectPromptMessages(),
+    variables: parseList($("#pgVariables").value),
+    model: {
+      provider: $("#pgModelProvider").value,
+      name: $("#pgModelName").value.trim(),
+      endpoint: optionalValue($("#pgModelEndpoint").value),
+    },
+    parameters: {
+      temperature: optionalNumber($("#pgTemperature").value),
+      top_p: optionalNumber($("#pgTopP").value),
+      max_tokens: optionalInteger($("#pgMaxTokens").value),
+    },
+    tool_policy: {
+      allow_tools: parseList($("#pgAllowTools").value),
+      read_only_tools: parseList($("#pgReadOnlyTools").value),
+      require_confirmation: parseList($("#pgRequireConfirmation").value),
+      block_tools: parseList($("#pgBlockTools").value),
+    },
+    metadata: {
+      source: "module9_playground_ui",
+    },
+  };
+}
+
+async function loadPlaygroundDefaults(options = {}) {
+  const { silent = false } = options;
+  const experimentPath = $("#pgExperiment").value.trim();
+  const variantId = $("#pgVariant").value.trim();
+  if (!experimentPath || !variantId) return null;
+
+  if (!silent) {
+    $("#playgroundStatus").textContent = "Loading variant";
+  }
+
+  try {
+    const defaults = await fetchJson(
+      `/playground/defaults?experiment_path=${encodeURIComponent(experimentPath)}&variant_id=${encodeURIComponent(variantId)}`,
+    );
+    state.playgroundDefaults = defaults;
+    applyPlaygroundDefaults(defaults);
+    if (!silent) {
+      $("#playgroundStatus").textContent = `Loaded ${defaults.variant_id}`;
+    }
+    return defaults;
+  } catch (error) {
+    if (!silent) {
+      $("#playgroundStatus").textContent = error.message;
+    }
+    return null;
+  }
+}
+
+function applyPlaygroundDefaults(defaults) {
+  syncSelectValues("#pgVariant", defaults.variants || [], defaults.variant_id);
+  syncSelectValues("#pgTask", defaults.task_ids || [], $("#pgTask").value || (defaults.task_ids || [])[0]);
+  const prompt = defaults.prompt || {};
+  const model = prompt.model || {};
+  const parameters = prompt.parameters || {};
+  const registry = defaults.local_model_registry || {};
+
+  syncDatalist("#pgModelOptions", registry.models || []);
+  $("#pgModelProvider").value = model.provider || registry.provider || "ollama";
+  $("#pgModelName").value = model.name || (registry.models || [])[0] || "";
+  $("#pgModelEndpoint").value = model.endpoint || registry.endpoint || "";
+  $("#pgTemperature").value = valueOrEmpty(parameters.temperature);
+  $("#pgTopP").value = valueOrEmpty(parameters.top_p);
+  $("#pgMaxTokens").value = valueOrEmpty(parameters.max_tokens);
+  $("#pgVariables").value = (prompt.variables || []).join(", ");
+  renderPromptEditors(prompt.messages || []);
+  populateToolPolicyFromPrompt(prompt.tools || []);
+  setPlaygroundCapabilities(defaults.capabilities || {});
+}
+
+function syncSelectValues(selector, values, selectedValue) {
+  const select = $(selector);
+  const current = selectedValue || select.value;
+  select.innerHTML = values.map((value) => `<option value="${escapeAttribute(value)}">${escapeHtml(value)}</option>`).join("");
+  select.value = values.includes(current) ? current : values[0] || "";
+}
+
+function syncDatalist(selector, values) {
+  $(selector).innerHTML = values
+    .map((value) => `<option value="${escapeAttribute(value)}"></option>`)
+    .join("");
+}
+
+function renderPromptEditors(messages) {
+  $("#promptEditors").innerHTML = messages.map((message, index) => `
+    <div class="prompt-card" data-index="${index}">
+      <label>
+        Role
+        <select class="prompt-role">
+          ${["system", "developer", "user", "assistant", "tool"].map((role) => `
+            <option value="${role}" ${role === message.role ? "selected" : ""}>${role}</option>
+          `).join("")}
+        </select>
+      </label>
+      <label>
+        Content
+        <textarea class="prompt-content" rows="7">${escapeHtml(message.content || "")}</textarea>
+      </label>
+    </div>
+  `).join("") || `<div class="empty">No prompt messages</div>`;
+}
+
+function populateToolPolicyFromPrompt(tools) {
+  $("#pgAllowTools").value = tools
+    .filter((tool) => tool.enabled && tool.policy === "allow")
+    .map((tool) => tool.name)
+    .join(", ");
+  $("#pgReadOnlyTools").value = tools
+    .filter((tool) => tool.enabled && tool.policy === "read_only")
+    .map((tool) => tool.name)
+    .join(", ");
+  $("#pgRequireConfirmation").value = tools
+    .filter((tool) => tool.enabled && tool.policy === "require_confirmation")
+    .map((tool) => tool.name)
+    .join(", ");
+  $("#pgBlockTools").value = tools
+    .filter((tool) => !tool.enabled || tool.policy === "block")
+    .map((tool) => tool.name)
+    .join(", ");
+}
+
+function setPlaygroundCapabilities(capabilities) {
+  const promptDisabled = capabilities.allow_prompt_editing === false;
+  const modelDisabled = capabilities.allow_model_switching === false;
+  const parameterDisabled = capabilities.allow_parameter_editing === false;
+  const toolPolicyDisabled = capabilities.allow_tool_policy_editing === false;
+  document.querySelectorAll(".prompt-role, .prompt-content, #pgVariables").forEach((field) => {
+    field.disabled = promptDisabled;
+  });
+  ["#pgModelProvider", "#pgModelName", "#pgModelEndpoint"].forEach((selector) => {
+    $(selector).disabled = modelDisabled;
+  });
+  ["#pgTemperature", "#pgTopP", "#pgMaxTokens"].forEach((selector) => {
+    $(selector).disabled = parameterDisabled;
+  });
+  ["#pgAllowTools", "#pgReadOnlyTools", "#pgRequireConfirmation", "#pgBlockTools"].forEach((selector) => {
+    $(selector).disabled = toolPolicyDisabled;
+  });
+}
+
+function collectPromptMessages() {
+  return [...document.querySelectorAll(".prompt-card")].map((card) => ({
+    role: card.querySelector(".prompt-role").value,
+    content: card.querySelector(".prompt-content").value,
+  }));
+}
+
+function renderPlaygroundResult() {
+  const result = state.playgroundResult;
+  if (!result) {
+    $("#playgroundResult").innerHTML = `<div class="empty">No replay result</div>`;
+    return;
+  }
+  const model = result.effective_prompt?.model || {};
+  const metrics = (result.metrics || [])
+    .map((metric) => `${metric.name}: ${metric.value}`)
+    .join(", ") || "-";
+  const renderedMessages = (result.rendered_messages || [])
+    .map((message) => `
+      <div class="rendered-message">
+        <strong>${escapeHtml(message.role)}</strong>
+        <pre>${escapeHtml(message.content)}</pre>
+      </div>
+    `)
+    .join("");
+  $("#playgroundResult").innerHTML = `
+    <dl class="detail-list">
+      ${detailRows({
+        Status: result.status,
+        Run: result.run_id,
+        Trace: result.trace_id,
+        Candidate: result.view_id || "-",
+        Model: `${model.provider || "-"} / ${model.name || "-"}`,
+        Metrics: metrics,
+      })}
+    </dl>
+    <div class="rendered-stack">${renderedMessages}</div>
+  `;
+}
+
+function applyPlaygroundView(view) {
+  const request = view.request || {};
+  const response = view.response || {};
+  $("#pgExperiment").value = request.experiment_path || $("#pgExperiment").value;
+  syncSelectValues(
+    "#pgVariant",
+    uniqueValues([...(state.playgroundDefaults?.variants || []), request.variant_id]),
+    request.variant_id,
+  );
+  syncSelectValues(
+    "#pgTask",
+    uniqueValues([...(state.playgroundDefaults?.task_ids || []), request.task_id]),
+    request.task_id,
+  );
+  $("#pgRunId").value = "";
+  $("#pgViewId").value = "";
+  $("#pgLabel").value = view.label || request.label || "";
+  $("#pgPromptVariables").value = JSON.stringify(request.prompt_variables || {}, null, 2);
+  applyPlaygroundOverridesToForm(request.overrides || {});
+  state.playgroundResult = response;
+  renderPlaygroundResult();
+}
+
+function applyPlaygroundOverridesToForm(overrides) {
+  if (overrides.messages) {
+    renderPromptEditors(overrides.messages);
+  }
+  $("#pgVariables").value = (overrides.variables || []).join(", ");
+  if (overrides.model) {
+    $("#pgModelProvider").value = overrides.model.provider || "ollama";
+    $("#pgModelName").value = overrides.model.name || "";
+    $("#pgModelEndpoint").value = overrides.model.endpoint || "";
+  }
+  if (overrides.parameters) {
+    $("#pgTemperature").value = valueOrEmpty(overrides.parameters.temperature);
+    $("#pgTopP").value = valueOrEmpty(overrides.parameters.top_p);
+    $("#pgMaxTokens").value = valueOrEmpty(overrides.parameters.max_tokens);
+  }
+  if (overrides.tool_policy) {
+    $("#pgAllowTools").value = (overrides.tool_policy.allow_tools || []).join(", ");
+    $("#pgReadOnlyTools").value = (overrides.tool_policy.read_only_tools || []).join(", ");
+    $("#pgRequireConfirmation").value = (overrides.tool_policy.require_confirmation || []).join(", ");
+    $("#pgBlockTools").value = (overrides.tool_policy.block_tools || []).join(", ");
   }
 }
 
@@ -367,6 +613,37 @@ function optionalValue(value) {
   return trimmed ? trimmed : undefined;
 }
 
+function optionalNumber(value) {
+  const trimmed = value.trim();
+  return trimmed ? Number(trimmed) : undefined;
+}
+
+function optionalInteger(value) {
+  const numberValue = optionalNumber(value);
+  return numberValue === undefined ? undefined : Math.trunc(numberValue);
+}
+
+function valueOrEmpty(value) {
+  return value === null || value === undefined ? "" : String(value);
+}
+
+function parseList(value) {
+  return value
+    .split(/[\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseJsonObject(value, label) {
+  const trimmed = value.trim();
+  if (!trimmed) return {};
+  const parsed = JSON.parse(trimmed);
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+    throw new Error(`${label} must be a JSON object`);
+  }
+  return parsed;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -459,6 +736,33 @@ $("#collapseTraceButton").addEventListener("click", () => {
   const children = groupByParent(spans);
   state.collapsedSpanIds = new Set(Object.keys(children).filter((spanId) => spanId));
   renderTrace();
+});
+
+$("#loadPromptButton").addEventListener("click", () => {
+  loadPlaygroundDefaults().catch((error) => {
+    $("#playgroundStatus").textContent = error.message;
+  });
+});
+
+$("#pgExperiment").addEventListener("change", () => {
+  loadPlaygroundDefaults({ silent: true }).catch(() => {});
+});
+
+$("#pgVariant").addEventListener("change", () => {
+  loadPlaygroundDefaults({ silent: true }).catch(() => {});
+});
+
+$("#viewList").addEventListener("click", async (event) => {
+  const item = event.target.closest(".saved-view");
+  if (!item) return;
+  $("#playgroundStatus").textContent = "Loading candidate";
+  try {
+    const view = await fetchJson(`/playground/views/${encodeURIComponent(item.dataset.viewId)}`);
+    applyPlaygroundView(view);
+    $("#playgroundStatus").textContent = `Loaded ${view.id}`;
+  } catch (error) {
+    $("#playgroundStatus").textContent = error.message;
+  }
 });
 
 $("#playgroundForm").addEventListener("submit", submitPlayground);

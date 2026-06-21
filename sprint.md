@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 8: trace visualizer UI.
+Module 9: Playground UI.
 
 ## Status
 
@@ -18,14 +18,16 @@ Module 8: trace visualizer UI.
 | Module 6 Playground backend | Done | Playground request/response schemas, override validation, deterministic mock replay, view persistence, API endpoints, and tests are implemented. |
 | Module 7 frontend shell | Done | No-build static UI served from `/ui`, local API navigation, run/trace selection, Playground replay form, saved views list, and frontend route tests are implemented. |
 | Module 8 trace visualizer UI | Done | Expandable span tree, span detail payload pane, timing waterfall, kind/status filters, keyboard selection, and trace UI tests are implemented. |
+| Module 9 Playground UI | Done | Prompt editor, model/parameter controls, tool-policy controls, replay/save actions, defaults loading, and result rendering are implemented. |
 
-## Module 8 Acceptance Criteria
+## Module 9 Acceptance Criteria
 
-- Trace spans can be expanded, collapsed, selected, and inspected.
-- Span details show timing, status, parentage, and typed payloads.
-- A timing-oriented waterfall shows relative span duration.
-- Span kind and status filters are available.
-- The UI remains no-build, local-only, and free of external graph dependencies.
+- Playground loads local prompt/model/task defaults for a selected experiment variant.
+- Prompt messages, declared variables, extra prompt variables, model settings, generation parameters, and tool-policy overrides are editable.
+- Replay and save-candidate actions submit to the Module 6 local replay endpoint.
+- Replay results show status, run, trace, model, metrics, and rendered messages.
+- Saved candidates can be selected and restored into the editor.
+- The UI remains no-build, local-only, and free of external editor/runtime dependencies.
 - No real OpenClaw, shell, browser, desktop, non-local network, or model execution is added.
 
 ## Working Rules
@@ -38,4 +40,4 @@ Module 8: trace visualizer UI.
 
 ## Next Sprint Candidate
 
-Module 9: Playground UI.
+Module 10: OpenClaw Adapter.

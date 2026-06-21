@@ -12,6 +12,7 @@ This repository currently implements:
 - **Module 6: Playground backend**
 - **Module 7: Frontend shell**
 - **Module 8: Trace visualizer UI**
+- **Module 9: Playground UI**
 
 ## What the implemented modules include
 
@@ -32,6 +33,7 @@ This repository currently implements:
 - Local Playground View persistence
 - No-build local frontend shell served from `/ui`
 - Expandable trace tree, span detail pane, filters, and timing waterfall
+- Playground prompt editor, model/parameter controls, tool-policy controls, replay/save actions, and result pane
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -91,6 +93,7 @@ GET  /ui
 GET  /experiments
 GET  /taskpacks
 GET  /runs
+GET  /playground/defaults
 POST /playground/runs
 GET  /playground/views
 ```
@@ -173,10 +176,12 @@ agent-ab-workbench/
     test_module5_server.py
     test_module6_playground.py
     test_module7_frontend.py
+    test_module8_trace_ui.py
+    test_module9_playground_ui.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 9 should expand the Playground UI with prompt, model, parameter, and tool-policy editing.
+Module 10 should add the first OpenClaw adapter without weakening the local safety boundaries.

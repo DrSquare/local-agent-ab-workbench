@@ -8,15 +8,22 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import Field
 
-from agent_ab.config import ConfigLoadError, load_experiment, validate_taskpack_with_fixtures
+from agent_ab.config import (
+    ConfigLoadError,
+    load_experiment,
+    load_prompt_object,
+    validate_taskpack_with_fixtures,
+)
 from agent_ab.playground import list_playground_views, load_playground_view, run_playground_task
-from agent_ab.schemas.common import StrictBaseModel
+from agent_ab.schemas.common import LocalModelRegistry, StrictBaseModel
 from agent_ab.schemas.playground import (
     PlaygroundRunRequest,
     PlaygroundRunResponse,
     PlaygroundView,
     PlaygroundViewListResponse,
+    validate_project_relative_path,
 )
+from agent_ab.schemas.prompt_object import PromptObject
 from agent_ab.schemas.trace import TraceEnvelope, validate_trace_token
 from agent_ab.trace_store import read_trace_jsonl
 
@@ -92,6 +99,25 @@ class TraceListResponse(StrictBaseModel):
     run_id: str
     trace_path: str
     traces: list[TraceEnvelope] = Field(default_factory=list)
+
+
+class PlaygroundCapabilities(StrictBaseModel):
+    enabled: bool
+    allow_model_switching: bool
+    allow_prompt_editing: bool
+    allow_parameter_editing: bool
+    allow_tool_policy_editing: bool
+    save_views: bool
+
+
+class PlaygroundDefaultsResponse(StrictBaseModel):
+    experiment_path: str
+    variant_id: str
+    variants: list[str] = Field(default_factory=list)
+    task_ids: list[str] = Field(default_factory=list)
+    prompt: PromptObject
+    capabilities: PlaygroundCapabilities
+    local_model_registry: LocalModelRegistry
 
 
 def is_local_server_host(host: str) -> bool:
@@ -211,6 +237,40 @@ def create_app(
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/playground/defaults", response_model=PlaygroundDefaultsResponse)
+    def get_playground_defaults(experiment_path: str, variant_id: str) -> PlaygroundDefaultsResponse:
+        try:
+            safe_experiment_path = validate_project_relative_path(experiment_path, "experiment_path")
+            safe_variant_id = validate_trace_token(variant_id, "variant_id")
+            experiment_file = _safe_project_file(root, safe_experiment_path)
+            experiment = load_experiment(experiment_file)
+            if safe_variant_id not in experiment.agents:
+                raise ValueError(f"variant id not found in experiment: {safe_variant_id}")
+            prompt = load_prompt_object(experiment.prompt_paths(experiment_file.parent)[safe_variant_id])
+            taskpack = validate_taskpack_with_fixtures(experiment.taskpack_path(experiment_file.parent))
+        except ConfigLoadError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        playground = experiment.playground
+        return PlaygroundDefaultsResponse(
+            experiment_path=safe_experiment_path,
+            variant_id=safe_variant_id,
+            variants=sorted(experiment.agents),
+            task_ids=[task.id for task in taskpack.tasks],
+            prompt=prompt,
+            capabilities=PlaygroundCapabilities(
+                enabled=playground.enabled,
+                allow_model_switching=playground.allow_model_switching,
+                allow_prompt_editing=playground.allow_prompt_editing,
+                allow_parameter_editing=playground.allow_parameter_editing,
+                allow_tool_policy_editing=playground.allow_tool_policy_editing,
+                save_views=playground.save_views,
+            ),
+            local_model_registry=playground.local_model_registry,
+        )
 
     @app.get("/playground/views", response_model=PlaygroundViewListResponse)
     def list_views() -> PlaygroundViewListResponse:
@@ -353,6 +413,17 @@ def _safe_run_dir(runs_root: Path, run_id: str) -> Path:
     candidate = (root / safe_run_id).resolve()
     if candidate == root or root not in candidate.parents:
         raise HTTPException(status_code=400, detail=f"run_id escapes runs root: {run_id}")
+    return candidate
+
+
+def _safe_project_file(project_root: Path, relative_path: str) -> Path:
+    safe_path = validate_project_relative_path(relative_path, "experiment_path")
+    root = project_root.resolve()
+    candidate = (root / safe_path).resolve()
+    if root not in candidate.parents:
+        raise ValueError(f"path escapes project root: {relative_path}")
+    if not candidate.is_file():
+        raise ValueError(f"file not found: {relative_path}")
     return candidate
 
 

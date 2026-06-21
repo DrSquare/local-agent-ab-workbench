@@ -142,42 +142,128 @@
 
         <section class="view" id="view-playground" aria-labelledby="playgroundTitle">
           <div class="section-heading">
-            <h2 id="playgroundTitle">Playground replay</h2>
+            <h2 id="playgroundTitle">Playground</h2>
             <span>Deterministic mock adapter only</span>
           </div>
           <div class="playground-layout">
-            <form class="panel form-grid" id="playgroundForm">
-              <label>
-                Experiment path
-                <input id="pgExperiment" name="experiment_path" required value="experiments/demo_openclaw_prompt_ab.yaml">
-              </label>
-              <label>
-                Variant
-                <input id="pgVariant" name="variant_id" required value="A">
-              </label>
-              <label>
-                Task
-                <input id="pgTask" name="task_id" required value="rename_todo">
-              </label>
-              <label>
-                Run ID
-                <input id="pgRunId" name="run_id" value="playground.rename_todo.ui">
-              </label>
-              <label>
-                View ID
-                <input id="pgViewId" name="view_id" value="view.rename_todo.ui">
-              </label>
-              <label class="check-row">
-                <input id="pgSaveView" name="save_view" type="checkbox" checked>
-                Save view
-              </label>
-              <button class="primary-button" type="submit">Run replay</button>
-              <p class="form-status" id="playgroundStatus" role="status"></p>
+            <form class="playground-form" id="playgroundForm">
+              <section class="panel form-grid" aria-labelledby="playgroundSetupTitle">
+                <h3 id="playgroundSetupTitle" class="panel-title">Run setup</h3>
+                <label>
+                  Experiment path
+                  <input id="pgExperiment" name="experiment_path" required value="experiments/demo_openclaw_prompt_ab.yaml">
+                </label>
+                <label>
+                  Variant
+                  <select id="pgVariant" name="variant_id" required>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                  </select>
+                </label>
+                <label>
+                  Task
+                  <select id="pgTask" name="task_id" required>
+                    <option value="rename_todo">rename_todo</option>
+                  </select>
+                </label>
+                <label>
+                  Run ID
+                  <input id="pgRunId" name="run_id" placeholder="auto">
+                </label>
+                <label>
+                  Candidate ID
+                  <input id="pgViewId" name="view_id" placeholder="auto">
+                </label>
+                <label>
+                  Candidate label
+                  <input id="pgLabel" name="label" value="UI candidate">
+                </label>
+              </section>
+
+              <section class="panel editor-panel" aria-labelledby="promptEditorTitle">
+                <h3 id="promptEditorTitle">Prompt editor</h3>
+                <div id="promptEditors" class="prompt-editors"></div>
+                <label class="wide-field">
+                  Template variables
+                  <input id="pgVariables" name="variables" value="task_query, workspace_path">
+                </label>
+                <label class="wide-field">
+                  Extra prompt variables JSON
+                  <textarea id="pgPromptVariables" name="prompt_variables" rows="4">{}</textarea>
+                </label>
+              </section>
+
+              <section class="panel form-grid" aria-labelledby="modelControlsTitle">
+                <h3 id="modelControlsTitle" class="panel-title">Model and parameters</h3>
+                <label>
+                  Provider
+                  <select id="pgModelProvider" name="model_provider">
+                    <option value="ollama">ollama</option>
+                    <option value="local_http">local_http</option>
+                    <option value="openclaw">openclaw</option>
+                    <option value="mock">mock</option>
+                  </select>
+                </label>
+                <label>
+                  Model
+                  <input id="pgModelName" name="model_name" list="pgModelOptions" required>
+                  <datalist id="pgModelOptions"></datalist>
+                </label>
+                <label>
+                  Endpoint
+                  <input id="pgModelEndpoint" name="model_endpoint">
+                </label>
+                <label>
+                  Temperature
+                  <input id="pgTemperature" name="temperature" type="number" min="0" max="2" step="0.01">
+                </label>
+                <label>
+                  Top P
+                  <input id="pgTopP" name="top_p" type="number" min="0" max="1" step="0.01">
+                </label>
+                <label>
+                  Max tokens
+                  <input id="pgMaxTokens" name="max_tokens" type="number" min="1" step="1">
+                </label>
+              </section>
+
+              <section class="panel form-grid" aria-labelledby="toolPolicyTitle">
+                <h3 id="toolPolicyTitle" class="panel-title">Tool policy</h3>
+                <label>
+                  Allow tools
+                  <input id="pgAllowTools" name="allow_tools">
+                </label>
+                <label>
+                  Read-only tools
+                  <input id="pgReadOnlyTools" name="read_only_tools">
+                </label>
+                <label>
+                  Require confirmation
+                  <input id="pgRequireConfirmation" name="require_confirmation">
+                </label>
+                <label>
+                  Block tools
+                  <input id="pgBlockTools" name="block_tools">
+                </label>
+              </section>
+
+              <section class="panel action-panel" aria-label="Playground actions">
+                <button class="primary-button" data-action="replay" type="submit">Run replay</button>
+                <button class="tool-button" data-action="save" type="submit">Save candidate</button>
+                <button class="tool-button" id="loadPromptButton" type="button">Load variant</button>
+                <p class="form-status" id="playgroundStatus" role="status"></p>
+              </section>
             </form>
-            <section class="panel" aria-labelledby="viewsTitle">
-              <h3 id="viewsTitle">Saved views</h3>
-              <div id="viewList" class="list-stack"></div>
-            </section>
+            <div class="playground-side">
+              <section class="panel" aria-labelledby="playgroundResultTitle">
+                <h3 id="playgroundResultTitle">Replay result</h3>
+                <div id="playgroundResult" class="result-panel"></div>
+              </section>
+              <section class="panel" aria-labelledby="viewsTitle">
+                <h3 id="viewsTitle">Saved candidates</h3>
+                <div id="viewList" class="list-stack"></div>
+              </section>
+            </div>
           </div>
         </section>
       </main>

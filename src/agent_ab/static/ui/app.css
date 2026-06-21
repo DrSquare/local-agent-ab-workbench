@@ -31,7 +31,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -41,7 +42,8 @@ button {
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
@@ -234,6 +236,17 @@ h3 {
   gap: 16px;
 }
 
+.playground-layout {
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+  align-items: start;
+}
+
+.playground-form,
+.playground-side {
+  display: grid;
+  gap: 16px;
+}
+
 .trace-controls {
   display: grid;
   grid-template-columns: repeat(2, minmax(160px, 1fr)) max-content max-content;
@@ -260,6 +273,10 @@ h3 {
 
 .panel {
   padding: 16px;
+}
+
+.panel-title {
+  grid-column: 1 / -1;
 }
 
 .table-wrap {
@@ -332,8 +349,15 @@ tbody tr:hover {
 }
 
 .list-item {
+  width: 100%;
   border-left: 4px solid var(--teal);
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
   padding: 10px 0 10px 12px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
 }
 
 .list-item strong,
@@ -484,7 +508,13 @@ tbody tr:hover {
   font-size: 0.82rem;
 }
 
-.form-grid input {
+.form-grid input,
+.form-grid select,
+.form-grid textarea,
+.wide-field input,
+.wide-field textarea,
+.prompt-card select,
+.prompt-card textarea {
   width: 100%;
   min-height: 42px;
   border: 1px solid var(--line);
@@ -492,6 +522,73 @@ tbody tr:hover {
   padding: 9px 10px;
   background: #fffdf8;
   color: var(--ink);
+}
+
+.editor-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.prompt-editors {
+  display: grid;
+  gap: 12px;
+}
+
+.prompt-card {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.25fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8f1e6;
+}
+
+.prompt-card label,
+.wide-field {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.prompt-card textarea,
+.wide-field textarea {
+  resize: vertical;
+}
+
+.action-panel {
+  display: grid;
+  grid-template-columns: max-content max-content max-content 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.result-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.rendered-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.rendered-message {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8f1e6;
+}
+
+.rendered-message pre {
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--muted);
 }
 
 .check-row {
@@ -524,6 +621,8 @@ tbody tr:hover {
   .playground-layout,
   .trace-controls,
   .form-grid,
+  .prompt-card,
+  .action-panel,
   .metrics-row {
     grid-template-columns: 1fr;
   }
