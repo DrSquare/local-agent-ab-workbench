@@ -44,7 +44,7 @@ def validate_relative_workspace_path(value: str, field_name: str = "path") -> st
         raise ValueError(f"{field_name} cannot be empty or current directory")
     if ".." in path.parts:
         raise ValueError(f"{field_name} cannot contain '..'")
-    if path.parts[0] == "~":
+    if path.parts[0].startswith("~"):
         raise ValueError(f"{field_name} cannot start with '~'")
     return path_value
 
@@ -102,9 +102,21 @@ class TaskValidator(StrictBaseModel):
     def required_fields_match_validator_type(self) -> TaskValidator:
         if self.type in KNOWN_VALIDATOR_TYPES and self.path is None:
             raise ValueError(f"validator type '{self.type}' requires path")
+        if self.type in {"file_exists", "file_not_exists"}:
+            extras = []
+            if self.contains is not None:
+                extras.append("contains")
+            if self.pattern is not None:
+                extras.append("pattern")
+            if extras:
+                raise ValueError(f"validator type '{self.type}' does not allow {extras}")
         if self.type in {"file_contains", "file_not_contains"} and self.contains is None:
             raise ValueError(f"validator type '{self.type}' requires contains")
+        if self.type in {"file_contains", "file_not_contains"} and self.pattern is not None:
+            raise ValueError(f"validator type '{self.type}' does not allow pattern")
         if self.type == "file_matches_regex":
+            if self.contains is not None:
+                raise ValueError("validator type 'file_matches_regex' does not allow contains")
             if self.pattern is None:
                 raise ValueError("validator type 'file_matches_regex' requires pattern")
             try:
@@ -146,6 +158,10 @@ class TaskPack(IdentifierMixin):
         if duplicates:
             raise ValueError(f"duplicate task ids: {duplicates}")
         return self
+
+    def fixture_paths(self, base_dir: str | Path | None = None) -> dict[str, Path]:
+        root = Path(base_dir) if base_dir else Path.cwd()
+        return {task.id: root / task.workspace.fixture for task in self.tasks}
 
     @classmethod
     def from_yaml_file(cls, path: str | Path) -> TaskPack:

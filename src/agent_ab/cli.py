@@ -1,4 +1,4 @@
-"""CLI for Module 1 schema validation and inspection."""
+"""CLI for local schema validation and inspection."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from rich.table import Table
 from agent_ab.config import (
     ConfigLoadError,
     load_prompt_object,
-    load_taskpack,
     validate_experiment_bundle,
+    validate_taskpack_with_fixtures,
 )
 from agent_ab.schemas.metrics import AGENTEVAL_METRIC_REGISTRY, MetricCategory, metric_names
 
@@ -78,7 +78,7 @@ def validate_taskpack_command(
     """Validate a TaskPack YAML file."""
 
     try:
-        taskpack = load_taskpack(path)
+        taskpack = validate_taskpack_with_fixtures(path)
     except ConfigLoadError as exc:
         console.print(f"[red]Validation failed:[/red] {exc}")
         raise typer.Exit(code=1) from exc

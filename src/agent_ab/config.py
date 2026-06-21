@@ -1,4 +1,4 @@
-"""Config loading helpers for Module 1."""
+"""Config loading helpers for schema validation modules."""
 
 from __future__ import annotations
 
@@ -46,6 +46,21 @@ def load_taskpack(path: str | Path) -> TaskPack:
     return load_model(path, TaskPack)
 
 
+def validate_taskpack_with_fixtures(path: str | Path) -> TaskPack:
+    """Validate a taskpack YAML file and its declared workspace fixture directories."""
+
+    taskpack_path = Path(path)
+    taskpack = load_taskpack(taskpack_path)
+    missing = [
+        f"{task_id}: {fixture_path}"
+        for task_id, fixture_path in taskpack.fixture_paths(taskpack_path.parent).items()
+        if not fixture_path.is_dir()
+    ]
+    if missing:
+        raise ConfigLoadError(f"task workspace fixture directories do not exist: {missing}")
+    return taskpack
+
+
 def validate_experiment_with_prompts(path: str | Path) -> tuple[ExperimentConfig, dict[str, PromptObject]]:
     """Validate an experiment plus every referenced PromptObject file."""
 
@@ -74,5 +89,5 @@ def validate_experiment_bundle(
 
     taskpack = None
     if include_taskpack:
-        taskpack = load_taskpack(experiment.taskpack_path(experiment_path.parent))
+        taskpack = validate_taskpack_with_fixtures(experiment.taskpack_path(experiment_path.parent))
     return experiment, prompts, taskpack

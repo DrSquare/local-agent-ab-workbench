@@ -5,14 +5,21 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from agent_ab.config import load_taskpack, validate_experiment_bundle
+from agent_ab.config import (
+    ConfigLoadError,
+    load_taskpack,
+    validate_experiment_bundle,
+    validate_taskpack_with_fixtures,
+)
 from agent_ab.schemas.task import TaskPack, TaskValidator, validate_relative_workspace_path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_demo_taskpack_validates() -> None:
-    taskpack = load_taskpack(PROJECT_ROOT / "taskpacks" / "desktop_basics" / "tasks.yaml")
+    taskpack = validate_taskpack_with_fixtures(
+        PROJECT_ROOT / "taskpacks" / "desktop_basics" / "tasks.yaml"
+    )
 
     assert taskpack.id == "desktop_basics"
     assert taskpack.version == 1
@@ -92,7 +99,14 @@ def test_validator_type_must_be_known_or_custom_prefixed() -> None:
 def test_validator_paths_must_be_relative_and_portable() -> None:
     assert validate_relative_workspace_path("notes/todo.txt") == "notes/todo.txt"
 
-    for bad_path in ["/notes/todo.txt", "../todo.txt", "notes\\todo.txt", "C:/Users/todo.txt"]:
+    for bad_path in [
+        "/notes/todo.txt",
+        "../todo.txt",
+        "notes\\todo.txt",
+        "C:/Users/todo.txt",
+        "~/todo.txt",
+        "~user/todo.txt",
+    ]:
         with pytest.raises(ValueError):
             validate_relative_workspace_path(bad_path)
 
@@ -109,3 +123,40 @@ def test_known_validators_require_type_specific_fields() -> None:
 
     with pytest.raises(ValidationError, match="invalid validator regex pattern"):
         TaskValidator(type="file_matches_regex", path="notes/todo.txt", pattern="[")
+
+
+def test_known_validators_reject_irrelevant_fields() -> None:
+    with pytest.raises(ValidationError, match="does not allow"):
+        TaskValidator(type="file_exists", path="notes/todo.txt", contains="todo")
+
+    with pytest.raises(ValidationError, match="does not allow pattern"):
+        TaskValidator(type="file_contains", path="notes/todo.txt", contains="todo", pattern="todo")
+
+    with pytest.raises(ValidationError, match="does not allow contains"):
+        TaskValidator(type="file_matches_regex", path="notes/todo.txt", pattern="todo", contains="todo")
+
+
+def test_taskpack_fixture_directories_must_exist(tmp_path: Path) -> None:
+    taskpack_path = tmp_path / "tasks.yaml"
+    taskpack_path.write_text(
+        "\n".join(
+            [
+                "id: missing_fixture",
+                "tasks:",
+                "  - id: task_one",
+                "    query: Do the thing.",
+                "    workspace:",
+                "      fixture: workspaces/task_one",
+                "    validators:",
+                "      - type: file_exists",
+                "        path: done.txt",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    taskpack = load_taskpack(taskpack_path)
+    assert taskpack.id == "missing_fixture"
+
+    with pytest.raises(ConfigLoadError, match="fixture directories do not exist"):
+        validate_taskpack_with_fixtures(taskpack_path)
