@@ -289,7 +289,7 @@ def openclaw_trace_to_envelope(
     """Wrap OpenClaw event/span payloads into the workbench trace contract."""
 
     safe_trace_id = validate_trace_token(trace_id, "trace_id")
-    source_spans = payload.get("spans", []) if isinstance(payload, dict) else payload
+    source_spans = _openclaw_source_spans(payload)
     child_spans = [_openclaw_span_to_trace_span(item, index, safe_trace_id) for index, item in enumerate(source_spans, start=1)]
     max_end = max([span.ended_at_ms or span.started_at_ms for span in child_spans] or [1])
     root_id = "span.openclaw.root"
@@ -348,6 +348,23 @@ def _command_with_config(command: str, config_path: Path) -> list[str]:
     else:
         parts.extend(["--config", config_value])
     return parts
+
+
+def _openclaw_source_spans(payload: dict[str, Any] | list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    for key in ("spans", "events", "steps", "records"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+    trace = payload.get("trace")
+    if isinstance(trace, list):
+        return [item for item in trace if isinstance(item, dict)]
+    if isinstance(trace, dict):
+        return _openclaw_source_spans(trace)
+    if any(key in payload for key in ("kind", "type", "event", "name")):
+        return [payload]
+    return []
 
 
 def _validate_execution_plan(prepared: OpenClawPreparedRun, plan: OpenClawCommandPlan) -> None:

@@ -88,7 +88,7 @@ def test_openclaw_trace_payload_wraps_to_workbench_trace() -> None:
 def test_openclaw_trace_wraps_real_adapter_aliases_and_redacts() -> None:
     trace = openclaw_trace_to_envelope(
         {
-            "spans": [
+            "events": [
                 {
                     "type": " tool_call ",
                     "event": "write action-items with secret",
@@ -133,6 +133,50 @@ def test_openclaw_trace_wraps_real_adapter_aliases_and_redacts() -> None:
     assert tool_span.attributes["api_key"] == "[REDACTED]"
     assert model_span.status == "ok"
     assert model_span.model_call.input_preview == "password: [REDACTED]"
+
+
+def test_openclaw_trace_accepts_nested_steps_and_single_event_payloads() -> None:
+    nested_trace = openclaw_trace_to_envelope(
+        {
+            "trace": {
+                "steps": [
+                    {
+                        "type": "shell_command",
+                        "name": "list workspace",
+                        "command": "dir",
+                        "status": "skipped",
+                        "timestamp_ms": 5,
+                    }
+                ]
+            }
+        },
+        trace_id="trace.openclaw.nested_steps",
+        taskpack_id="openclaw_demo",
+        task_id="openclaw_rename_todo",
+        variant_id="B",
+        run_id="openclaw.rename_todo.nested_steps",
+    )
+    single_event_trace = openclaw_trace_to_envelope(
+        {
+            "type": "desktop_action",
+            "name": "click save",
+            "action": "click",
+            "target": "Save",
+            "timestamp_ms": 10,
+        },
+        trace_id="trace.openclaw.single_event",
+        taskpack_id="openclaw_demo",
+        task_id="openclaw_rename_todo",
+        variant_id="B",
+        run_id="openclaw.rename_todo.single_event",
+    )
+
+    shell_span = next(span for span in nested_trace.spans if span.kind == "shell")
+    desktop_span = next(span for span in single_event_trace.spans if span.kind == "desktop")
+    assert shell_span.status == "skipped"
+    assert shell_span.shell_action.command == "dir"
+    assert desktop_span.desktop_action.action == "click"
+    assert desktop_span.desktop_action.target == "Save"
 
 
 def test_openclaw_execution_requires_explicit_opt_in(tmp_path: Path) -> None:
