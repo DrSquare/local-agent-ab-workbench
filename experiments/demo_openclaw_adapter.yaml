@@ -1,0 +1,64 @@
+name: openclaw_adapter_demo_v1
+description: Offline adapter-preparation demo for OpenClaw-style local CLI agents.
+offline: true
+seed: 42
+repetitions: 1
+randomize_order: false
+baseline:
+  primary_variant: A
+  candidate_variant: B
+agents:
+  A:
+    label: baseline_openclaw_cli
+    adapter: openclaw_cli
+    prompt_object: ../prompts/baseline_openclaw.yaml
+    command: openclaw run --config configs/baseline.yaml
+  B:
+    label: candidate_openclaw_cli
+    adapter: openclaw_cli
+    prompt_object: ../prompts/candidate_playground.yaml
+    command: openclaw run --config configs/candidate.yaml
+taskpack: ../taskpacks/openclaw_demo/tasks.yaml
+limits:
+  max_seconds_per_task: 180
+  max_steps_per_task: 40
+  max_parallelism: 1
+  allowed_paths:
+    - "$RUN_WORKSPACE"
+  blocked_paths:
+    - "$HOME"
+    - "/"
+  blocked_commands:
+    - "rm -rf /"
+    - "curl"
+    - "wget"
+    - "scp"
+    - "ssh"
+  allow_network: false
+  network_allowlist:
+    - localhost
+    - 127.0.0.1
+metrics:
+  primary: task_success
+  secondary:
+    - validator_pass_rate
+    - latency_ms
+    - step_count
+    - tool_success
+tracing:
+  enabled: true
+  capture_inputs: true
+  capture_outputs: true
+  capture_artifacts: true
+  capture_screenshots: false
+  capture_model_messages: true
+  redact_secrets: true
+  format: local_openinference_json
+  include_span_events: true
+  include_timeline: true
+  max_preview_chars: 2000
+tags:
+  - openclaw
+  - adapter
+  - offline
+

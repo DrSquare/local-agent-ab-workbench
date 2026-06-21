@@ -158,7 +158,7 @@ past the no-build shell.
 |---|---|---|
 | Local models | Ollama-compatible registry contract | Already in schema |
 | Mock testing | Deterministic mock adapter | Module 4 |
-| First real agent target | OpenClaw CLI adapter | Module 10 |
+| First real agent target | OpenClaw CLI adapter preparation and trace wrapping | Module 10 |
 | Generic support | CLI and local HTTP adapter interface | Module 4+ |
 | Tool layer | MCP-aware tool specs and telemetry attributes | Contract now, runtime later |
 
@@ -241,6 +241,7 @@ Coverage expectations by phase:
 | Module 7 | Frontend shell routes, local-only assets, API endpoint wiring |
 | Module 8 | Trace filters, span detail rendering, timing waterfall, keyboard span selection |
 | Module 9 | Playground defaults endpoint, editor controls, replay/save payloads, result rendering |
+| Module 10 | OpenClaw config translation, command planning, trace wrapping, prepare CLI |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 ## File Layout Direction

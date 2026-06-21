@@ -84,6 +84,16 @@ Module 9 expands only the Playground UI and local defaults loading:
 
 Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, external frontend services, desktop packaging, or frontend build tooling inside Module 9.
 
+Module 10 adds OpenClaw adapter preparation only:
+
+- OpenClaw CLI config translation
+- OpenClaw command planning
+- Isolated prepared-run workspace and config artifacts
+- OpenClaw trace payload wrapping into workbench trace contracts
+- Demo OpenClaw adapter experiment and taskpack
+
+Do not execute the OpenClaw CLI, shell, browser, desktop automation, non-local network calls, or real model calls by default inside Module 10. Real execution must wait for Module 11 guardrails.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -101,10 +111,11 @@ python -m pip install -e '.[dev]'
 pytest
 agent-ab validate-experiment experiments/demo_openclaw_prompt_ab.yaml
 agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
+agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_rename_todo
 agent-ab serve --host 127.0.0.1 --port 8765
 agent-ab metrics
 ```
 
 ## Next recommended task
 
-Implement Module 10: OpenClaw Adapter.
+Implement Module 11: Guardrails and Sandbox.

@@ -13,6 +13,7 @@ This repository currently implements:
 - **Module 7: Frontend shell**
 - **Module 8: Trace visualizer UI**
 - **Module 9: Playground UI**
+- **Module 10: OpenClaw adapter preparation**
 
 ## What the implemented modules include
 
@@ -34,6 +35,7 @@ This repository currently implements:
 - No-build local frontend shell served from `/ui`
 - Expandable trace tree, span detail pane, filters, and timing waterfall
 - Playground prompt editor, model/parameter controls, tool-policy controls, replay/save actions, and result pane
+- OpenClaw CLI config translation, command planning, prepared-run artifacts, and trace wrapping
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -77,6 +79,16 @@ agent-ab run-mock-task taskpacks/desktop_basics/tasks.yaml rename_todo \
   --run-root runs/mock \
   --run-id mock.rename_todo.demo
 ```
+
+## Prepare an OpenClaw adapter run
+
+```bash
+agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_rename_todo \
+  --run-root runs/openclaw \
+  --run-id openclaw.rename_todo.demo
+```
+
+This writes an isolated workspace and `openclaw_config.yaml` plus a command plan. It does not execute the OpenClaw CLI by default.
 
 ## Serve the local API
 
@@ -138,6 +150,7 @@ agent-ab-workbench/
     PLAN.md
     TECH_STACK.md
   experiments/
+    demo_openclaw_adapter.yaml
     demo_openclaw_prompt_ab.yaml
   prompts/
     baseline_openclaw.yaml
@@ -146,7 +159,12 @@ agent-ab-workbench/
     desktop_basics/
       tasks.yaml
       workspaces/
+    openclaw_demo/
+      tasks.yaml
+      workspaces/
   src/agent_ab/
+    adapters/
+      openclaw.py
     cli.py
     config.py
     playground.py
@@ -178,10 +196,11 @@ agent-ab-workbench/
     test_module7_frontend.py
     test_module8_trace_ui.py
     test_module9_playground_ui.py
+    test_module10_openclaw_adapter.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 10 should add the first OpenClaw adapter without weakening the local safety boundaries.
+Module 11 should add guardrails and sandbox enforcement before real adapter execution is enabled.

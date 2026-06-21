@@ -1,0 +1,25 @@
+id: openclaw_demo
+version: 1
+description: Safe local filesystem taskpack for OpenClaw adapter preparation.
+tasks:
+  - id: openclaw_rename_todo
+    description: Rename a todo file inside the isolated OpenClaw demo workspace.
+    query: Rename notes/todo.txt to notes/action-items.txt.
+    workspace:
+      fixture: workspaces/rename_todo
+    validators:
+      - type: file_exists
+        path: notes/action-items.txt
+      - type: file_not_exists
+        path: notes/todo.txt
+      - type: file_contains
+        path: notes/action-items.txt
+        contains: Review inbox items before standup.
+    tags:
+      - filesystem
+      - rename
+      - openclaw
+tags:
+  - openclaw
+  - offline
+

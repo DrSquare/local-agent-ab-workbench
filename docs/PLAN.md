@@ -333,7 +333,9 @@ Deliverables:
 
 ### Module 10: OpenClaw Adapter
 
-Goal: run a real OpenClaw-style desktop agent through the workbench contracts.
+Status: implemented.
+
+Goal: prepare a real OpenClaw-style desktop-agent run through the workbench contracts, with execution held behind later guardrails.
 
 Deliverables:
 
@@ -341,6 +343,8 @@ Deliverables:
 - Adapter-specific config translation
 - Trace ingestion or wrapping strategy
 - Demo OpenClaw taskpack
+- Prepared-run CLI command
+- OpenClaw command plan with generated config path
 
 ### Module 11: Guardrails and Sandbox
 
@@ -419,11 +423,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Define the OpenClaw adapter boundary and config translation shape.
-2. Add an adapter-specific runner entry point that stays behind local safety gates.
-3. Wrap or ingest OpenClaw-style traces into the Module 3 trace contracts.
-4. Add a demo OpenClaw taskpack/config path without adding cloud-only dependencies.
-5. Add focused adapter tests that do not require real desktop automation by default.
+1. Enforce allowed-path and blocked-path checks for prepared and executed runs.
+2. Enforce blocked-command checks before any adapter execution.
+3. Add localhost-only network policy checks for adapter/model endpoints.
+4. Add timeout enforcement hooks around future process/tool execution.
+5. Add secret-redaction checks for traces, command plans, and previews.
 
 ## References
 

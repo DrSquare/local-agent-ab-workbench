@@ -9,6 +9,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from agent_ab.adapters.openclaw import prepare_openclaw_run
 from agent_ab.config import (
     ConfigLoadError,
     load_prompt_object,
@@ -110,6 +111,35 @@ def run_mock_task_command(
     console.print(f"trace: {result.trace_id}")
     for name, path in result.artifacts.items():
         console.print(f"{name}: {path}")
+
+
+@app.command("prepare-openclaw-run")
+def prepare_openclaw_run_command(
+    experiment: Annotated[Path, typer.Argument(help="Path to experiment YAML.")],
+    variant_id: Annotated[str, typer.Argument(help="OpenClaw variant ID to prepare.")],
+    task_id: Annotated[str, typer.Argument(help="Task ID to prepare.")],
+    run_root: Annotated[Path, typer.Option(help="Directory for local run artifacts.")] = Path("runs/openclaw"),
+    run_id: Annotated[str | None, typer.Option(help="Optional deterministic run ID.")] = None,
+) -> None:
+    """Prepare an OpenClaw CLI run package without executing the agent."""
+
+    try:
+        prepared = prepare_openclaw_run(
+            experiment,
+            variant_id,
+            task_id,
+            run_root,
+            run_id=run_id,
+        )
+    except (ConfigLoadError, FileExistsError, ValueError) as exc:
+        console.print(f"[red]Prepare failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] run={prepared.run_id}")
+    console.print(f"workspace: {prepared.workspace_path}")
+    console.print(f"config: {prepared.config_path}")
+    console.print(f"working_directory: {prepared.command_plan.working_directory}")
+    console.print("command: " + " ".join(prepared.command_plan.command))
 
 
 @app.command("serve")
