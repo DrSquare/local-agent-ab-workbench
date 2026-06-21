@@ -8,8 +8,9 @@ This repository currently implements:
 - **Module 2: TaskPack schema + validator contracts**
 - **Module 3: Telemetry schema + trace store contracts**
 - **Module 4: Runner core + deterministic mock adapter**
+- **Module 5: Local FastAPI backend**
 
-## What Module 1 includes
+## What the implemented modules include
 
 - Experiment YAML schema for A/B agent evaluations
 - Prompt Object YAML schema for Playground-editable model/prompt/tool bundles
@@ -22,6 +23,7 @@ This repository currently implements:
 - Local JSONL trace writer and SQLite trace index helpers
 - Local validator executor for TaskPack contracts
 - Deterministic mock adapter and run workspace lifecycle
+- Local read-only API for experiment, taskpack, run, and trace discovery
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -32,6 +34,12 @@ This repository currently implements:
 ```bash
 cd local-agent-ab-workbench
 python -m pip install -e '.[dev]'
+```
+
+For the local API without dev tools:
+
+```bash
+python -m pip install -e '.[server]'
 ```
 
 ## Validate the demo experiment
@@ -59,6 +67,14 @@ agent-ab run-mock-task taskpacks/desktop_basics/tasks.yaml rename_todo \
   --run-root runs/mock \
   --run-id mock.rename_todo.demo
 ```
+
+## Serve the local API
+
+```bash
+agent-ab serve --host 127.0.0.1 --port 8765
+```
+
+The server command rejects non-local bind hosts.
 
 ## Render a prompt
 
@@ -111,6 +127,7 @@ agent-ab-workbench/
   src/agent_ab/
     cli.py
     config.py
+    server.py
     schemas/
       common.py
       experiment.py
@@ -127,10 +144,11 @@ agent-ab-workbench/
     test_module2_tasks.py
     test_module3_traces.py
     test_module4_runner.py
+    test_module5_server.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 5 should add a local FastAPI backend for experiment, taskpack, run, trace, and artifact discovery.
+Module 6 should add Playground backend request/response contracts, one-off replay plumbing, and local Playground View persistence.

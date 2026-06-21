@@ -30,7 +30,7 @@ This revision separates the stack into:
 
 ## Current Core Stack
 
-This is the stack that is active through Modules 1 and 2.
+This is the base stack that remains active through Module 5.
 
 | Layer | Choice | Status | Reason |
 |---|---|---|---|
@@ -39,7 +39,7 @@ This is the stack that is active through Modules 1 and 2.
 | Config files | YAML | Active | Easy to read, diff, review, and edit |
 | YAML parser | PyYAML | Active | Small dependency already used by config loaders |
 | CLI | Typer + Rich | Active | Local validation commands with readable output |
-| Tests | pytest | Active | Fast schema and CLI coverage |
+| Tests | pytest | Active dev dependency | Fast schema, runner, and API coverage |
 | Lint target | Ruff | Active dev dependency | Simple formatting/lint baseline |
 
 Current runtime dependencies should stay small:
@@ -56,6 +56,9 @@ Current development dependencies:
 ```text
 pytest
 ruff
+fastapi
+uvicorn
+httpx
 ```
 
 ## Module 1 Implementation Scope
@@ -112,21 +115,21 @@ Module 2 validates that:
 - Workspace fixtures are declared in a portable way.
 - The demo experiment can point to a taskpack without executing it.
 
-## Deferred Backend Stack
+## Module 5 Backend Stack
 
-These choices are appropriate after task, trace, and run-result contracts exist.
+These choices are active for the local read-only backend.
 
 | Layer | Choice | Earliest module | Reason |
 |---|---|---|---|
-| API | FastAPI | Module 5 | Local UI/backend API for experiments, traces, and Playground |
-| Local server | Uvicorn | Module 5 | FastAPI runtime, localhost only |
+| API | FastAPI | Module 5 | Local UI/backend API for experiments, taskpacks, runs, and traces |
+| Local server | Uvicorn | Module 5 | FastAPI runtime, localhost-only CLI binding |
 | Artifact store | Filesystem JSON/JSONL | Module 3 or 4 | Inspectable offline artifacts |
 | Structured store | SQLite via stdlib or lightweight wrapper | Module 3 or 4 | Portable local run/query store |
 | Analytics store | DuckDB optional | Later | Useful only if SQLite/query performance becomes limiting |
 | Serialization | Pydantic JSON mode | Module 3+ | Keeps persisted contracts aligned with schemas |
 
-Avoid adding the backend stack before Module 5 unless a schema module has a
-clear reason to test API contracts.
+The backend stack is exposed through the `server` extra and included in the
+`dev` extra for API tests.
 
 ## Deferred Frontend Stack
 
@@ -209,8 +212,8 @@ Suggested future extras:
 
 ```toml
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.6"]
-server = ["fastapi", "uvicorn"]
+dev = ["pytest>=8.0", "ruff>=0.6", "fastapi>=0.115", "uvicorn>=0.30", "httpx>=0.27"]
+server = ["fastapi>=0.115", "uvicorn>=0.30"]
 analytics = ["duckdb"]
 ```
 
@@ -253,6 +256,7 @@ agent-ab-workbench/
   src/agent_ab/
     cli.py
     config.py
+    server.py
     schemas/
       common.py
       experiment.py
@@ -269,9 +273,10 @@ agent-ab-workbench/
     test_module2_tasks.py
     test_module3_traces.py
     test_module4_runner.py
+    test_module5_server.py
 ```
 
-Later modules can add `runner/`, `tracing/`, `storage/`, `server/`, and
+Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and
 `frontend/` directories when their contracts are ready.
 
 ## References

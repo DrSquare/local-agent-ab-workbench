@@ -20,6 +20,7 @@ from agent_ab.schemas.metrics import AGENTEVAL_METRIC_REGISTRY, MetricCategory, 
 
 app = typer.Typer(help="Local offline A/B workbench CLI.")
 console = Console()
+_LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 
 @app.command("validate-experiment")
@@ -109,6 +110,40 @@ def run_mock_task_command(
     console.print(f"trace: {result.trace_id}")
     for name, path in result.artifacts.items():
         console.print(f"{name}: {path}")
+
+
+@app.command("serve")
+def serve_command(
+    host: Annotated[str, typer.Option(help="Local bind host.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(min=1, max=65535, help="Local bind port.")] = 8765,
+    project_root: Annotated[Path, typer.Option(help="Project root for config discovery.")] = Path("."),
+    runs_root: Annotated[
+        Path | None,
+        typer.Option(help="Run artifact root. Defaults to <project-root>/runs."),
+    ] = None,
+) -> None:
+    """Serve the local read-only workbench API."""
+
+    if host.strip().lower() not in _LOCAL_SERVER_HOSTS:
+        console.print("[red]Serve failed:[/red] host must be localhost, 127.0.0.1, or ::1")
+        raise typer.Exit(code=1)
+
+    try:
+        import uvicorn
+
+        from agent_ab.server import create_app
+    except ImportError as exc:
+        console.print(
+            "[red]Serve failed:[/red] install server dependencies with "
+            "python -m pip install -e '.[server]'"
+        )
+        raise typer.Exit(code=1) from exc
+
+    uvicorn.run(
+        create_app(project_root=project_root, runs_root=runs_root),
+        host=host,
+        port=port,
+    )
 
 
 @app.command("metrics")

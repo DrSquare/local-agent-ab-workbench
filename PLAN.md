@@ -24,18 +24,25 @@ stable.
 
 ## Current State
 
-Module 1 is implemented and intentionally limited to schemas and validation:
+Modules 1 through 5 are implemented with clear local-first boundaries:
 
 - Experiment config
 - Prompt Object config
+- TaskPack and TaskCase config
+- Declarative task validator contracts
+- Trace envelope and span schemas
+- JSONL trace writer contract
+- SQLite trace index contract
+- Deterministic mock runner and local validator executor
+- Localhost-only FastAPI backend for discovery and trace inspection
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
-- CLI validators for experiments, prompts, prompt rendering, and metrics
-- pytest coverage for schema validation rules
+- CLI validators and local server command
+- pytest coverage for schema, runner, persistence, and API contracts
 
-Module 1 must not grow real agent execution. Any execution-facing fields should
-remain declarative contracts until the runner module is introduced.
+Real OpenClaw, shell, browser, desktop, non-local network, and model execution
+remain out of scope until the adapter and sandbox modules.
 
 ## Primary User Story
 
@@ -249,6 +256,8 @@ Module 4 is the first module allowed to execute tasks.
 
 ### Module 5: Local Backend API
 
+Status: implemented.
+
 Goal: expose local experiment, taskpack, trace, and artifact data to a UI.
 
 Deliverables:
@@ -257,7 +266,7 @@ Deliverables:
 - Experiment and taskpack discovery endpoints
 - Run listing and result summary endpoints
 - Trace retrieval endpoints
-- Playground request/response contracts
+- API response model tests
 
 ### Module 6: Playground Backend
 
@@ -394,11 +403,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add FastAPI app bound to localhost.
-2. Add experiment and taskpack discovery endpoints.
-3. Add run artifact listing endpoints.
-4. Add trace retrieval endpoints.
-5. Add API response model tests.
+1. Add Playground run request and response schemas.
+2. Add prompt, model, parameter, and tool-policy override validation.
+3. Add deterministic one-off replay plumbing using the mock runner.
+4. Add local Playground View persistence.
+5. Add focused tests for request validation, replay output, and saved views.
 
 ## References
 

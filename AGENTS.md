@@ -34,6 +34,16 @@ Module 4 adds only deterministic local mock execution:
 
 Do not add real OpenClaw, shell, browser, desktop, network, or model execution inside Module 4.
 
+Module 5 adds only a local read-only FastAPI backend:
+
+- Localhost-only `agent-ab serve` command
+- Experiment discovery endpoint
+- TaskPack discovery endpoint
+- Run summary and artifact listing endpoints
+- Trace JSONL retrieval endpoint
+
+Do not add real agent execution, non-local binding, cloud service calls, or UI code inside Module 5.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -51,9 +61,10 @@ python -m pip install -e '.[dev]'
 pytest
 agent-ab validate-experiment experiments/demo_openclaw_prompt_ab.yaml
 agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
+agent-ab serve --host 127.0.0.1 --port 8765
 agent-ab metrics
 ```
 
 ## Next recommended task
 
-Implement Module 5: local FastAPI backend.
+Implement Module 6: Playground backend.
