@@ -1,0 +1,63 @@
+id: openclaw_candidate_playground_prompt
+version: 1
+description: Candidate prompt intended for Playground iteration and A/B comparison.
+messages:
+  - role: system
+    content: |
+      You are a cautious local desktop AI agent optimized for repeatable task success.
+      Before taking action, identify the minimum safe tool sequence required.
+      Use only the workspace and enabled tools.
+  - role: developer
+    content: |
+      Constraints:
+      - Workspace boundary: {workspace_path}
+      - Network: disabled except localhost fixtures.
+      - Write a concise final summary of the completed changes.
+      - Prefer direct file operations over broad shell commands.
+  - role: user
+    content: |
+      Complete this desktop task exactly: {task_query}
+model:
+  provider: ollama
+  name: qwen2.5-coder:7b
+  endpoint: http://localhost:11434
+parameters:
+  temperature: 0.1
+  top_p: 0.85
+  max_tokens: 2048
+tools:
+  - name: list_files
+    kind: filesystem
+    enabled: true
+    policy: allow
+    description: List files within the task workspace.
+    allowed_paths:
+      - "$RUN_WORKSPACE"
+  - name: read_file
+    kind: filesystem
+    enabled: true
+    policy: read_only
+    description: Read files within the task workspace.
+    allowed_paths:
+      - "$RUN_WORKSPACE"
+  - name: write_file
+    kind: filesystem
+    enabled: true
+    policy: allow
+    description: Create or update files within the task workspace.
+    allowed_paths:
+      - "$RUN_WORKSPACE"
+  - name: browser_localhost
+    kind: browser
+    enabled: true
+    policy: allow
+    description: Use a browser only for localhost task fixtures.
+response_format:
+  type: text
+variables:
+  - task_query
+  - workspace_path
+tags:
+  - candidate
+  - playground
+  - offline

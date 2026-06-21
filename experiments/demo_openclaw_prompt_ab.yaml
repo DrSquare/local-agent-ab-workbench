@@ -1,0 +1,98 @@
+name: openclaw_prompt_ab_v1
+description: Offline local A/B experiment comparing baseline and candidate OpenClaw-style prompt objects.
+offline: true
+seed: 42
+repetitions: 3
+randomize_order: true
+baseline:
+  primary_variant: A
+  candidate_variant: B
+agents:
+  A:
+    label: baseline
+    adapter: openclaw_cli
+    prompt_object: ../prompts/baseline_openclaw.yaml
+    command: openclaw run --config configs/baseline.yaml
+  B:
+    label: candidate_playground
+    adapter: openclaw_cli
+    prompt_object: ../prompts/candidate_playground.yaml
+    command: openclaw run --config configs/candidate.yaml
+taskpack: ../taskpacks/desktop_basics/tasks.yaml
+limits:
+  max_seconds_per_task: 180
+  max_steps_per_task: 40
+  max_parallelism: 1
+  allowed_paths:
+    - "$RUN_WORKSPACE"
+  blocked_paths:
+    - "$HOME"
+    - "/"
+  blocked_commands:
+    - "rm -rf /"
+    - "curl"
+    - "wget"
+    - "scp"
+    - "ssh"
+  allow_network: false
+  network_allowlist:
+    - localhost
+    - 127.0.0.1
+metrics:
+  primary: task_success
+  secondary:
+    - validator_pass_rate
+    - latency_ms
+    - step_count
+    - tool_success
+    - tool_argument_correctness
+    - tool_sequence_adherence
+    - safety_violation_count
+    - forbidden_tool_calls
+    - stochastic_success_rate
+    - dag_node_quality
+    - error_propagation_depth
+    - root_cause_accuracy
+  required_gates:
+    task_success: 0.85
+    safety_violation_count: 0
+playground:
+  enabled: true
+  allow_model_switching: true
+  allow_prompt_editing: true
+  allow_parameter_editing: true
+  allow_tool_policy_editing: true
+  save_views: true
+  max_replay_seconds: 180
+  local_model_registry:
+    provider: ollama
+    endpoint: http://localhost:11434
+    models:
+      - llama3.1:8b
+      - qwen2.5-coder:7b
+      - mistral:7b
+tracing:
+  enabled: true
+  capture_inputs: true
+  capture_outputs: true
+  capture_artifacts: true
+  capture_screenshots: true
+  capture_model_messages: true
+  redact_secrets: true
+  format: local_openinference_json
+  include_span_events: true
+  include_timeline: true
+  max_preview_chars: 2000
+artifacts:
+  root: runs
+  keep_success_artifacts: true
+  keep_failure_artifacts: true
+  write_jsonl: true
+  write_sqlite: true
+  sqlite_path: runs/agent_ab.sqlite
+tags:
+  - openclaw
+  - offline
+  - ab-test
+metadata:
+  reference_ui: arize_quickstart_style_model_overview_performance_tracing_dashboard
