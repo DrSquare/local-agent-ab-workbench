@@ -148,6 +148,10 @@ pytest
 
 Browser-level UI tests are included as optional coverage and skip automatically unless Playwright and a Chromium browser are installed.
 
+## PR and release workflow
+
+See [docs/WORKFLOW.md](docs/WORKFLOW.md) for the feature-branch, PR, verification, and release checklist.
+
 ## TDD tests
 
 Use `tests_tdd/` for tests that may be red while designing a new behavior. The
@@ -163,10 +167,13 @@ Move durable passing tests into `tests/` when the behavior is implemented.
 
 ```text
 agent-ab-workbench/
+  .github/
+    PULL_REQUEST_TEMPLATE.md
   docs/
     KNOWN_LIMITATIONS.md
     PLAN.md
     TECH_STACK.md
+    WORKFLOW.md
   experiments/
     demo_openclaw_adapter.yaml
     demo_openclaw_prompt_ab.yaml

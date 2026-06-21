@@ -119,6 +119,7 @@ Post-MVP hardening adds:
 - Aggregate task/variant comparison reports for repeated local runs
 - Guarded OpenClaw execution helper requiring explicit `allow_execute=True`
 - Optional Playwright browser tests for the local `/ui` flow
+- PR/release workflow documentation in `docs/WORKFLOW.md`
 
 ## Coding rules
 
@@ -147,4 +148,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Post-MVP hardening: PR/release workflow docs and real adapter trace edge-case review.
+Post-MVP hardening: real adapter trace edge-case review.

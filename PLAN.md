@@ -429,14 +429,14 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add PR/release workflow documentation.
-2. Review and tighten Windows/POSIX guardrail edge cases with real adapter traces.
+1. Review and tighten Windows/POSIX guardrail edge cases with real adapter traces.
 
 Completed post-MVP hardening:
 
 - Aggregate A/B comparison reports across repeated variants.
 - Safety-gated real OpenClaw execution behind explicit opt-in.
 - Browser-level UI tests that run when Playwright is available.
+- PR/release workflow documentation and PR template.
 
 ## References
 
