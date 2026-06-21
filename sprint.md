@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 11: Guardrails and Sandbox.
+Module 12: Demo and Reporting.
 
 ## Status
 
@@ -21,15 +21,16 @@ Module 11: Guardrails and Sandbox.
 | Module 9 Playground UI | Done | Prompt editor, model/parameter controls, tool-policy controls, replay/save actions, defaults loading, and result rendering are implemented. |
 | Module 10 OpenClaw adapter | Done | OpenClaw config translation, command planning, prepared run artifacts, trace wrapping, demo adapter experiment/taskpack, and CLI preparation are implemented. |
 | Module 11 guardrails and sandbox | Done | Path policy, blocked command checks, local endpoint checks, timeout checks, secret redaction, and OpenClaw plan enforcement are implemented. |
+| Module 12 demo and reporting | Done | Local demo helper/script, JSON and CSV run exports, reporting CLI commands, README updates, and known limitations are implemented. |
 
-## Module 11 Acceptance Criteria
+## Module 12 Acceptance Criteria
 
-- Paths are checked against allowed and blocked path policies.
-- Blocked command executable and sequence checks are centralized.
-- Localhost-only endpoint policy is enforced when network is disabled.
-- Timeout values are bounded by experiment limits.
-- Secret redaction covers text, nested payloads, and OpenClaw trace previews.
-- OpenClaw command plans are checked before any future execution path can use them.
+- A repeatable local demo can generate deterministic mock run artifacts.
+- Local run reports can be exported as JSON and CSV.
+- CLI commands support demo execution and report export.
+- Demo/reporting tests cover generated artifacts and command behavior.
+- Known limitations are documented.
+- All planned MVP modules are represented in the tracker.
 
 ## Working Rules
 
@@ -41,4 +42,4 @@ Module 11: Guardrails and Sandbox.
 
 ## Next Sprint Candidate
 
-Module 12: Demo and Reporting.
+Post-MVP hardening and integration.

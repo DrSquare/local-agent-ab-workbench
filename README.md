@@ -15,6 +15,7 @@ This repository currently implements:
 - **Module 9: Playground UI**
 - **Module 10: OpenClaw adapter preparation**
 - **Module 11: Guardrails and sandbox policy**
+- **Module 12: Demo and reporting**
 
 ## What the implemented modules include
 
@@ -38,6 +39,7 @@ This repository currently implements:
 - Playground prompt editor, model/parameter controls, tool-policy controls, replay/save actions, and result pane
 - OpenClaw CLI config translation, command planning, prepared-run artifacts, and trace wrapping
 - Guardrail helpers for paths, commands, endpoints, timeouts, and secret redaction
+- Local demo runner plus JSON and CSV run report exports
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -91,6 +93,13 @@ agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_
 ```
 
 This writes an isolated workspace and `openclaw_config.yaml` plus a command plan. It does not execute the OpenClaw CLI by default.
+
+## Run the local demo and export reports
+
+```bash
+agent-ab run-demo --output-root demo_output
+agent-ab export-runs demo_output/runs --output demo_output/reports/runs.csv --format csv
+```
 
 ## Serve the local API
 
@@ -149,6 +158,7 @@ Move durable passing tests into `tests/` when the behavior is implemented.
 ```text
 agent-ab-workbench/
   docs/
+    KNOWN_LIMITATIONS.md
     PLAN.md
     TECH_STACK.md
   experiments/
@@ -171,6 +181,7 @@ agent-ab-workbench/
     config.py
     guardrails.py
     playground.py
+    reporting.py
     server.py
     static/
       ui/
@@ -189,6 +200,8 @@ agent-ab-workbench/
     runner.py
     trace_store.py
     validators.py
+  scripts/
+    run_local_demo.py
   tests/
     test_module1_schemas.py
     test_module2_tasks.py
@@ -201,10 +214,11 @@ agent-ab-workbench/
     test_module9_playground_ui.py
     test_module10_openclaw_adapter.py
     test_module11_guardrails.py
+    test_module12_reporting.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 12 should add the end-to-end demo and reporting/export artifacts.
+All planned MVP modules are implemented. Next work should focus on post-MVP hardening, aggregate reporting, and safety-gated real adapter execution.

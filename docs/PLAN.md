@@ -363,6 +363,8 @@ Deliverables:
 
 ### Module 12: Demo and Reporting
 
+Status: implemented.
+
 Goal: provide an end-to-end local demo.
 
 Deliverables:
@@ -372,6 +374,7 @@ Deliverables:
 - JSON and CSV export
 - README update
 - Known limitations
+- Reporting CLI commands
 
 ## Metric Strategy
 
@@ -426,11 +429,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add a repeatable local demo script.
-2. Add JSON and CSV export commands for runs or traces.
-3. Add demo data that can be regenerated without external services.
-4. Document known limitations and safety defaults.
-5. Update README with end-to-end demo and reporting flow.
+1. Add aggregate A/B comparison reports across repeated variants.
+2. Add safety-gated real OpenClaw execution behind explicit opt-in.
+3. Expand browser-level UI tests when Playwright is available.
+4. Add PR/release workflow documentation.
+5. Review and tighten Windows/POSIX guardrail edge cases with real adapter traces.
 
 ## References
 

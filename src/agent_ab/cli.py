@@ -16,6 +16,7 @@ from agent_ab.config import (
     validate_experiment_bundle,
     validate_taskpack_with_fixtures,
 )
+from agent_ab.reporting import ReportFormat, export_run_report, run_local_demo
 from agent_ab.runner import run_mock_task
 from agent_ab.schemas.metrics import AGENTEVAL_METRIC_REGISTRY, MetricCategory, metric_names
 
@@ -140,6 +141,39 @@ def prepare_openclaw_run_command(
     console.print(f"config: {prepared.config_path}")
     console.print(f"working_directory: {prepared.command_plan.working_directory}")
     console.print("command: " + " ".join(prepared.command_plan.command))
+
+
+@app.command("export-runs")
+def export_runs_command(
+    runs_root: Annotated[Path, typer.Argument(help="Run artifact root to summarize.")],
+    output: Annotated[Path, typer.Option(help="Output report path.")] = Path("reports/runs.json"),
+    report_format: Annotated[ReportFormat, typer.Option("--format", help="Report format.")] = ReportFormat.JSON,
+) -> None:
+    """Export local run summaries to JSON or CSV."""
+
+    if output == Path("reports/runs.json") and report_format == ReportFormat.CSV:
+        output = Path("reports/runs.csv")
+    report_path = export_run_report(runs_root, output, report_format)
+    console.print(f"[green]OK[/green] report={report_path}")
+
+
+@app.command("run-demo")
+def run_demo_command(
+    output_root: Annotated[Path, typer.Option(help="Output root for demo runs and reports.")] = Path("demo_output"),
+    project_root: Annotated[Path, typer.Option(help="Project root containing demo taskpacks.")] = Path("."),
+) -> None:
+    """Run the deterministic local demo and export reports."""
+
+    try:
+        summary = run_local_demo(project_root, output_root)
+    except (ConfigLoadError, FileExistsError, ValueError) as exc:
+        console.print(f"[red]Demo failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] run={summary.run_id}")
+    console.print(f"runs: {summary.runs_root}")
+    console.print(f"json_report: {summary.json_report}")
+    console.print(f"csv_report: {summary.csv_report}")
 
 
 @app.command("serve")
