@@ -34,6 +34,30 @@ def test_path_policy_allows_workspace_and_blocks_escapes(tmp_path: Path) -> None
         enforce_path_policy("secrets/token.txt", workspace_path=workspace, limits=limits)
 
 
+def test_path_policy_handles_run_dir_and_posix_root_edge_cases(tmp_path: Path) -> None:
+    run_dir = tmp_path / "runs" / "openclaw.case"
+    workspace = run_dir / "workspace"
+    workspace.mkdir(parents=True)
+    limits = RunLimits(
+        allowed_paths=["$RUN_WORKSPACE"],
+        blocked_paths=["$HOME", "/"],
+    )
+
+    workspace_file = enforce_path_policy("notes/todo.txt", workspace_path=workspace, limits=limits)
+    run_file = enforce_path_policy(
+        run_dir / "openclaw_config.yaml",
+        workspace_path=workspace,
+        run_dir=run_dir,
+        extra_allowed_paths=["$RUN_DIR"],
+        limits=limits,
+    )
+
+    assert workspace_file == workspace / "notes" / "todo.txt"
+    assert run_file == run_dir / "openclaw_config.yaml"
+    with pytest.raises(GuardrailViolation, match="outside allowed paths"):
+        enforce_path_policy(tmp_path / "outside.txt", workspace_path=workspace, limits=limits)
+
+
 def test_command_policy_rejects_blocked_executables_and_sequences() -> None:
     limits = RunLimits(blocked_commands=["curl", "rm -rf /"])
 
@@ -42,6 +66,18 @@ def test_command_policy_rejects_blocked_executables_and_sequences() -> None:
         enforce_command_policy(["curl", "https://example.com"], limits)
     with pytest.raises(GuardrailViolation, match="rm -rf /"):
         enforce_command_policy("rm -rf /", limits)
+
+
+def test_command_policy_normalizes_windows_paths_and_exe_suffixes() -> None:
+    limits = RunLimits(blocked_commands=["powershell", "curl"])
+
+    with pytest.raises(GuardrailViolation, match="powershell"):
+        enforce_command_policy(
+            [r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", "-NoProfile"],
+            limits,
+        )
+    with pytest.raises(GuardrailViolation, match="curl"):
+        enforce_command_policy(["/usr/bin/curl.exe", "https://example.com"], limits)
 
 
 def test_network_and_timeout_policies_enforce_local_limits() -> None:

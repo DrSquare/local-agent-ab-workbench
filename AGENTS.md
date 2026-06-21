@@ -120,6 +120,7 @@ Post-MVP hardening adds:
 - Guarded OpenClaw execution helper requiring explicit `allow_execute=True`
 - Optional Playwright browser tests for the local `/ui` flow
 - PR/release workflow documentation in `docs/WORKFLOW.md`
+- Windows/POSIX command/path edge-case coverage and real adapter trace alias handling
 
 ## Coding rules
 
@@ -148,4 +149,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Post-MVP hardening: real adapter trace edge-case review.
+Choose the next product milestone after reviewing `PLAN.md` and `sprint.md`.

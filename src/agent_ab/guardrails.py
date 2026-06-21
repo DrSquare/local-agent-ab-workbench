@@ -64,17 +64,24 @@ def enforce_command_policy(command: str | Sequence[str], limits: RunLimits) -> l
     parts = shlex.split(command) if isinstance(command, str) else [str(part) for part in command]
     if not parts:
         raise GuardrailViolation("command cannot be empty")
-    executable = Path(parts[0]).name.lower()
+    executable = command_executable_name(parts[0])
     normalized = " ".join(parts).lower()
     for blocked in limits.blocked_commands:
         blocked_parts = shlex.split(blocked)
         if not blocked_parts:
             continue
-        blocked_executable = Path(blocked_parts[0]).name.lower()
+        blocked_executable = command_executable_name(blocked_parts[0])
         blocked_normalized = " ".join(blocked_parts).lower()
         if executable == blocked_executable or normalized.startswith(blocked_normalized):
             raise GuardrailViolation(f"command is blocked by policy: {blocked}")
     return parts
+
+
+def command_executable_name(value: str | Path) -> str:
+    """Return a platform-neutral executable name without a Windows .exe suffix."""
+
+    name = str(value).replace("\\", "/").rsplit("/", 1)[-1].lower()
+    return name[:-4] if name.endswith(".exe") else name
 
 
 def enforce_local_endpoint(endpoint: str | None, limits: RunLimits, *, label: str = "endpoint") -> str | None:

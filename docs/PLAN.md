@@ -429,7 +429,7 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Review and tighten Windows/POSIX guardrail edge cases with real adapter traces.
+All currently tracked post-MVP hardening items are complete. Next planning should choose the next product milestone.
 
 Completed post-MVP hardening:
 
@@ -437,6 +437,7 @@ Completed post-MVP hardening:
 - Safety-gated real OpenClaw execution behind explicit opt-in.
 - Browser-level UI tests that run when Playwright is available.
 - PR/release workflow documentation and PR template.
+- Windows/POSIX command/path edge-case coverage and real-adapter trace alias handling.
 
 ## References
 

@@ -26,6 +26,7 @@ Post-MVP hardening: reporting aggregates and execution gates.
 | Post-MVP OpenClaw execution gate | Done | Prepared OpenClaw plans can execute only through an explicit `allow_execute=True` opt-in and are covered with injected-runner tests. |
 | Post-MVP browser UI tests | Done | Optional Playwright tests cover local inventory, trace selection, and Playground replay when a browser runtime is installed. |
 | Post-MVP workflow docs | Done | PR checklist, required verification commands, release steps, and rollback guidance are documented. |
+| Post-MVP guardrail edge cases | Done | Command normalization, run-dir path policy, POSIX root handling, and real-adapter trace aliases are covered. |
 
 ## Post-MVP Acceptance Criteria
 
@@ -36,6 +37,8 @@ Post-MVP hardening: reporting aggregates and execution gates.
 - Execution-gate tests do not invoke a real desktop agent.
 - Browser-level UI tests skip cleanly when Playwright is unavailable.
 - PR and release workflow docs list required verification and risk review items.
+- Windows/POSIX command and path edge cases are covered by tests.
+- Real-adapter trace aliases normalize to typed workbench spans with redaction.
 
 ## Working Rules
 
@@ -47,4 +50,4 @@ Post-MVP hardening: reporting aggregates and execution gates.
 
 ## Next Sprint Candidate
 
-Real-adapter trace edge-case review.
+Choose the next product milestone.

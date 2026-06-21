@@ -25,6 +25,7 @@ from agent_ab.config import (
 )
 from agent_ab.guardrails import (
     GuardrailViolation,
+    command_executable_name,
     enforce_command_plan,
     enforce_local_endpoint,
     redact_object,
@@ -254,8 +255,8 @@ def build_openclaw_command_plan(
     timeout_seconds: int,
 ) -> OpenClawCommandPlan:
     command = _command_with_config(variant.command or "", Path(config_path))
-    executable = Path(command[0]).name.lower()
-    if executable not in {"openclaw", "openclaw.exe"}:
+    executable = command_executable_name(command[0])
+    if executable != "openclaw":
         raise ValueError("openclaw_cli variants must use the openclaw executable")
     default_working_path = Path(default_working_directory).resolve()
     if variant.working_directory:
@@ -352,8 +353,8 @@ def _command_with_config(command: str, config_path: Path) -> list[str]:
 def _validate_execution_plan(prepared: OpenClawPreparedRun, plan: OpenClawCommandPlan) -> None:
     if not plan.command:
         raise GuardrailViolation("OpenClaw execution command cannot be empty")
-    executable = Path(plan.command[0]).name.lower()
-    if executable not in {"openclaw", "openclaw.exe"}:
+    executable = command_executable_name(plan.command[0])
+    if executable != "openclaw":
         raise GuardrailViolation("OpenClaw execution requires the openclaw executable")
     if plan.timeout_seconds < 1:
         raise GuardrailViolation("OpenClaw execution timeout must be at least one second")
@@ -450,8 +451,8 @@ def _openclaw_span_to_trace_span(payload: dict[str, Any], index: int, trace_id: 
 
 
 def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind, dict[str, Any]]:
-    raw_kind = str(payload.get("kind") or payload.get("type") or "custom").lower()
-    if raw_kind == "tool":
+    raw_kind = str(payload.get("kind") or payload.get("type") or "custom").strip().lower()
+    if raw_kind in {"tool", "tool_call", "tool-call"}:
         return SpanKind.TOOL, {
             "tool_call": ToolCallDetail(
                 tool_name=str(payload.get("tool_name") or name),
@@ -460,7 +461,7 @@ def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind,
                 error=redact_text(payload.get("error")),
             )
         }
-    if raw_kind == "shell":
+    if raw_kind in {"shell", "shell_command", "shell-command", "command"}:
         return SpanKind.SHELL, {
             "shell_action": ShellActionDetail(
                 command=str(payload.get("command") or name),
@@ -469,7 +470,7 @@ def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind,
                 stderr_preview=redact_text(payload.get("stderr_preview")),
             )
         }
-    if raw_kind == "desktop":
+    if raw_kind in {"desktop", "desktop_action", "desktop-action"}:
         return SpanKind.DESKTOP, {
             "desktop_action": DesktopActionDetail(
                 action=str(payload.get("action") or name),
@@ -478,7 +479,7 @@ def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind,
                 screenshot_after=payload.get("screenshot_after"),
             )
         }
-    if raw_kind in {"llm", "model"}:
+    if raw_kind in {"llm", "llm_call", "llm-call", "model", "model_call", "model-call"}:
         return SpanKind.LLM, {
             "model_call": ModelCallDetail(
                 provider=str(payload.get("provider") or "openclaw"),
@@ -494,10 +495,10 @@ def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind,
 
 
 def _span_status(value: Any) -> SpanStatus:
-    status = str(value or "").lower()
-    if status == "error":
+    status = str(value or "").strip().lower()
+    if status in {"error", "failed", "failure"}:
         return SpanStatus.ERROR
-    if status == "skipped":
+    if status in {"skipped", "skip"}:
         return SpanStatus.SKIPPED
     return SpanStatus.OK
 

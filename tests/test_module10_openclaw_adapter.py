@@ -85,6 +85,56 @@ def test_openclaw_trace_payload_wraps_to_workbench_trace() -> None:
     assert shell_span.shell_action.stderr_preview == "blocked"
 
 
+def test_openclaw_trace_wraps_real_adapter_aliases_and_redacts() -> None:
+    trace = openclaw_trace_to_envelope(
+        {
+            "spans": [
+                {
+                    "type": " tool_call ",
+                    "event": "write action-items with secret",
+                    "tool_name": "write_file",
+                    "arguments": {
+                        "path": r"notes\action-items.txt",
+                        "authorization": "Bearer abc123",
+                    },
+                    "status": " failed ",
+                    "timestamp_ms": 10,
+                    "duration_ms": 5,
+                    "error": "token=abc123",
+                    "attributes": {"api_key": "abc123"},
+                },
+                {
+                    "type": "model_call",
+                    "name": "local completion",
+                    "provider": "ollama",
+                    "model": "qwen2.5-coder:7b",
+                    "parameters": {"temperature": 0.1},
+                    "input_preview": "password: abc123",
+                    "output_preview": "done",
+                    "status": "success",
+                    "started_at_ms": 20,
+                    "ended_at_ms": 30,
+                },
+            ]
+        },
+        trace_id="trace.openclaw.real_aliases",
+        taskpack_id="openclaw_demo",
+        task_id="openclaw_rename_todo",
+        variant_id="B",
+        run_id="openclaw.rename_todo.real_aliases",
+    )
+
+    tool_span = next(span for span in trace.spans if span.kind == "tool")
+    model_span = next(span for span in trace.spans if span.kind == "llm")
+    assert tool_span.status == "error"
+    assert tool_span.span_id == "span.openclaw.1.write_action-items_with_secret"
+    assert tool_span.tool_call.arguments["authorization"] == "[REDACTED]"
+    assert tool_span.tool_call.error == "token=[REDACTED]"
+    assert tool_span.attributes["api_key"] == "[REDACTED]"
+    assert model_span.status == "ok"
+    assert model_span.model_call.input_preview == "password: [REDACTED]"
+
+
 def test_openclaw_execution_requires_explicit_opt_in(tmp_path: Path) -> None:
     prepared = prepare_openclaw_run(
         EXPERIMENT,
