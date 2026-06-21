@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 5: local FastAPI backend.
+Module 6: Playground backend.
 
 ## Status
 
@@ -15,15 +15,16 @@ Module 5: local FastAPI backend.
 | Module 3 trace contracts | Done | Trace envelope, typed span details, JSONL writer, SQLite index, and tests are implemented. |
 | Module 4 mock runner | Done | Run workspace lifecycle, validator executor, deterministic mock adapter, trace artifact writing, and tests are implemented. |
 | Module 5 local backend | Done | Localhost-only server command, experiment/taskpack discovery, run summaries, artifact listing, trace retrieval, and API tests are implemented. |
+| Module 6 Playground backend | Done | Playground request/response schemas, override validation, deterministic mock replay, view persistence, API endpoints, and tests are implemented. |
 
-## Module 5 Acceptance Criteria
+## Module 6 Acceptance Criteria
 
-- A FastAPI app exposes local read-only workbench data.
-- The CLI serves only on `localhost`, `127.0.0.1`, or `::1`.
-- Experiments and TaskPacks can be discovered from the project tree.
-- Run directories expose artifact summaries.
-- Trace JSONL can be retrieved through a typed API response.
-- No real OpenClaw, shell, browser, desktop, non-local network, or model execution is added.
+- Playground run request and response schemas validate strict local contracts.
+- Prompt, model, parameter, and tool-policy overrides are validated before replay.
+- One-off replay uses the deterministic mock runner only.
+- Playground Views are persisted as local JSON and can be listed/retrieved by the API.
+- Replays appear in the normal local run artifact listing.
+- No real OpenClaw, shell, browser, desktop, non-local network, model execution, or UI code is added.
 
 ## Working Rules
 
@@ -35,4 +36,4 @@ Module 5: local FastAPI backend.
 
 ## Next Sprint Candidate
 
-Module 6: Playground backend.
+Module 7: frontend shell.

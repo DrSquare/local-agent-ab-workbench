@@ -233,6 +233,7 @@ Coverage expectations by phase:
 | Module 3 | Span parent/child integrity, trace serialization, typed detail payloads, JSONL/SQLite persistence |
 | Module 4 | Mock adapter determinism, validator execution, workspace lifecycle, artifact writing |
 | Backend | API response models, local-only binding assumptions, error shapes |
+| Module 6 | Playground request validation, mock replay output, view persistence |
 | Frontend | Core flows with Playwright once UI exists |
 
 ## File Layout Direction
@@ -256,11 +257,13 @@ agent-ab-workbench/
   src/agent_ab/
     cli.py
     config.py
+    playground.py
     server.py
     schemas/
       common.py
       experiment.py
       metrics.py
+      playground.py
       prompt_object.py
       run.py
       task.py
@@ -274,6 +277,7 @@ agent-ab-workbench/
     test_module3_traces.py
     test_module4_runner.py
     test_module5_server.py
+    test_module6_playground.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and

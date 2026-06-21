@@ -44,6 +44,16 @@ Module 5 adds only a local read-only FastAPI backend:
 
 Do not add real agent execution, non-local binding, cloud service calls, or UI code inside Module 5.
 
+Module 6 adds only Playground backend contracts and deterministic mock replay:
+
+- Playground run request and response schemas
+- Prompt, model, parameter, and tool-policy override validation
+- One-off replay through the deterministic mock runner
+- Local Playground View JSON persistence
+- Playground API endpoints
+
+Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, or UI code inside Module 6.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -67,4 +77,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 6: Playground backend.
+Implement Module 7: frontend shell.

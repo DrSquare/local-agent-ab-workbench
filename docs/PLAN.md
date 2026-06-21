@@ -35,6 +35,7 @@ Modules 1 through 5 are implemented with clear local-first boundaries:
 - SQLite trace index contract
 - Deterministic mock runner and local validator executor
 - Localhost-only FastAPI backend for discovery and trace inspection
+- Playground backend contracts, deterministic mock replay, and view persistence
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
@@ -270,6 +271,8 @@ Deliverables:
 
 ### Module 6: Playground Backend
 
+Status: implemented.
+
 Goal: support one-off local replay and candidate variant creation.
 
 Deliverables:
@@ -278,7 +281,8 @@ Deliverables:
 - Prompt/model/parameter override handling
 - Tool policy override handling
 - Playground View persistence
-- Result diff model
+- Deterministic mock replay API endpoints
+- Playground View listing and retrieval endpoints
 
 ### Module 7: Frontend Shell
 
@@ -403,11 +407,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add Playground run request and response schemas.
-2. Add prompt, model, parameter, and tool-policy override validation.
-3. Add deterministic one-off replay plumbing using the mock runner.
-4. Add local Playground View persistence.
-5. Add focused tests for request validation, replay output, and saved views.
+1. Add the first frontend app shell.
+2. Add experiment, taskpack, run, trace, and Playground navigation.
+3. Connect the shell to the Module 5 and Module 6 API endpoints.
+4. Add basic empty, loading, and error states.
+5. Add frontend verification for the core navigation flow.
 
 ## References
 

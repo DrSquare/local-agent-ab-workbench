@@ -8,7 +8,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import Field
 
 from agent_ab.config import ConfigLoadError, load_experiment, validate_taskpack_with_fixtures
+from agent_ab.playground import list_playground_views, load_playground_view, run_playground_task
 from agent_ab.schemas.common import StrictBaseModel
+from agent_ab.schemas.playground import (
+    PlaygroundRunRequest,
+    PlaygroundRunResponse,
+    PlaygroundView,
+    PlaygroundViewListResponse,
+)
 from agent_ab.schemas.trace import TraceEnvelope, validate_trace_token
 from agent_ab.trace_store import read_trace_jsonl
 
@@ -85,7 +92,11 @@ def is_local_server_host(host: str) -> bool:
     return host.strip().lower() in LOCAL_SERVER_HOSTS
 
 
-def create_app(project_root: str | Path | None = None, runs_root: str | Path | None = None) -> FastAPI:
+def create_app(
+    project_root: str | Path | None = None,
+    runs_root: str | Path | None = None,
+    playground_root: str | Path | None = None,
+) -> FastAPI:
     """Create the local API app.
 
     The app only reads local config and artifact files. Network binding is
@@ -94,6 +105,11 @@ def create_app(project_root: str | Path | None = None, runs_root: str | Path | N
 
     root = Path(project_root or Path.cwd()).resolve()
     runs = Path(runs_root).resolve() if runs_root else (root / "runs").resolve()
+    playground_views = (
+        Path(playground_root).resolve()
+        if playground_root
+        else (root / "playground_views").resolve()
+    )
 
     app = FastAPI(
         title="Local Agent A/B Workbench",
@@ -157,6 +173,38 @@ def create_app(project_root: str | Path | None = None, runs_root: str | Path | N
             trace_path=_path_for_response(trace_path, root),
             traces=traces,
         )
+
+    @app.post("/playground/runs", response_model=PlaygroundRunResponse)
+    def create_playground_run(request: PlaygroundRunRequest) -> PlaygroundRunResponse:
+        try:
+            return run_playground_task(
+                request,
+                project_root=root,
+                run_root=runs,
+                views_root=playground_views,
+            )
+        except FileExistsError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except ConfigLoadError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/playground/views", response_model=PlaygroundViewListResponse)
+    def list_views() -> PlaygroundViewListResponse:
+        try:
+            return list_playground_views(playground_views)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/playground/views/{view_id}", response_model=PlaygroundView)
+    def get_view(view_id: str) -> PlaygroundView:
+        try:
+            return load_playground_view(playground_views, view_id)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return app
 

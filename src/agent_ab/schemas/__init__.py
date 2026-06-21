@@ -2,6 +2,7 @@
 
 from agent_ab.schemas.experiment import ExperimentConfig
 from agent_ab.schemas.metrics import MetricDefinition, MetricSelection, metric_names
+from agent_ab.schemas.playground import PlaygroundRunRequest, PlaygroundRunResponse, PlaygroundView
 from agent_ab.schemas.prompt_object import PromptObject
 from agent_ab.schemas.run import TaskRunResult
 from agent_ab.schemas.task import TaskPack
@@ -11,6 +12,9 @@ __all__ = [
     "ExperimentConfig",
     "MetricDefinition",
     "MetricSelection",
+    "PlaygroundRunRequest",
+    "PlaygroundRunResponse",
+    "PlaygroundView",
     "PromptObject",
     "TaskPack",
     "TaskRunResult",

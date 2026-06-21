@@ -9,6 +9,7 @@ This repository currently implements:
 - **Module 3: Telemetry schema + trace store contracts**
 - **Module 4: Runner core + deterministic mock adapter**
 - **Module 5: Local FastAPI backend**
+- **Module 6: Playground backend**
 
 ## What the implemented modules include
 
@@ -24,6 +25,9 @@ This repository currently implements:
 - Local validator executor for TaskPack contracts
 - Deterministic mock adapter and run workspace lifecycle
 - Local read-only API for experiment, taskpack, run, and trace discovery
+- Playground replay request/response contracts
+- Deterministic one-off Playground replay through the mock runner
+- Local Playground View persistence
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -76,6 +80,16 @@ agent-ab serve --host 127.0.0.1 --port 8765
 
 The server command rejects non-local bind hosts.
 
+Useful local API paths include:
+
+```text
+GET  /experiments
+GET  /taskpacks
+GET  /runs
+POST /playground/runs
+GET  /playground/views
+```
+
 ## Render a prompt
 
 ```bash
@@ -127,11 +141,13 @@ agent-ab-workbench/
   src/agent_ab/
     cli.py
     config.py
+    playground.py
     server.py
     schemas/
       common.py
       experiment.py
       metrics.py
+      playground.py
       prompt_object.py
       run.py
       task.py
@@ -145,10 +161,11 @@ agent-ab-workbench/
     test_module3_traces.py
     test_module4_runner.py
     test_module5_server.py
+    test_module6_playground.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 6 should add Playground backend request/response contracts, one-off replay plumbing, and local Playground View persistence.
+Module 7 should add the first local frontend shell for experiment, run, trace, and Playground navigation.
