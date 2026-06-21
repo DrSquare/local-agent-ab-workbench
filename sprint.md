@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 10: OpenClaw Adapter.
+Module 11: Guardrails and Sandbox.
 
 ## Status
 
@@ -20,15 +20,16 @@ Module 10: OpenClaw Adapter.
 | Module 8 trace visualizer UI | Done | Expandable span tree, span detail payload pane, timing waterfall, kind/status filters, keyboard selection, and trace UI tests are implemented. |
 | Module 9 Playground UI | Done | Prompt editor, model/parameter controls, tool-policy controls, replay/save actions, defaults loading, and result rendering are implemented. |
 | Module 10 OpenClaw adapter | Done | OpenClaw config translation, command planning, prepared run artifacts, trace wrapping, demo adapter experiment/taskpack, and CLI preparation are implemented. |
+| Module 11 guardrails and sandbox | Done | Path policy, blocked command checks, local endpoint checks, timeout checks, secret redaction, and OpenClaw plan enforcement are implemented. |
 
-## Module 10 Acceptance Criteria
+## Module 11 Acceptance Criteria
 
-- OpenClaw CLI variants can be prepared into isolated run workspaces.
-- Prompt, model, parameter, tool, task, limit, and tracing contracts are translated to an OpenClaw-style YAML config.
-- Command plans replace or append the generated config path and validate the `openclaw` executable.
-- OpenClaw span/event payloads can be wrapped into the workbench trace contract.
-- A demo OpenClaw adapter experiment and taskpack are available.
-- Real CLI execution remains disabled by default until guardrails are implemented.
+- Paths are checked against allowed and blocked path policies.
+- Blocked command executable and sequence checks are centralized.
+- Localhost-only endpoint policy is enforced when network is disabled.
+- Timeout values are bounded by experiment limits.
+- Secret redaction covers text, nested payloads, and OpenClaw trace previews.
+- OpenClaw command plans are checked before any future execution path can use them.
 
 ## Working Rules
 
@@ -40,4 +41,4 @@ Module 10: OpenClaw Adapter.
 
 ## Next Sprint Candidate
 
-Module 11: Guardrails and Sandbox.
+Module 12: Demo and Reporting.

@@ -14,6 +14,7 @@ This repository currently implements:
 - **Module 8: Trace visualizer UI**
 - **Module 9: Playground UI**
 - **Module 10: OpenClaw adapter preparation**
+- **Module 11: Guardrails and sandbox policy**
 
 ## What the implemented modules include
 
@@ -36,6 +37,7 @@ This repository currently implements:
 - Expandable trace tree, span detail pane, filters, and timing waterfall
 - Playground prompt editor, model/parameter controls, tool-policy controls, replay/save actions, and result pane
 - OpenClaw CLI config translation, command planning, prepared-run artifacts, and trace wrapping
+- Guardrail helpers for paths, commands, endpoints, timeouts, and secret redaction
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -167,6 +169,7 @@ agent-ab-workbench/
       openclaw.py
     cli.py
     config.py
+    guardrails.py
     playground.py
     server.py
     static/
@@ -197,10 +200,11 @@ agent-ab-workbench/
     test_module8_trace_ui.py
     test_module9_playground_ui.py
     test_module10_openclaw_adapter.py
+    test_module11_guardrails.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 11 should add guardrails and sandbox enforcement before real adapter execution is enabled.
+Module 12 should add the end-to-end demo and reporting/export artifacts.

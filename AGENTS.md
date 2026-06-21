@@ -94,6 +94,17 @@ Module 10 adds OpenClaw adapter preparation only:
 
 Do not execute the OpenClaw CLI, shell, browser, desktop automation, non-local network calls, or real model calls by default inside Module 10. Real execution must wait for Module 11 guardrails.
 
+Module 11 adds guardrails and sandbox policy helpers:
+
+- Allowed-path and blocked-path enforcement
+- Blocked command enforcement
+- Localhost-only endpoint checks when network is disabled
+- Timeout checks against experiment limits
+- Secret redaction for text and nested trace payloads
+- OpenClaw command-plan guardrail checks
+
+Do not enable unattended real desktop automation or non-local network execution inside Module 11. Use guardrail helpers before adding future execution paths.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -118,4 +129,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 11: Guardrails and Sandbox.
+Implement Module 12: Demo and Reporting.

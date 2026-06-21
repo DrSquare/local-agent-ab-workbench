@@ -242,6 +242,7 @@ Coverage expectations by phase:
 | Module 8 | Trace filters, span detail rendering, timing waterfall, keyboard span selection |
 | Module 9 | Playground defaults endpoint, editor controls, replay/save payloads, result rendering |
 | Module 10 | OpenClaw config translation, command planning, trace wrapping, prepare CLI |
+| Module 11 | Path policy, blocked command policy, endpoint checks, timeout bounds, secret redaction |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 ## File Layout Direction

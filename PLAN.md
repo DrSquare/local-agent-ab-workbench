@@ -348,6 +348,8 @@ Deliverables:
 
 ### Module 11: Guardrails and Sandbox
 
+Status: implemented.
+
 Goal: enforce local safety boundaries during real runs.
 
 Deliverables:
@@ -357,6 +359,7 @@ Deliverables:
 - Localhost-only network policy
 - Timeout enforcement
 - Secret redaction checks
+- OpenClaw command-plan guardrail integration
 
 ### Module 12: Demo and Reporting
 
@@ -423,11 +426,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Enforce allowed-path and blocked-path checks for prepared and executed runs.
-2. Enforce blocked-command checks before any adapter execution.
-3. Add localhost-only network policy checks for adapter/model endpoints.
-4. Add timeout enforcement hooks around future process/tool execution.
-5. Add secret-redaction checks for traces, command plans, and previews.
+1. Add a repeatable local demo script.
+2. Add JSON and CSV export commands for runs or traces.
+3. Add demo data that can be regenerated without external services.
+4. Document known limitations and safety defaults.
+5. Update README with end-to-end demo and reporting flow.
 
 ## References
 

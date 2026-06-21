@@ -20,6 +20,12 @@ from agent_ab.config import (
     load_prompt_object,
     validate_taskpack_with_fixtures,
 )
+from agent_ab.guardrails import (
+    enforce_command_plan,
+    enforce_local_endpoint,
+    redact_object,
+    redact_text,
+)
 from agent_ab.runner import prepare_run_workspace
 from agent_ab.schemas.common import AdapterKind, StrictBaseModel
 from agent_ab.schemas.experiment import AgentVariant, ExperimentConfig
@@ -110,6 +116,21 @@ def prepare_openclaw_run(
         config_path=config_path,
         default_working_directory=run_dir,
         timeout_seconds=experiment.limits.max_seconds_per_task,
+    )
+    enforce_local_endpoint(prompt.model.endpoint, experiment.limits, label="prompt model endpoint")
+    enforce_local_endpoint(
+        experiment.playground.local_model_registry.endpoint,
+        experiment.limits,
+        label="playground model registry endpoint",
+    )
+    enforce_command_plan(
+        command=command_plan.command,
+        working_directory=command_plan.working_directory,
+        config_path=command_plan.config_path,
+        timeout_seconds=command_plan.timeout_seconds,
+        workspace_path=workspace_path,
+        run_dir=run_dir,
+        limits=experiment.limits,
     )
     return OpenClawPreparedRun(
         run_id=effective_run_id,
@@ -303,7 +324,7 @@ def _openclaw_span_to_trace_span(payload: dict[str, Any], index: int, trace_id: 
         status=_span_status(payload.get("status")),
         started_at_ms=started_at_ms,
         ended_at_ms=int(ended_at_ms) if ended_at_ms is not None else None,
-        attributes=dict(payload.get("attributes") or {}),
+        attributes=redact_object(dict(payload.get("attributes") or {})),
         **detail,
     )
 
@@ -314,9 +335,9 @@ def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind,
         return SpanKind.TOOL, {
             "tool_call": ToolCallDetail(
                 tool_name=str(payload.get("tool_name") or name),
-                arguments=dict(payload.get("arguments") or {}),
-                result_preview=payload.get("result_preview"),
-                error=payload.get("error"),
+                arguments=redact_object(dict(payload.get("arguments") or {})),
+                result_preview=redact_text(payload.get("result_preview")),
+                error=redact_text(payload.get("error")),
             )
         }
     if raw_kind == "shell":
@@ -324,8 +345,8 @@ def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind,
             "shell_action": ShellActionDetail(
                 command=str(payload.get("command") or name),
                 exit_code=payload.get("exit_code"),
-                stdout_preview=payload.get("stdout_preview"),
-                stderr_preview=payload.get("stderr_preview"),
+                stdout_preview=redact_text(payload.get("stdout_preview")),
+                stderr_preview=redact_text(payload.get("stderr_preview")),
             )
         }
     if raw_kind == "desktop":
@@ -342,9 +363,9 @@ def _span_kind_and_detail(payload: dict[str, Any], name: str) -> tuple[SpanKind,
             "model_call": ModelCallDetail(
                 provider=str(payload.get("provider") or "openclaw"),
                 model=str(payload.get("model") or "unknown"),
-                parameters=dict(payload.get("parameters") or {}),
-                input_preview=payload.get("input_preview"),
-                output_preview=payload.get("output_preview"),
+                parameters=redact_object(dict(payload.get("parameters") or {})),
+                input_preview=redact_text(payload.get("input_preview")),
+                output_preview=redact_text(payload.get("output_preview")),
                 prompt_tokens=payload.get("prompt_tokens"),
                 completion_tokens=payload.get("completion_tokens"),
             )
