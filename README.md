@@ -6,6 +6,7 @@ This repository currently implements:
 
 - **Module 1: Experiment + Prompt Object schema**
 - **Module 2: TaskPack schema + validator contracts**
+- **Module 3: Telemetry schema + trace store contracts**
 
 ## What Module 1 includes
 
@@ -15,6 +16,9 @@ This repository currently implements:
 - Playground and tracing config contracts
 - TaskPack and TaskCase YAML schemas
 - Declarative task validator contracts
+- Trace envelope and span schemas
+- Typed trace detail payloads for model, tool, desktop, shell, validator, and scoring spans
+- Local JSONL trace writer and SQLite trace index helpers
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -102,13 +106,16 @@ agent-ab-workbench/
       metrics.py
       prompt_object.py
       task.py
+      trace.py
+    trace_store.py
   tests/
     test_module1_schemas.py
     test_module2_tasks.py
+    test_module3_traces.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 3 should add the telemetry schema and trace store so future runner work can emit typed local spans.
+Module 4 should add the runner core and deterministic mock adapter. This is the first module allowed to execute task validators and emit trace spans.

@@ -18,8 +18,9 @@ clear and risked adding agent execution before the repository has task, trace,
 and result contracts.
 
 This revision keeps the product vision, but makes module boundaries explicit:
-Modules 1 and 2 define contracts only. Real agent execution starts later, after
-taskpacks, validators, telemetry, and storage schemas are stable.
+Modules 1 through 3 define contracts only. Real agent execution starts in
+Module 4, after taskpacks, validators, telemetry, and storage schemas are
+stable.
 
 ## Current State
 
@@ -214,6 +215,8 @@ Module 2 acceptance criteria:
 
 ### Module 3: Telemetry Schema and Trace Store
 
+Status: implemented.
+
 Goal: define typed spans and local trace persistence before implementing real
 agent execution.
 
@@ -389,12 +392,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add telemetry envelope and span schemas.
-2. Define typed span detail payloads for model calls, tool calls, desktop
-   actions, shell actions, validators, and scoring.
-3. Add JSONL trace writer contracts.
-4. Add SQLite trace index contracts.
-5. Add tests for trace serialization and parent/child ID relationships.
+1. Add runner interface.
+2. Add run workspace lifecycle contract.
+3. Add deterministic mock adapter.
+4. Add validator executor for Module 2 contracts.
+5. Add local artifact writing that emits Module 3 trace spans.
 
 ## References
 

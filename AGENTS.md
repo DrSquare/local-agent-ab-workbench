@@ -8,19 +8,22 @@ Build a local offline A/B testing and debugging workbench for desktop AI agents.
 
 ## Current module
 
-Modules 1 and 2 implement only schemas and validation:
+Modules 1 through 3 implement only schemas, validation, and local persistence contracts:
 
 - Experiment config
 - Prompt Object config
 - TaskPack config
 - TaskCase config
 - Declarative task validator contracts
+- Trace envelope and span schemas
+- JSONL trace writer contract
+- SQLite trace index contract
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
 - CLI validators
 
-Do not add real agent execution inside Modules 1 or 2.
+Do not add real agent execution inside Modules 1, 2, or 3.
 
 ## Coding rules
 
@@ -44,4 +47,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 3: telemetry schema + trace store.
+Implement Module 4: runner core + deterministic mock adapter.

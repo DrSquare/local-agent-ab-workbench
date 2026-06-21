@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 2: task schema and validators.
+Module 3: telemetry schema and trace store.
 
 ## Status
 
@@ -12,16 +12,15 @@ Module 2: task schema and validators.
 | Module 1 hardening | Done | Duplicate YAML keys, local endpoints, prompt templates, baseline variants, and tool policy conflicts are covered by tests. |
 | TDD test folder | Done | `tests_tdd/` is available for opt-in red tests. |
 | Module 2 task contracts | Done | Taskpack schema, task case schema, validator contracts, demo taskpack, CLI validation, and tests are implemented. |
+| Module 3 trace contracts | Done | Trace envelope, typed span details, JSONL writer, SQLite index, and tests are implemented. |
 
-## Module 2 Acceptance Criteria
+## Module 3 Acceptance Criteria
 
-- `agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml` succeeds.
-- Unknown taskpack keys fail with Pydantic `extra="forbid"`.
-- Task IDs are stable identifiers and unique within a taskpack.
-- Validator types are known or use a `custom.` prefix.
-- Validator paths are portable relative workspace paths.
-- Setup and validator contracts remain declarative; no task execution is added.
-- The demo experiment references a validated taskpack without requiring a runner.
+- Trace envelope and span schemas validate parent/child integrity.
+- Typed details exist for model calls, tool calls, desktop actions, shell actions, validators, and scoring.
+- Trace JSONL round trip is covered by tests.
+- SQLite trace index is covered by tests.
+- Trace contracts remain persistence-only; no agent execution is added.
 
 ## Working Rules
 
@@ -33,4 +32,4 @@ Module 2: task schema and validators.
 
 ## Next Sprint Candidate
 
-Module 3: telemetry schema and trace store.
+Module 4: runner core and deterministic mock adapter.
