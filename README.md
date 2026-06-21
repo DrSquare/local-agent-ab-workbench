@@ -40,6 +40,8 @@ This repository currently implements:
 - OpenClaw CLI config translation, command planning, prepared-run artifacts, and trace wrapping
 - Guardrail helpers for paths, commands, endpoints, timeouts, and secret redaction
 - Local demo runner plus JSON and CSV run report exports
+- Aggregate task/variant comparison reports across repeated local runs
+- Safety-gated OpenClaw execution helper requiring explicit opt-in
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -93,12 +95,14 @@ agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_
 ```
 
 This writes an isolated workspace and `openclaw_config.yaml` plus a command plan. It does not execute the OpenClaw CLI by default.
+Execution is available only through the guarded adapter helper with an explicit `allow_execute=True` opt-in.
 
 ## Run the local demo and export reports
 
 ```bash
 agent-ab run-demo --output-root demo_output
 agent-ab export-runs demo_output/runs --output demo_output/reports/runs.csv --format csv
+agent-ab compare-runs demo_output/runs --output demo_output/reports/comparison.json
 ```
 
 ## Serve the local API

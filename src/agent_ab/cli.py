@@ -16,7 +16,12 @@ from agent_ab.config import (
     validate_experiment_bundle,
     validate_taskpack_with_fixtures,
 )
-from agent_ab.reporting import ReportFormat, export_run_report, run_local_demo
+from agent_ab.reporting import (
+    ReportFormat,
+    export_run_report,
+    export_variant_comparison_report,
+    run_local_demo,
+)
 from agent_ab.runner import run_mock_task
 from agent_ab.schemas.metrics import AGENTEVAL_METRIC_REGISTRY, MetricCategory, metric_names
 
@@ -157,6 +162,20 @@ def export_runs_command(
     console.print(f"[green]OK[/green] report={report_path}")
 
 
+@app.command("compare-runs")
+def compare_runs_command(
+    runs_root: Annotated[Path, typer.Argument(help="Run artifact root to aggregate by task and variant.")],
+    output: Annotated[Path, typer.Option(help="Output comparison report path.")] = Path("reports/comparison.json"),
+    report_format: Annotated[ReportFormat, typer.Option("--format", help="Report format.")] = ReportFormat.JSON,
+) -> None:
+    """Export aggregate task/variant comparison summaries to JSON or CSV."""
+
+    if output == Path("reports/comparison.json") and report_format == ReportFormat.CSV:
+        output = Path("reports/comparison.csv")
+    report_path = export_variant_comparison_report(runs_root, output, report_format)
+    console.print(f"[green]OK[/green] comparison={report_path}")
+
+
 @app.command("run-demo")
 def run_demo_command(
     output_root: Annotated[Path, typer.Option(help="Output root for demo runs and reports.")] = Path("demo_output"),
@@ -174,6 +193,8 @@ def run_demo_command(
     console.print(f"runs: {summary.runs_root}")
     console.print(f"json_report: {summary.json_report}")
     console.print(f"csv_report: {summary.csv_report}")
+    console.print(f"comparison_json_report: {summary.comparison_json_report}")
+    console.print(f"comparison_csv_report: {summary.comparison_csv_report}")
 
 
 @app.command("serve")

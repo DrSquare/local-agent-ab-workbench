@@ -114,6 +114,11 @@ Module 12 adds demo and reporting artifacts:
 
 After Module 12, prefer post-MVP hardening, integration tests, and real-adapter execution only when explicitly safety-gated.
 
+Post-MVP hardening adds:
+
+- Aggregate task/variant comparison reports for repeated local runs
+- Guarded OpenClaw execution helper requiring explicit `allow_execute=True`
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -134,10 +139,11 @@ agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
 agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_rename_todo
 agent-ab run-demo --output-root demo_output
 agent-ab export-runs demo_output/runs --output demo_output/reports/runs.csv --format csv
+agent-ab compare-runs demo_output/runs --output demo_output/reports/comparison.json
 agent-ab serve --host 127.0.0.1 --port 8765
 agent-ab metrics
 ```
 
 ## Next recommended task
 
-Post-MVP hardening: aggregate reports, PR review, and safety-gated real adapter execution.
+Post-MVP hardening: browser-level UI tests, PR/release workflow docs, and real adapter trace edge-case review.

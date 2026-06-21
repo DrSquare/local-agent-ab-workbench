@@ -7,8 +7,11 @@ Execution belongs behind the runtime guardrails added in later modules.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
+import subprocess
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +24,7 @@ from agent_ab.config import (
     validate_taskpack_with_fixtures,
 )
 from agent_ab.guardrails import (
+    GuardrailViolation,
     enforce_command_plan,
     enforce_local_endpoint,
     redact_object,
@@ -64,6 +68,17 @@ class OpenClawPreparedRun(StrictBaseModel):
     run_dir: str
     config_path: str
     command_plan: OpenClawCommandPlan
+
+
+class OpenClawExecutionResult(StrictBaseModel):
+    run_id: str
+    command: list[str]
+    working_directory: str
+    return_code: int
+    status: str
+    stdout_preview: str | None = None
+    stderr_preview: str | None = None
+    timed_out: bool = False
 
 
 def prepare_openclaw_run(
@@ -141,6 +156,34 @@ def prepare_openclaw_run(
         run_dir=str(run_dir),
         config_path=str(config_path),
         command_plan=command_plan,
+    )
+
+
+def execute_openclaw_plan(
+    prepared: OpenClawPreparedRun,
+    *,
+    allow_execute: bool = False,
+    runner: Callable[[OpenClawCommandPlan], Any] | None = None,
+) -> OpenClawExecutionResult:
+    """Execute a prepared OpenClaw command plan only after explicit opt-in."""
+
+    if not allow_execute:
+        raise GuardrailViolation("OpenClaw execution requires explicit allow_execute=True opt-in")
+
+    plan = prepared.command_plan.model_copy(update={"execute": True})
+    _validate_execution_plan(prepared, plan)
+    completed = runner(plan) if runner is not None else _run_openclaw_subprocess(plan)
+    return_code = int(_completed_field(completed, "returncode", -1))
+    timed_out = bool(_completed_field(completed, "timed_out", False))
+    return OpenClawExecutionResult(
+        run_id=prepared.run_id,
+        command=plan.command,
+        working_directory=plan.working_directory,
+        return_code=return_code,
+        status=_execution_status(return_code, timed_out),
+        stdout_preview=redact_text(_coerce_text(_completed_field(completed, "stdout", None))),
+        stderr_preview=redact_text(_coerce_text(_completed_field(completed, "stderr", None))),
+        timed_out=timed_out,
     )
 
 
@@ -304,6 +347,83 @@ def _command_with_config(command: str, config_path: Path) -> list[str]:
     else:
         parts.extend(["--config", config_value])
     return parts
+
+
+def _validate_execution_plan(prepared: OpenClawPreparedRun, plan: OpenClawCommandPlan) -> None:
+    if not plan.command:
+        raise GuardrailViolation("OpenClaw execution command cannot be empty")
+    executable = Path(plan.command[0]).name.lower()
+    if executable not in {"openclaw", "openclaw.exe"}:
+        raise GuardrailViolation("OpenClaw execution requires the openclaw executable")
+    if plan.timeout_seconds < 1:
+        raise GuardrailViolation("OpenClaw execution timeout must be at least one second")
+
+    run_dir = Path(prepared.run_dir).resolve()
+    config_path = Path(plan.config_path).resolve()
+    working_directory = Path(plan.working_directory).resolve()
+    if not _is_within(config_path, run_dir):
+        raise GuardrailViolation("OpenClaw config_path must stay within the prepared run directory")
+    if not _is_within(working_directory, run_dir):
+        raise GuardrailViolation("OpenClaw working_directory must stay within the prepared run directory")
+    if not config_path.is_file():
+        raise GuardrailViolation(f"OpenClaw config_path does not exist: {config_path}")
+    if not working_directory.is_dir():
+        raise GuardrailViolation(f"OpenClaw working_directory does not exist: {working_directory}")
+
+
+def _run_openclaw_subprocess(plan: OpenClawCommandPlan) -> Any:
+    env = os.environ.copy()
+    env.update(plan.env)
+    try:
+        return subprocess.run(
+            plan.command,
+            cwd=plan.working_directory,
+            env=env,
+            timeout=plan.timeout_seconds,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "returncode": -1,
+            "stdout": _coerce_text(exc.stdout),
+            "stderr": _coerce_text(exc.stderr) or str(exc),
+            "timed_out": True,
+        }
+    except OSError as exc:
+        return {
+            "returncode": -1,
+            "stdout": None,
+            "stderr": str(exc),
+            "timed_out": False,
+        }
+
+
+def _completed_field(completed: Any, field: str, default: Any) -> Any:
+    if isinstance(completed, dict):
+        return completed.get(field, default)
+    return getattr(completed, field, default)
+
+
+def _coerce_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value)
+
+
+def _execution_status(return_code: int, timed_out: bool) -> str:
+    if timed_out:
+        return "timeout"
+    if return_code == 0:
+        return "passed"
+    return "failed"
+
+
+def _is_within(candidate: Path, root: Path) -> bool:
+    return candidate == root or root in candidate.parents
 
 
 def _openclaw_span_to_trace_span(payload: dict[str, Any], index: int, trace_id: str) -> TraceSpan:

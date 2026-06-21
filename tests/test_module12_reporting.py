@@ -7,7 +7,14 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from agent_ab.cli import app
-from agent_ab.reporting import ReportFormat, collect_run_reports, export_run_report, run_local_demo
+from agent_ab.reporting import (
+    ReportFormat,
+    build_variant_comparisons,
+    collect_run_reports,
+    export_run_report,
+    export_variant_comparison_report,
+    run_local_demo,
+)
 from agent_ab.runner import run_mock_task
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +40,36 @@ def test_run_reporting_exports_json_and_csv(tmp_path: Path) -> None:
     assert csv_rows[0]["status"] == "passed"
 
 
+def test_variant_comparison_report_groups_repeated_variants(tmp_path: Path) -> None:
+    runs_root = tmp_path / "runs"
+    run_mock_task(TASKPACK, "rename_todo", runs_root, run_id="demo.report.a1", variant_id="A")
+    run_mock_task(TASKPACK, "rename_todo", runs_root, run_id="demo.report.a2", variant_id="A")
+    run_mock_task(TASKPACK, "rename_todo", runs_root, run_id="demo.report.b1", variant_id="B")
+
+    rows = collect_run_reports(runs_root)
+    comparisons = build_variant_comparisons(rows)
+    json_path = export_variant_comparison_report(
+        runs_root,
+        tmp_path / "reports" / "comparison.json",
+        ReportFormat.JSON,
+    )
+    csv_path = export_variant_comparison_report(
+        runs_root,
+        tmp_path / "reports" / "comparison.csv",
+        ReportFormat.CSV,
+    )
+
+    assert [(row.variant_id, row.run_count, row.pass_rate) for row in comparisons] == [
+        ("A", 2, 1.0),
+        ("B", 1, 1.0),
+    ]
+    assert json.loads(json_path.read_text(encoding="utf-8"))["comparisons"][0]["run_count"] == 2
+    with csv_path.open(encoding="utf-8", newline="") as csv_file:
+        csv_rows = list(csv.DictReader(csv_file))
+    assert csv_rows[0]["variant_id"] == "A"
+    assert csv_rows[0]["run_count"] == "2"
+
+
 def test_run_local_demo_creates_repeatable_reports(tmp_path: Path) -> None:
     output_root = tmp_path / "demo"
 
@@ -43,6 +80,8 @@ def test_run_local_demo_creates_repeatable_reports(tmp_path: Path) -> None:
     assert second.run_id == "demo.rename_todo.mock.2"
     assert Path(first.json_report).is_file()
     assert Path(first.csv_report).is_file()
+    assert Path(second.comparison_json_report).is_file()
+    assert Path(second.comparison_csv_report).is_file()
     report = json.loads(Path(second.json_report).read_text(encoding="utf-8"))
     assert [row["run_id"] for row in report["runs"]] == [
         "demo.rename_todo.mock",
@@ -66,6 +105,15 @@ def test_reporting_cli_exports_and_runs_demo(tmp_path: Path) -> None:
             "csv",
         ],
     )
+    compare_result = runner.invoke(
+        app,
+        [
+            "compare-runs",
+            str(runs_root),
+            "--output",
+            str(tmp_path / "reports" / "comparison.json"),
+        ],
+    )
     demo_result = runner.invoke(
         app,
         [
@@ -79,6 +127,10 @@ def test_reporting_cli_exports_and_runs_demo(tmp_path: Path) -> None:
 
     assert export_result.exit_code == 0
     assert "report=" in export_result.output
+    assert compare_result.exit_code == 0
+    assert "comparison=" in compare_result.output
     assert demo_result.exit_code == 0
     assert "json_report" in demo_result.output
+    assert "comparison_json_report" in demo_result.output
     assert (tmp_path / "reports" / "runs.csv").is_file()
+    assert (tmp_path / "reports" / "comparison.json").is_file()

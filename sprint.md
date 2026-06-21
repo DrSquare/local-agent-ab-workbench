@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 12: Demo and Reporting.
+Post-MVP hardening: reporting aggregates and execution gates.
 
 ## Status
 
@@ -22,15 +22,16 @@ Module 12: Demo and Reporting.
 | Module 10 OpenClaw adapter | Done | OpenClaw config translation, command planning, prepared run artifacts, trace wrapping, demo adapter experiment/taskpack, and CLI preparation are implemented. |
 | Module 11 guardrails and sandbox | Done | Path policy, blocked command checks, local endpoint checks, timeout checks, secret redaction, and OpenClaw plan enforcement are implemented. |
 | Module 12 demo and reporting | Done | Local demo helper/script, JSON and CSV run exports, reporting CLI commands, README updates, and known limitations are implemented. |
+| Post-MVP aggregate reporting | Done | Task/variant comparison reports can aggregate repeated run artifacts and export JSON or CSV through the CLI. |
+| Post-MVP OpenClaw execution gate | Done | Prepared OpenClaw plans can execute only through an explicit `allow_execute=True` opt-in and are covered with injected-runner tests. |
 
-## Module 12 Acceptance Criteria
+## Post-MVP Acceptance Criteria
 
-- A repeatable local demo can generate deterministic mock run artifacts.
-- Local run reports can be exported as JSON and CSV.
-- CLI commands support demo execution and report export.
-- Demo/reporting tests cover generated artifacts and command behavior.
-- Known limitations are documented.
-- All planned MVP modules are represented in the tracker.
+- Repeated local runs can be grouped by task and variant.
+- Comparison reports can be exported as JSON and CSV.
+- CLI commands support comparison report export.
+- Real OpenClaw execution remains blocked unless explicitly opted in.
+- Execution-gate tests do not invoke a real desktop agent.
 
 ## Working Rules
 
@@ -42,4 +43,4 @@ Module 12: Demo and Reporting.
 
 ## Next Sprint Candidate
 
-Post-MVP hardening and integration.
+Browser-level UI tests, PR/release workflow docs, and real-adapter trace edge-case review.

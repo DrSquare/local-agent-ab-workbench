@@ -429,11 +429,14 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add aggregate A/B comparison reports across repeated variants.
-2. Add safety-gated real OpenClaw execution behind explicit opt-in.
-3. Expand browser-level UI tests when Playwright is available.
-4. Add PR/release workflow documentation.
-5. Review and tighten Windows/POSIX guardrail edge cases with real adapter traces.
+1. Expand browser-level UI tests when Playwright is available.
+2. Add PR/release workflow documentation.
+3. Review and tighten Windows/POSIX guardrail edge cases with real adapter traces.
+
+Completed post-MVP hardening:
+
+- Aggregate A/B comparison reports across repeated variants.
+- Safety-gated real OpenClaw execution behind explicit opt-in.
 
 ## References
 

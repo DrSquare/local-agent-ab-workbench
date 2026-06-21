@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Iterable
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -38,11 +39,26 @@ class RunReportRow(StrictBaseModel):
     artifacts: dict[str, bool] = Field(default_factory=dict)
 
 
+class VariantComparisonRow(StrictBaseModel):
+    task_id: str | None = None
+    variant_id: str | None = None
+    run_count: int = 0
+    pass_count: int = 0
+    fail_count: int = 0
+    unknown_count: int = 0
+    pass_rate: float | None = None
+    avg_duration_ms: float | None = None
+    avg_validator_pass_rate: float | None = None
+    avg_step_count: float | None = None
+
+
 class DemoRunSummary(StrictBaseModel):
     run_id: str
     runs_root: str
     json_report: str
     csv_report: str
+    comparison_json_report: str
+    comparison_csv_report: str
 
 
 def collect_run_reports(runs_root: str | Path) -> list[RunReportRow]:
@@ -80,6 +96,67 @@ def export_run_report(runs_root: str | Path, output_path: str | Path, report_for
     return write_run_report(collect_run_reports(runs_root), output_path, report_format)
 
 
+def build_variant_comparisons(rows: list[RunReportRow]) -> list[VariantComparisonRow]:
+    grouped: dict[tuple[str | None, str | None], list[RunReportRow]] = {}
+    for row in rows:
+        grouped.setdefault((row.task_id, row.variant_id), []).append(row)
+
+    comparisons: list[VariantComparisonRow] = []
+    for (task_id, variant_id), group in sorted(grouped.items(), key=lambda item: ((item[0][0] or ""), (item[0][1] or ""))):
+        pass_count = sum(row.status == "passed" for row in group)
+        fail_count = sum(row.status == "failed" for row in group)
+        unknown_count = len(group) - pass_count - fail_count
+        comparisons.append(
+            VariantComparisonRow(
+                task_id=task_id,
+                variant_id=variant_id,
+                run_count=len(group),
+                pass_count=pass_count,
+                fail_count=fail_count,
+                unknown_count=unknown_count,
+                pass_rate=pass_count / len(group) if group else None,
+                avg_duration_ms=_average_numeric(row.duration_ms for row in group),
+                avg_validator_pass_rate=_average_numeric(row.validator_pass_rate for row in group),
+                avg_step_count=_average_numeric(row.step_count for row in group),
+            )
+        )
+    return comparisons
+
+
+def write_variant_comparison_report(
+    rows: list[VariantComparisonRow],
+    output_path: str | Path,
+    report_format: ReportFormat,
+) -> Path:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if report_format == ReportFormat.JSON:
+        path.write_text(
+            json.dumps({"comparisons": [row.model_dump(mode="json") for row in rows]}, indent=2),
+            encoding="utf-8",
+        )
+        return path
+    with path.open("w", encoding="utf-8", newline="") as csv_file:
+        fieldnames = list(VariantComparisonRow.model_fields)
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row.model_dump(mode="json"))
+    return path
+
+
+def export_variant_comparison_report(
+    runs_root: str | Path,
+    output_path: str | Path,
+    report_format: ReportFormat,
+) -> Path:
+    return write_variant_comparison_report(
+        build_variant_comparisons(collect_run_reports(runs_root)),
+        output_path,
+        report_format,
+    )
+
+
 def run_local_demo(project_root: str | Path, output_root: str | Path) -> DemoRunSummary:
     root = Path(project_root)
     output = Path(output_root)
@@ -96,11 +173,24 @@ def run_local_demo(project_root: str | Path, output_root: str | Path) -> DemoRun
     rows = collect_run_reports(runs_root)
     json_report = write_run_report(rows, reports_root / "runs.json", ReportFormat.JSON)
     csv_report = write_run_report(rows, reports_root / "runs.csv", ReportFormat.CSV)
+    comparisons = build_variant_comparisons(rows)
+    comparison_json_report = write_variant_comparison_report(
+        comparisons,
+        reports_root / "comparison.json",
+        ReportFormat.JSON,
+    )
+    comparison_csv_report = write_variant_comparison_report(
+        comparisons,
+        reports_root / "comparison.csv",
+        ReportFormat.CSV,
+    )
     return DemoRunSummary(
         run_id=result.run_id,
         runs_root=str(runs_root),
         json_report=str(json_report),
         csv_report=str(csv_report),
+        comparison_json_report=str(comparison_json_report),
+        comparison_csv_report=str(comparison_csv_report),
     )
 
 
@@ -162,6 +252,27 @@ def _status_from_metrics(metrics: dict[str, Any]) -> str:
     if task_success == 0 or task_success == 0.0:
         return "failed"
     return "unknown"
+
+
+def _average_numeric(values: Iterable[Any]) -> float | None:
+    numeric_values = [_numeric(value) for value in values]
+    numeric_values = [value for value in numeric_values if value is not None]
+    if not numeric_values:
+        return None
+    return sum(numeric_values) / len(numeric_values)
+
+
+def _numeric(value: Any) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
 
 
 def _next_demo_run_id(runs_root: Path) -> str:
