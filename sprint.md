@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 3: telemetry schema and trace store.
+Module 4: runner core and deterministic mock adapter.
 
 ## Status
 
@@ -13,14 +13,15 @@ Module 3: telemetry schema and trace store.
 | TDD test folder | Done | `tests_tdd/` is available for opt-in red tests. |
 | Module 2 task contracts | Done | Taskpack schema, task case schema, validator contracts, demo taskpack, CLI validation, and tests are implemented. |
 | Module 3 trace contracts | Done | Trace envelope, typed span details, JSONL writer, SQLite index, and tests are implemented. |
+| Module 4 mock runner | Done | Run workspace lifecycle, validator executor, deterministic mock adapter, trace artifact writing, and tests are implemented. |
 
-## Module 3 Acceptance Criteria
+## Module 4 Acceptance Criteria
 
-- Trace envelope and span schemas validate parent/child integrity.
-- Typed details exist for model calls, tool calls, desktop actions, shell actions, validators, and scoring.
-- Trace JSONL round trip is covered by tests.
-- SQLite trace index is covered by tests.
-- Trace contracts remain persistence-only; no agent execution is added.
+- A deterministic mock task can run from a validated taskpack.
+- Workspace fixtures are copied into an isolated run workspace.
+- Module 2 validators execute locally against the run workspace.
+- Module 3 trace artifacts are written locally as JSONL and SQLite.
+- No real OpenClaw, shell, browser, desktop, network, or model execution is added.
 
 ## Working Rules
 
@@ -32,4 +33,4 @@ Module 3: telemetry schema and trace store.
 
 ## Next Sprint Candidate
 
-Module 4: runner core and deterministic mock adapter.
+Module 5: local FastAPI backend.

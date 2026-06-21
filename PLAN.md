@@ -232,6 +232,8 @@ Deliverables:
 
 ### Module 4: Runner Core and Mock Adapter
 
+Status: implemented.
+
 Goal: execute deterministic mock runs first, then add real adapters.
 
 Deliverables:
@@ -392,11 +394,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add runner interface.
-2. Add run workspace lifecycle contract.
-3. Add deterministic mock adapter.
-4. Add validator executor for Module 2 contracts.
-5. Add local artifact writing that emits Module 3 trace spans.
+1. Add FastAPI app bound to localhost.
+2. Add experiment and taskpack discovery endpoints.
+3. Add run artifact listing endpoints.
+4. Add trace retrieval endpoints.
+5. Add API response model tests.
 
 ## References
 

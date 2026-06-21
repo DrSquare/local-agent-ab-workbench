@@ -15,6 +15,7 @@ from agent_ab.config import (
     validate_experiment_bundle,
     validate_taskpack_with_fixtures,
 )
+from agent_ab.runner import run_mock_task
 from agent_ab.schemas.metrics import AGENTEVAL_METRIC_REGISTRY, MetricCategory, metric_names
 
 app = typer.Typer(help="Local offline A/B workbench CLI.")
@@ -86,6 +87,28 @@ def validate_taskpack_command(
     console.print(f"[green]OK[/green] taskpack={taskpack.id}@v{taskpack.version}")
     console.print(f"tasks: {len(taskpack.tasks)}")
     console.print(f"task ids: {', '.join(task.id for task in taskpack.tasks)}")
+
+
+@app.command("run-mock-task")
+def run_mock_task_command(
+    taskpack: Annotated[Path, typer.Argument(help="Path to TaskPack YAML.")],
+    task_id: Annotated[str, typer.Argument(help="Task ID to run.")],
+    run_root: Annotated[Path, typer.Option(help="Directory for local run artifacts.")] = Path("runs/mock"),
+    run_id: Annotated[str | None, typer.Option(help="Optional deterministic run ID.")] = None,
+) -> None:
+    """Run one task with the deterministic mock adapter."""
+
+    try:
+        result = run_mock_task(taskpack, task_id, run_root, run_id=run_id)
+    except (ConfigLoadError, FileExistsError, ValueError) as exc:
+        console.print(f"[red]Run failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] run={result.run_id} status={result.status}")
+    console.print(f"workspace: {result.workspace_path}")
+    console.print(f"trace: {result.trace_id}")
+    for name, path in result.artifacts.items():
+        console.print(f"{name}: {path}")
 
 
 @app.command("metrics")

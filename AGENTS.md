@@ -25,6 +25,15 @@ Modules 1 through 3 implement only schemas, validation, and local persistence co
 
 Do not add real agent execution inside Modules 1, 2, or 3.
 
+Module 4 adds only deterministic local mock execution:
+
+- Run workspace copy lifecycle
+- Local validator executor
+- Deterministic mock adapter
+- Trace artifact writing through Module 3 contracts
+
+Do not add real OpenClaw, shell, browser, desktop, network, or model execution inside Module 4.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -47,4 +56,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 4: runner core + deterministic mock adapter.
+Implement Module 5: local FastAPI backend.

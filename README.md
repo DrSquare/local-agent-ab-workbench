@@ -7,6 +7,7 @@ This repository currently implements:
 - **Module 1: Experiment + Prompt Object schema**
 - **Module 2: TaskPack schema + validator contracts**
 - **Module 3: Telemetry schema + trace store contracts**
+- **Module 4: Runner core + deterministic mock adapter**
 
 ## What Module 1 includes
 
@@ -19,6 +20,8 @@ This repository currently implements:
 - Trace envelope and span schemas
 - Typed trace detail payloads for model, tool, desktop, shell, validator, and scoring spans
 - Local JSONL trace writer and SQLite trace index helpers
+- Local validator executor for TaskPack contracts
+- Deterministic mock adapter and run workspace lifecycle
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -47,6 +50,14 @@ agent-ab validate-prompt prompts/baseline_openclaw.yaml
 
 ```bash
 agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
+```
+
+## Run a deterministic mock task
+
+```bash
+agent-ab run-mock-task taskpacks/desktop_basics/tasks.yaml rename_todo \
+  --run-root runs/mock \
+  --run-id mock.rename_todo.demo
 ```
 
 ## Render a prompt
@@ -105,17 +116,21 @@ agent-ab-workbench/
       experiment.py
       metrics.py
       prompt_object.py
+      run.py
       task.py
       trace.py
+    runner.py
     trace_store.py
+    validators.py
   tests/
     test_module1_schemas.py
     test_module2_tasks.py
     test_module3_traces.py
+    test_module4_runner.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 4 should add the runner core and deterministic mock adapter. This is the first module allowed to execute task validators and emit trace spans.
+Module 5 should add a local FastAPI backend for experiment, taskpack, run, trace, and artifact discovery.

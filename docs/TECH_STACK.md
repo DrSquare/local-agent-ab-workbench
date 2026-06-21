@@ -228,7 +228,7 @@ Coverage expectations by phase:
 | Module 1 | Strict keys, prompt rendering, metric selection, experiment cross-field validation |
 | Module 2 | Task ID uniqueness, validator type validation, workspace fixture validation, path rules |
 | Module 3 | Span parent/child integrity, trace serialization, typed detail payloads, JSONL/SQLite persistence |
-| Module 4 | Mock adapter determinism, validator execution, artifact writing |
+| Module 4 | Mock adapter determinism, validator execution, workspace lifecycle, artifact writing |
 | Backend | API response models, local-only binding assumptions, error shapes |
 | Frontend | Core flows with Playwright once UI exists |
 
@@ -258,13 +258,17 @@ agent-ab-workbench/
       experiment.py
       metrics.py
       prompt_object.py
+      run.py
       task.py
       trace.py
+    runner.py
     trace_store.py
+    validators.py
   tests/
     test_module1_schemas.py
     test_module2_tasks.py
     test_module3_traces.py
+    test_module4_runner.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `server/`, and
