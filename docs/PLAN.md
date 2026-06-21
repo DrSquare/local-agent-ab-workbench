@@ -1,14 +1,15 @@
-# Local Offline Agent A/B Workbench Product Plan
+# Local Offline Agent Evaluation Workbench Product Plan
 
 ## Mission
 
-Build a local, offline-first A/B testing and debugging workbench for desktop AI
+Build a local, offline-first evaluation and debugging workbench for desktop AI
 agents such as OpenClaw-style local assistants.
 
-The workbench should help a developer compare agent variants, inspect failed
-task traces, replay failures in a local Playground, and save improved prompt,
-model, and tool configurations as new candidates without sending private
-desktop data to a cloud service.
+The workbench should adapt Inspect AI's evaluation pattern to local desktop
+agents: datasets of deterministic samples, solver or agent adapters, scorers,
+eval logs, analysis, and sandboxed execution. A/B comparison, trace debugging,
+and Playground replay remain core workflows, but they sit on top of a reusable
+evaluation model rather than defining the model themselves.
 
 ## Planning Critique
 
@@ -17,14 +18,34 @@ UI deliverables into the current schema-only stage. That made the next step less
 clear and risked adding agent execution before the repository has task, trace,
 and result contracts.
 
-This revision keeps the product vision, but makes module boundaries explicit:
-Modules 1 through 3 define contracts only. Real agent execution starts in
-Module 4, after taskpacks, validators, telemetry, and storage schemas are
-stable.
+Post-MVP review against Inspect AI shows a second gap: the current architecture
+has experiments, taskpacks, validators, traces, and reports, but it does not yet
+name the deeper reusable objects that Inspect makes explicit: task, dataset,
+sample, solver, scorer, eval log, analysis, limits, and sandbox.
+
+This revision keeps the local desktop-agent mission, but changes the next
+milestone from "pick another product feature" to "add an Inspect-inspired eval
+core." The workbench should not clone Inspect or depend on it by default; it
+should adopt the component boundaries that make evaluations easier to compose,
+resume, analyze, and extend.
+
+## Inspect AI Reference Takeaways
+
+| Inspect idea | Workbench adaptation |
+|---|---|
+| Task combines dataset, solver, and scorer | `EvalTask` binds TaskPack samples, an adapter, scorer IDs, limits, and logging |
+| Dataset/sample abstraction | TaskPack tasks become normalized local samples with workspace fixtures |
+| Solver/agent abstraction | Mock, OpenClaw, generic CLI, and local HTTP become solver adapters |
+| Scorers produce comparable outcomes | Validators, trace checks, and future model graders become scorer pipeline stages |
+| Eval logs are first-class | Trace envelopes grow into eval logs with config, scores, artifacts, and transcript events |
+| Eval sets support repeated runs | Multi-variant, multi-task run plans become resumable local eval sets |
+| Sandboxes gate tools | Disposable workspaces plus path, command, endpoint, timeout, and redaction policy |
+| Analysis scans logs | Reports, comparisons, and future scanners operate over local eval logs |
 
 ## Current State
 
-Modules 1 through 5 are implemented with clear local-first boundaries:
+Modules 1 through 12 plus post-MVP hardening are implemented with clear
+local-first boundaries:
 
 - Experiment config
 - Prompt Object config
@@ -44,8 +65,10 @@ Modules 1 through 5 are implemented with clear local-first boundaries:
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
-Real OpenClaw, shell, browser, desktop, non-local network, and model execution
-remain out of scope until the adapter and sandbox modules.
+Real OpenClaw execution is available only behind explicit opt-in and guardrail
+checks. Additional real shell, browser, desktop, non-local network, and model
+execution remain out of scope until the eval core can bind solver and sandbox
+policy explicitly.
 
 ## Primary User Story
 
@@ -57,7 +80,7 @@ improve the agent safely before shipping it into real local workflows.
 ## Target Product Loop
 
 ```text
-Run A/B experiment
+Run eval task or A/B experiment
   -> find failed or regressed task query
   -> open hierarchical trace
   -> inspect spans: planner -> model call -> tool call -> desktop action -> validator
@@ -84,6 +107,21 @@ Examples:
 | Full tool access | Restricted tool policy | Does restriction reduce safety failures? |
 | Single planner | Planner plus critic | Does reflection help or add latency? |
 | Current OpenClaw config | Candidate OpenClaw config | Is the new config safe enough to ship? |
+
+### Eval Tasks
+
+Eval tasks are the next core product object. They make a single reusable unit
+out of sample selection, solver adapter, scorer set, limits, and logging.
+
+Expected workflows:
+
+| ID | Workflow | Result |
+|---|---|---|
+| ET-1 | Define eval task | TaskPack samples, solver, scorers, and limits are bound in one config |
+| ET-2 | Run one eval task | Each sample produces an eval log with trace, scores, artifacts, and status |
+| ET-3 | Run eval set | One or more eval tasks run across variants with resumable local state |
+| ET-4 | Analyze eval logs | Per-sample and aggregate tables can be exported |
+| ET-5 | Replay failed sample | Playground opens from an eval log, not only from raw run artifacts |
 
 ### Playground
 
@@ -376,11 +414,76 @@ Deliverables:
 - Known limitations
 - Reporting CLI commands
 
+### Module 13: Inspect-Inspired Eval Core
+
+Status: planned.
+
+Goal: add explicit evaluation primitives underneath A/B comparison, reports, and
+Playground replay.
+
+Deliverables:
+
+- `EvalTask` schema
+- `EvalSample` normalization from TaskPack tasks
+- Solver adapter contract that wraps mock and OpenClaw preparation
+- Scorer contract that can call existing validators and trace checks
+- Eval log envelope that references run config, trace, scores, artifacts, and errors
+- CLI validator for eval task configs
+- Focused tests for schema strictness, sample selection, scorer references, and log shape
+
+Non-goals:
+
+- No new real agent execution beyond existing explicit OpenClaw gate
+- No cloud model grader dependency
+- No frontend rewrite
+
+### Module 14: Eval Runner and Eval Sets
+
+Status: planned.
+
+Goal: run one or more eval tasks across variants with local resumability.
+
+Deliverables:
+
+- Eval run planner
+- Eval set config
+- Resume and skip-completed behavior over local logs
+- Failure threshold and limit handling
+- Aggregate status summaries
+
+### Module 15: Analysis and Scanner Layer
+
+Status: planned.
+
+Goal: make eval logs queryable for reports, comparisons, and qualitative review.
+
+Deliverables:
+
+- Per-sample JSON/CSV export
+- Per-eval aggregate export
+- Trace and transcript scanner contract
+- Failure taxonomy hooks
+- UI/API endpoints over eval logs
+
+### Module 16: Sandbox Provider Interface
+
+Status: planned.
+
+Goal: separate safety policy from execution backend so real adapters can use
+the same guardrail contract.
+
+Deliverables:
+
+- Sandbox provider schema
+- Local workspace provider
+- Optional Docker provider design, not required dependency
+- Tool approval and denial events in eval logs
+
 ## Metric Strategy
 
-The metric registry is AgentEval-inspired and local-first. Module 1 defines
-metric names and metadata only. Later modules compute metric results from
-validators, trace spans, and artifacts.
+The metric registry is AgentEval-inspired and local-first, but Module 13 should
+reshape metric calculation around Inspect-style scorers. Metrics remain the
+aggregate names; scorers are the executable units that produce scores.
 
 Metric groups:
 
@@ -404,8 +507,8 @@ Metric groups:
   `memory_reducer_fidelity`
 - Responsible AI: `toxicity`, `bias`, `misinformation_risk`
 
-The goal is not to clone AgentEval. The goal is to preserve useful evaluation
-concepts while adapting them to offline desktop-agent traces.
+The goal is not to clone AgentEval or Inspect AI. The goal is to preserve useful
+evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Offline and Privacy Requirements
 
@@ -426,10 +529,24 @@ concepts while adapting them to offline desktop-agent traces.
 - Should path policy be shared between experiment limits, prompt tools, and
   task validators through one common schema?
 - Should metric results attach directly to spans, task runs, or both?
+- Should `EvalTask` configs be separate files or embedded into experiment YAML?
+- Should scorer results be stored as span details, eval-log top-level scores, or both?
+- What is the minimum sandbox provider interface before Docker or external agents?
 
 ## Immediate Next Work
 
-All currently tracked post-MVP hardening items are complete. Next planning should choose the next product milestone.
+Implement Module 13: Inspect-inspired eval core.
+
+Module 13 acceptance criteria:
+
+- EvalTask config validates with `extra="forbid"`.
+- EvalTask can select all samples or named samples from a TaskPack.
+- Solver adapter references are validated without executing real agents.
+- Scorer references can target existing validators and metric names.
+- EvalLog schema captures sample ID, solver ID, scorer results, trace reference,
+  artifacts, limits, and errors.
+- Existing A/B report and Playground concepts can be described as workflows over
+  EvalTask/EvalLog without breaking current commands.
 
 Completed post-MVP hardening:
 
@@ -441,6 +558,8 @@ Completed post-MVP hardening:
 
 ## References
 
+- Inspect AI repository: https://github.com/UKGovernmentBEIS/inspect_ai
+- Inspect AI docs: https://inspect.aisi.org.uk/
 - Arize Quickstart Guide: https://arize.com/resource/arize-quickstart-guide/
 - AgentEval .NET toolkit: https://agenteval.dev/
 - AgentEval DAG paper: https://arxiv.org/abs/2604.23581

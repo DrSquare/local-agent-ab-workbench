@@ -1,6 +1,8 @@
-# Local Agent A/B Workbench
+# Local Agent Evaluation Workbench
 
-A local, offline-first A/B testing and debugging workbench for desktop AI agents such as OpenClaw-style local assistants.
+A local, offline-first evaluation and debugging workbench for desktop AI agents such as OpenClaw-style local assistants.
+
+The roadmap is now Inspect-inspired: TaskPacks become local datasets, agent adapters act as solvers, validators and scorers grade outcomes, trace artifacts become eval logs, and guardrails/sandboxes protect real execution. A/B comparison remains an important workflow, but it is treated as one evaluation mode rather than the whole product.
 
 This repository currently implements:
 
@@ -46,6 +48,19 @@ This repository currently implements:
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
 - pytest coverage for schema validation and prompt rendering
+
+## Product direction
+
+The next milestone is an evaluation core modeled around reusable components:
+
+- `EvalTask`: binds a TaskPack sample set to a solver/agent adapter and scorer set.
+- `Dataset/Sample`: normalizes desktop tasks into repeatable local samples.
+- `Solver/Agent`: wraps deterministic mock, OpenClaw, and future CLI/local HTTP agents behind one contract.
+- `Scorer`: turns validators, trace checks, and optional model-graded checks into comparable scores.
+- `EvalLog`: makes run traces, scores, config, and artifacts queryable and replayable.
+- `Sandbox`: keeps real tool and desktop execution behind explicit local policy.
+
+This keeps the workbench compatible with Inspect-style evaluation thinking without making `inspect-ai` a core dependency.
 
 ## Install locally
 
@@ -170,6 +185,7 @@ agent-ab-workbench/
   .github/
     PULL_REQUEST_TEMPLATE.md
   docs/
+    INSPECT_ALIGNMENT.md
     KNOWN_LIMITATIONS.md
     PLAN.md
     TECH_STACK.md

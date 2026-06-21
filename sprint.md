@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Post-MVP hardening: reporting aggregates and execution gates.
+Module 13: Inspect-inspired eval core.
 
 ## Status
 
@@ -27,8 +27,20 @@ Post-MVP hardening: reporting aggregates and execution gates.
 | Post-MVP browser UI tests | Done | Optional Playwright tests cover local inventory, trace selection, and Playground replay when a browser runtime is installed. |
 | Post-MVP workflow docs | Done | PR checklist, required verification commands, release steps, and rollback guidance are documented. |
 | Post-MVP guardrail edge cases | Done | Command normalization, run-dir path policy, POSIX root handling, and real-adapter trace aliases are covered. |
+| Inspect AI reference review | Done | Mission, plan, tech stack, and sprint tracker now use task/dataset/solver/scorer/log/sandbox concepts as the next architecture reference. |
+| Module 13 EvalTask core | Planned | Define strict EvalTask, EvalSample, solver reference, scorer reference, and EvalLog contracts before adding more real execution. |
 
-## Post-MVP Acceptance Criteria
+## Module 13 Acceptance Criteria
+
+- EvalTask config validates with strict unknown-key rejection.
+- EvalTask selects all samples or named samples from an existing TaskPack.
+- Solver references validate against registered adapter names without executing real agents.
+- Scorer references validate against built-in metrics, validators, or `custom.` names.
+- EvalLog schema captures sample ID, solver ID, scorer results, trace reference, artifacts, limits, errors, and metadata.
+- Current A/B reporting and Playground replay can be described as workflows over EvalTask/EvalLog.
+- Module 13 tests cover every new schema rule.
+
+## Completed Post-MVP Criteria
 
 - Repeated local runs can be grouped by task and variant.
 - Comparison reports can be exported as JSON and CSV.
@@ -50,4 +62,4 @@ Post-MVP hardening: reporting aggregates and execution gates.
 
 ## Next Sprint Candidate
 
-Choose the next product milestone.
+Module 13 implementation: EvalTask schema, normalized sample selection, scorer references, and EvalLog contract.

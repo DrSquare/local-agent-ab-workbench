@@ -4,7 +4,8 @@ This repository is designed to be friendly for Codex-style coding agents.
 
 ## Project goal
 
-Build a local offline A/B testing and debugging workbench for desktop AI agents.
+Build a local offline evaluation and debugging workbench for desktop AI agents.
+Use Inspect AI's component model as architectural reference: eval tasks combine datasets/samples, solvers or agents, scorers, logs, analysis, and sandboxed execution. Adapt those concepts to local desktop-agent workflows rather than cloning Inspect or adding it as a core dependency.
 
 ## Current module
 
@@ -122,6 +123,14 @@ Post-MVP hardening adds:
 - PR/release workflow documentation in `docs/WORKFLOW.md`
 - Windows/POSIX command/path edge-case coverage and real adapter trace alias handling
 
+Next architectural direction:
+
+- EvalTask contracts that bind TaskPack samples, solver adapters, scorer sets, limits, and logging.
+- Dataset/Sample normalization for local desktop tasks.
+- Solver/Agent adapter interface for mock, OpenClaw, generic CLI, and local HTTP agents.
+- Scorer pipeline that separates validation, trace review, and aggregate metrics.
+- EvalLog and analysis APIs for replay, comparison, scanning, and reports.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -149,4 +158,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Choose the next product milestone after reviewing `PLAN.md` and `sprint.md`.
+Implement the Inspect-inspired EvalTask core after reviewing `PLAN.md`, `TECH_STACK.md`, and `sprint.md`.

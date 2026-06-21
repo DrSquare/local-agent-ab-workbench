@@ -1,4 +1,4 @@
-# Local Offline Agent A/B Workbench Tech Stack
+# Local Offline Agent Evaluation Workbench Tech Stack
 
 ## Stack Critique
 
@@ -6,12 +6,18 @@ The previous stack document mixed current dependencies with later MVP choices.
 That made FastAPI, React, SQLite, Tauri, and adapter work look equally current
 even though the repository is still in Module 1 schema validation.
 
+Post-MVP review against Inspect AI adds a stronger architectural critique:
+the stack needs a stable evaluation core, not just experiment/reporting
+surfaces. Inspect's task/dataset/solver/scorer/log/sandbox pattern is the
+reference shape for that core.
+
 This revision separates the stack into:
 
-- Current core stack used by Module 1.
+- Current core stack used by implemented modules.
 - Module 2 stack needed for taskpack contracts.
 - Deferred runtime, backend, and frontend choices.
 - Dependency rules that preserve the offline-first goal.
+- Planned evaluation-core components inspired by Inspect AI.
 
 ## Design Principles
 
@@ -27,6 +33,28 @@ This revision separates the stack into:
   before becoming experiment variants.
 - Adapter based: OpenClaw is a target adapter, but the harness should support
   mock, generic CLI, local HTTP, and future desktop-agent adapters.
+- Evaluation-component based: TaskPacks, solvers, scorers, logs, analysis, and
+  sandboxes should have explicit contracts.
+- Logs first: every run should produce a structured eval log that can be
+  inspected, replayed, compared, and scanned.
+
+## Inspect-Inspired Architecture Map
+
+| Evaluation layer | Local workbench object | Stack choice |
+|---|---|---|
+| Task | Planned `EvalTask` schema | Pydantic v2 + YAML |
+| Dataset | TaskPack plus normalized samples | Existing TaskPack YAML, future sample selector |
+| Sample | TaskCase + workspace fixture + metadata | Existing task schema plus planned `EvalSample` view |
+| Solver/Agent | Adapter contract | Python protocol/class with mock, OpenClaw, generic CLI, local HTTP implementations |
+| Scorer | Validator and trace scoring pipeline | Python scorer registry plus metric metadata |
+| Eval log | Run config + trace + scores + artifacts | JSON/JSONL files with SQLite index |
+| Eval set | Multi-task and multi-variant plan | YAML config plus resumable local state |
+| Sandbox | Execution provider | Local workspace provider first, Docker/provider extras later |
+| Analysis | Reports and scanner outputs | Built-in JSON/CSV first, optional dataframe extra later |
+
+Do not add `inspect-ai` as a required dependency in Module 13. The next step is
+to adopt compatible boundaries while preserving this project's local desktop
+agent contracts and YAML authoring model.
 
 ## Current Core Stack
 
@@ -165,6 +193,21 @@ past the no-build shell.
 Do not add model SDKs or agent SDKs to the core dependency set until a runner
 module needs them. Prefer adapter-specific optional extras.
 
+## Module 13 Evaluation Core Stack
+
+These choices should guide the next implementation module.
+
+| Need | Choice | Reason |
+|---|---|---|
+| EvalTask schema | Pydantic v2 | Reuse strict config rules and `extra="forbid"` |
+| EvalTask files | YAML | Reviewable configs for local eval authoring |
+| Sample selection | TaskPack path plus explicit include/exclude lists | Keeps existing taskpacks reusable |
+| Solver contract | Python adapter protocol plus registry | Separates run planning from adapter execution |
+| Scorer contract | Python scorer registry | Separates validation/scoring from metrics aggregation |
+| Eval logs | JSON/JSONL plus SQLite index | Human-inspectable logs with local query support |
+| Analysis export | JSON/CSV initially | No new analytics dependency for Module 13 |
+| Inspect compatibility | Conceptual only | Avoids pulling cloud/model-provider assumptions into core |
+
 ## Safety and Sandbox Stack
 
 The schema already models safety intent. Runtime enforcement comes later.
@@ -219,6 +262,7 @@ Suggested future extras:
 dev = ["pytest>=8.0", "ruff>=0.6", "fastapi>=0.115", "uvicorn>=0.30", "httpx>=0.27"]
 server = ["fastapi>=0.115", "uvicorn>=0.30"]
 analytics = ["duckdb"]
+analysis = ["pandas>=2.0"]
 ```
 
 Adapter extras should be introduced only when the corresponding adapter is
@@ -245,6 +289,7 @@ Coverage expectations by phase:
 | Module 11 | Path policy, blocked command policy, endpoint checks, timeout bounds, secret redaction |
 | Module 12 | Demo helper, JSON/CSV report export, reporting CLI, known limitations docs |
 | Post-MVP | Aggregate comparison exports, explicit OpenClaw execution opt-in, optional Playwright browser tests, PR/release workflow docs, guardrail edge-case tests |
+| Module 13 | EvalTask strict schema, sample selection, solver/scorer references, eval-log contract |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 ## File Layout Direction
@@ -254,8 +299,12 @@ Near-term target:
 ```text
 agent-ab-workbench/
   docs/
+    INSPECT_ALIGNMENT.md
     PLAN.md
     TECH_STACK.md
+    WORKFLOW.md
+  evals/
+    desktop_basics_eval.yaml
   experiments/
     demo_openclaw_prompt_ab.yaml
   prompts/
@@ -277,6 +326,7 @@ agent-ab-workbench/
         app.js
     schemas/
       common.py
+      eval.py
       experiment.py
       metrics.py
       playground.py
@@ -287,6 +337,7 @@ agent-ab-workbench/
     runner.py
     trace_store.py
     validators.py
+    evals.py
   tests/
     test_module1_schemas.py
     test_module2_tasks.py
@@ -295,6 +346,7 @@ agent-ab-workbench/
     test_module5_server.py
     test_module6_playground.py
     test_module7_frontend.py
+    test_module13_eval_core.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and
