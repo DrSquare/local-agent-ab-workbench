@@ -24,6 +24,7 @@ Post-MVP hardening: reporting aggregates and execution gates.
 | Module 12 demo and reporting | Done | Local demo helper/script, JSON and CSV run exports, reporting CLI commands, README updates, and known limitations are implemented. |
 | Post-MVP aggregate reporting | Done | Task/variant comparison reports can aggregate repeated run artifacts and export JSON or CSV through the CLI. |
 | Post-MVP OpenClaw execution gate | Done | Prepared OpenClaw plans can execute only through an explicit `allow_execute=True` opt-in and are covered with injected-runner tests. |
+| Post-MVP browser UI tests | Done | Optional Playwright tests cover local inventory, trace selection, and Playground replay when a browser runtime is installed. |
 
 ## Post-MVP Acceptance Criteria
 
@@ -32,6 +33,7 @@ Post-MVP hardening: reporting aggregates and execution gates.
 - CLI commands support comparison report export.
 - Real OpenClaw execution remains blocked unless explicitly opted in.
 - Execution-gate tests do not invoke a real desktop agent.
+- Browser-level UI tests skip cleanly when Playwright is unavailable.
 
 ## Working Rules
 
@@ -43,4 +45,4 @@ Post-MVP hardening: reporting aggregates and execution gates.
 
 ## Next Sprint Candidate
 
-Browser-level UI tests, PR/release workflow docs, and real-adapter trace edge-case review.
+PR/release workflow docs and real-adapter trace edge-case review.

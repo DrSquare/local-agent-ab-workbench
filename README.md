@@ -146,6 +146,8 @@ agent-ab metrics --category tool
 pytest
 ```
 
+Browser-level UI tests are included as optional coverage and skip automatically unless Playwright and a Chromium browser are installed.
+
 ## TDD tests
 
 Use `tests_tdd/` for tests that may be red while designing a new behavior. The
