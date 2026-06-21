@@ -108,16 +108,36 @@
             <h2 id="traceTitle">Trace</h2>
             <span id="selectedRunLabel">No run selected</span>
           </div>
+          <div class="trace-controls panel" aria-label="Trace controls">
+            <label>
+              Span kind
+              <select id="traceKindFilter">
+                <option value="">All kinds</option>
+              </select>
+            </label>
+            <label>
+              Span status
+              <select id="traceStatusFilter">
+                <option value="">All statuses</option>
+              </select>
+            </label>
+            <button class="tool-button" id="expandTraceButton" type="button">Expand all</button>
+            <button class="tool-button" id="collapseTraceButton" type="button">Collapse all</button>
+          </div>
           <div class="trace-layout">
             <section class="panel" aria-labelledby="traceTreeTitle">
               <h3 id="traceTreeTitle">Span tree</h3>
               <div id="traceTree" class="trace-tree"></div>
             </section>
             <section class="panel detail-panel" aria-labelledby="traceDetailTitle">
-              <h3 id="traceDetailTitle">Run detail</h3>
+              <h3 id="traceDetailTitle">Span detail</h3>
               <dl id="traceDetails" class="detail-list"></dl>
             </section>
           </div>
+          <section class="panel timeline-panel" aria-labelledby="traceTimelineTitle">
+            <h3 id="traceTimelineTitle">Timing waterfall</h3>
+            <div id="traceTimeline" class="trace-timeline"></div>
+          </section>
         </section>
 
         <section class="view" id="view-playground" aria-labelledby="playgroundTitle">

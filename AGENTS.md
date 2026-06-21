@@ -63,6 +63,16 @@ Module 7 adds only the first local frontend shell:
 
 Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, external frontend services, or desktop packaging inside Module 7.
 
+Module 8 expands only the trace visualizer UI:
+
+- Expandable/collapsible trace tree
+- Span detail pane for typed payloads
+- Timing-oriented waterfall view
+- Span kind/status filters
+- Frontend tests for trace UI assets and local trace payloads
+
+Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, external frontend services, desktop packaging, or graph dependencies inside Module 8.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -86,4 +96,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 8: trace visualizer UI.
+Implement Module 9: Playground UI.

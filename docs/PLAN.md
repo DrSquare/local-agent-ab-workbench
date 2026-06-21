@@ -37,6 +37,7 @@ Modules 1 through 5 are implemented with clear local-first boundaries:
 - Localhost-only FastAPI backend for discovery and trace inspection
 - Playground backend contracts, deterministic mock replay, and view persistence
 - Local frontend shell served from the FastAPI app
+- Trace visualizer UI with expandable spans, filters, details, and waterfall timing
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
@@ -301,6 +302,8 @@ Deliverables:
 
 ### Module 8: Trace Visualizer UI
 
+Status: implemented.
+
 Goal: inspect hierarchical telemetry.
 
 Deliverables:
@@ -308,8 +311,8 @@ Deliverables:
 - Trace tree
 - Span detail panes
 - Waterfall timing view
-- A/B trace comparison
-- Export action
+- Span kind/status filters
+- Keyboard-selectable span rows
 
 ### Module 9: Playground UI
 
@@ -411,11 +414,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add a richer trace tree with expand/collapse behavior.
-2. Add span detail panes for typed payloads.
-3. Add a timing-oriented waterfall or duration view.
-4. Add trace filtering by span kind and status.
-5. Add frontend verification for trace navigation and span inspection.
+1. Add prompt editor controls for Playground messages.
+2. Add model and parameter controls.
+3. Add tool policy controls.
+4. Connect edited Playground state to the Module 6 replay endpoint.
+5. Add frontend verification for Playground edit and replay flows.
 
 ## References
 

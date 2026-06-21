@@ -11,6 +11,7 @@ This repository currently implements:
 - **Module 5: Local FastAPI backend**
 - **Module 6: Playground backend**
 - **Module 7: Frontend shell**
+- **Module 8: Trace visualizer UI**
 
 ## What the implemented modules include
 
@@ -30,6 +31,7 @@ This repository currently implements:
 - Deterministic one-off Playground replay through the mock runner
 - Local Playground View persistence
 - No-build local frontend shell served from `/ui`
+- Expandable trace tree, span detail pane, filters, and timing waterfall
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -177,4 +179,4 @@ agent-ab-workbench/
 
 ## Next module
 
-Module 8 should expand the trace visualizer UI with hierarchical span inspection and timing-oriented views.
+Module 9 should expand the Playground UI with prompt, model, parameter, and tool-policy editing.

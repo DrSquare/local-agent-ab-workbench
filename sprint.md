@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 7: frontend shell.
+Module 8: trace visualizer UI.
 
 ## Status
 
@@ -17,14 +17,15 @@ Module 7: frontend shell.
 | Module 5 local backend | Done | Localhost-only server command, experiment/taskpack discovery, run summaries, artifact listing, trace retrieval, and API tests are implemented. |
 | Module 6 Playground backend | Done | Playground request/response schemas, override validation, deterministic mock replay, view persistence, API endpoints, and tests are implemented. |
 | Module 7 frontend shell | Done | No-build static UI served from `/ui`, local API navigation, run/trace selection, Playground replay form, saved views list, and frontend route tests are implemented. |
+| Module 8 trace visualizer UI | Done | Expandable span tree, span detail payload pane, timing waterfall, kind/status filters, keyboard selection, and trace UI tests are implemented. |
 
-## Module 7 Acceptance Criteria
+## Module 8 Acceptance Criteria
 
-- The local API serves a usable frontend shell at `/ui`.
-- The shell shows experiment, TaskPack, run, trace, and Playground navigation.
-- Runs can be selected and their trace spans can be loaded from the local API.
-- Playground replay can be triggered through the Module 6 endpoint.
-- The UI uses no external assets, package registries, cloud calls, or desktop packaging.
+- Trace spans can be expanded, collapsed, selected, and inspected.
+- Span details show timing, status, parentage, and typed payloads.
+- A timing-oriented waterfall shows relative span duration.
+- Span kind and status filters are available.
+- The UI remains no-build, local-only, and free of external graph dependencies.
 - No real OpenClaw, shell, browser, desktop, non-local network, or model execution is added.
 
 ## Working Rules
@@ -37,4 +38,4 @@ Module 7: frontend shell.
 
 ## Next Sprint Candidate
 
-Module 8: trace visualizer UI.
+Module 9: Playground UI.

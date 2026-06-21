@@ -142,8 +142,8 @@ These choices are for the UI phase, not the schema modules.
 | Tables | Native tables | Module 7 | Good enough for the first experiment/run/task views |
 | State/query | Small browser state module | Module 7 | Local API cache and selected run/trace state without extra dependencies |
 | Prompt editor | Monaco Editor | Module 9 | Prompt/YAML/JSON editing |
-| Trace tree | Virtualized tree first, React Flow if graph layout is needed | Module 8 | Hierarchical spans are tree-shaped initially |
-| Timeline | SVG or canvas waterfall | Module 8 | Span duration visualization |
+| Trace tree | Native expandable tree in the static shell | Module 8 | Hierarchical spans are tree-shaped initially |
+| Timeline | CSS waterfall bars | Module 8 | Span duration visualization without canvas or graph dependencies |
 | Packaging | Tauri | Later | Desktop packaging after local web UI is stable |
 
 The first frontend should be a workbench, not a landing page.
@@ -238,6 +238,7 @@ Coverage expectations by phase:
 | Backend | API response models, local-only binding assumptions, error shapes |
 | Module 6 | Playground request validation, mock replay output, view persistence |
 | Module 7 | Frontend shell routes, local-only assets, API endpoint wiring |
+| Module 8 | Trace filters, span detail rendering, timing waterfall, keyboard span selection |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 ## File Layout Direction
