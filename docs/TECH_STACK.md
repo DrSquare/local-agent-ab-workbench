@@ -30,7 +30,7 @@ This revision separates the stack into:
 
 ## Current Core Stack
 
-This is the stack that should remain active through Modules 1 and 2.
+This is the stack that is active through Modules 1 and 2.
 
 | Layer | Choice | Status | Reason |
 |---|---|---|---|
@@ -80,10 +80,10 @@ use.
 
 ## Module 2 Technical Direction
 
-Module 2 should not add a runner, backend server, UI, database, or model
-provider integration. It should add only taskpack contracts and validators.
+Module 2 adds only taskpack contracts and validators. It does not add a runner,
+backend server, UI, database, or model provider integration.
 
-Recommended additions:
+Implemented additions:
 
 | Need | Choice | Reason |
 |---|---|---|
@@ -94,7 +94,7 @@ Recommended additions:
 | CLI | `agent-ab validate-taskpack` | Matches existing validation commands |
 | Tests | pytest | One test per new schema rule |
 
-Recommended files:
+Implemented files:
 
 ```text
 src/agent_ab/schemas/task.py
@@ -103,7 +103,7 @@ taskpacks/desktop_basics/workspaces/
 tests/test_module2_tasks.py
 ```
 
-Module 2 should validate that:
+Module 2 validates that:
 
 - Unknown keys fail.
 - Task IDs are valid and unique.

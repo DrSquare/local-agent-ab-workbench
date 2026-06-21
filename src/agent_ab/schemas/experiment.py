@@ -200,6 +200,13 @@ class ExperimentConfig(StrictBaseModel):
             paths[variant_id] = prompt_path
         return paths
 
+    def taskpack_path(self, base_dir: str | Path | None = None) -> Path:
+        root = Path(base_dir) if base_dir else Path.cwd()
+        taskpack_path = Path(self.taskpack)
+        if not taskpack_path.is_absolute():
+            taskpack_path = root / taskpack_path
+        return taskpack_path
+
     @classmethod
     def from_yaml_file(cls, path: str | Path) -> ExperimentConfig:
         return cls.model_validate(load_yaml_mapping(path))

@@ -157,7 +157,7 @@ Non-goals:
 
 ### Module 2: Task Schema and Validators
 
-Status: next.
+Status: implemented.
 
 Goal: define deterministic taskpacks that experiments can reference.
 
@@ -389,12 +389,12 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add `TaskPack`, `TaskCase`, and validator schemas.
-2. Add a `validate-taskpack` CLI command.
-3. Add `taskpacks/desktop_basics/tasks.yaml` with a small fixture.
-4. Add Module 2 tests for strict keys, unique IDs, path rules, and validator
-   type validation.
-5. Update the demo experiment only as needed to point at the validated taskpack.
+1. Add telemetry envelope and span schemas.
+2. Define typed span detail payloads for model calls, tool calls, desktop
+   actions, shell actions, validators, and scoring.
+3. Add JSONL trace writer contracts.
+4. Add SQLite trace index contracts.
+5. Add tests for trace serialization and parent/child ID relationships.
 
 ## References
 

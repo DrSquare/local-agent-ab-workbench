@@ -9,6 +9,7 @@ from pydantic import BaseModel, ValidationError
 
 from agent_ab.schemas.experiment import ExperimentConfig
 from agent_ab.schemas.prompt_object import PromptObject
+from agent_ab.schemas.task import TaskPack
 from agent_ab.yaml_io import YamlConfigError, load_yaml_mapping
 
 T = TypeVar("T", bound=BaseModel)
@@ -41,6 +42,10 @@ def load_prompt_object(path: str | Path) -> PromptObject:
     return load_model(path, PromptObject)
 
 
+def load_taskpack(path: str | Path) -> TaskPack:
+    return load_model(path, TaskPack)
+
+
 def validate_experiment_with_prompts(path: str | Path) -> tuple[ExperimentConfig, dict[str, PromptObject]]:
     """Validate an experiment plus every referenced PromptObject file."""
 
@@ -50,3 +55,24 @@ def validate_experiment_with_prompts(path: str | Path) -> tuple[ExperimentConfig
     for variant_id, prompt_path in experiment.prompt_paths(experiment_path.parent).items():
         prompts[variant_id] = load_prompt_object(prompt_path)
     return experiment, prompts
+
+
+def validate_experiment_bundle(
+    path: str | Path,
+    *,
+    include_prompts: bool = True,
+    include_taskpack: bool = True,
+) -> tuple[ExperimentConfig, dict[str, PromptObject], TaskPack | None]:
+    """Validate an experiment and optionally its referenced prompt objects and taskpack."""
+
+    experiment_path = Path(path)
+    experiment = load_experiment(experiment_path)
+    prompts: dict[str, PromptObject] = {}
+    if include_prompts:
+        for variant_id, prompt_path in experiment.prompt_paths(experiment_path.parent).items():
+            prompts[variant_id] = load_prompt_object(prompt_path)
+
+    taskpack = None
+    if include_taskpack:
+        taskpack = load_taskpack(experiment.taskpack_path(experiment_path.parent))
+    return experiment, prompts, taskpack

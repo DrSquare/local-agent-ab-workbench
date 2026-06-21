@@ -8,16 +8,19 @@ Build a local offline A/B testing and debugging workbench for desktop AI agents.
 
 ## Current module
 
-Module 1 implements only schemas and validation:
+Modules 1 and 2 implement only schemas and validation:
 
 - Experiment config
 - Prompt Object config
+- TaskPack config
+- TaskCase config
+- Declarative task validator contracts
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
 - CLI validators
 
-Do not add real agent execution inside Module 1.
+Do not add real agent execution inside Modules 1 or 2.
 
 ## Coding rules
 
@@ -35,9 +38,10 @@ Do not add real agent execution inside Module 1.
 python -m pip install -e '.[dev]'
 pytest
 agent-ab validate-experiment experiments/demo_openclaw_prompt_ab.yaml
+agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
 agent-ab metrics
 ```
 
 ## Next recommended task
 
-Implement Module 2: task schema + validators.
+Implement Module 3: telemetry schema + trace store.

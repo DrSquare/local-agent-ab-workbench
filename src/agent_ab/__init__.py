@@ -2,7 +2,8 @@
 
 from agent_ab.schemas.experiment import ExperimentConfig
 from agent_ab.schemas.prompt_object import PromptObject
+from agent_ab.schemas.task import TaskPack
 
-__all__ = ["ExperimentConfig", "PromptObject"]
+__all__ = ["ExperimentConfig", "PromptObject", "TaskPack"]
 
 __version__ = "0.1.0"

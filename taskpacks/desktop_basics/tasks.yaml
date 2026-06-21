@@ -1,0 +1,23 @@
+id: desktop_basics
+version: 1
+description: Deterministic local file tasks for early schema and runner development.
+tasks:
+  - id: rename_todo
+    description: Rename a todo file inside the isolated workspace.
+    query: Rename notes/todo.txt to notes/action-items.txt.
+    workspace:
+      fixture: workspaces/rename_todo
+    validators:
+      - type: file_exists
+        path: notes/action-items.txt
+      - type: file_not_exists
+        path: notes/todo.txt
+      - type: file_contains
+        path: notes/action-items.txt
+        contains: Review inbox items before standup.
+    tags:
+      - filesystem
+      - rename
+tags:
+  - desktop-basics
+  - offline

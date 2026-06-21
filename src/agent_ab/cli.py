@@ -11,9 +11,9 @@ from rich.table import Table
 
 from agent_ab.config import (
     ConfigLoadError,
-    load_experiment,
     load_prompt_object,
-    validate_experiment_with_prompts,
+    load_taskpack,
+    validate_experiment_bundle,
 )
 from agent_ab.schemas.metrics import AGENTEVAL_METRIC_REGISTRY, MetricCategory, metric_names
 
@@ -28,15 +28,19 @@ def validate_experiment_command(
         bool,
         typer.Option("--include-prompts/--no-include-prompts", help="Validate referenced PromptObjects too."),
     ] = True,
+    include_taskpack: Annotated[
+        bool,
+        typer.Option("--include-taskpack/--no-include-taskpack", help="Validate the referenced TaskPack too."),
+    ] = True,
 ) -> None:
     """Validate an experiment YAML file."""
 
     try:
-        if include_prompts:
-            experiment, prompts = validate_experiment_with_prompts(path)
-        else:
-            experiment = load_experiment(path)
-            prompts = {}
+        experiment, prompts, taskpack = validate_experiment_bundle(
+            path,
+            include_prompts=include_prompts,
+            include_taskpack=include_taskpack,
+        )
     except ConfigLoadError as exc:
         console.print(f"[red]Validation failed:[/red] {exc}")
         raise typer.Exit(code=1) from exc
@@ -45,6 +49,8 @@ def validate_experiment_command(
     console.print(f"variants: {', '.join(experiment.agents)}")
     if prompts:
         console.print(f"prompt objects: {', '.join(f'{k}:{v.id}@v{v.version}' for k, v in prompts.items())}")
+    if taskpack:
+        console.print(f"taskpack: {taskpack.id}@v{taskpack.version} ({len(taskpack.tasks)} tasks)")
 
 
 @app.command("validate-prompt")
@@ -63,6 +69,23 @@ def validate_prompt_command(
     console.print(f"model: {prompt.model.provider}/{prompt.model.name}")
     console.print(f"variables: {', '.join(prompt.variables) or '(none)'}")
     console.print(f"enabled tools: {', '.join(prompt.enabled_tool_names()) or '(none)'}")
+
+
+@app.command("validate-taskpack")
+def validate_taskpack_command(
+    path: Annotated[Path, typer.Argument(help="Path to TaskPack YAML.")],
+) -> None:
+    """Validate a TaskPack YAML file."""
+
+    try:
+        taskpack = load_taskpack(path)
+    except ConfigLoadError as exc:
+        console.print(f"[red]Validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] taskpack={taskpack.id}@v{taskpack.version}")
+    console.print(f"tasks: {len(taskpack.tasks)}")
+    console.print(f"task ids: {', '.join(task.id for task in taskpack.tasks)}")
 
 
 @app.command("metrics")

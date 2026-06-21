@@ -2,7 +2,10 @@
 
 A local, offline-first A/B testing and debugging workbench for desktop AI agents such as OpenClaw-style local assistants.
 
-This repository currently implements **Module 1: Experiment + Prompt Object schema**.
+This repository currently implements:
+
+- **Module 1: Experiment + Prompt Object schema**
+- **Module 2: TaskPack schema + validator contracts**
 
 ## What Module 1 includes
 
@@ -10,8 +13,11 @@ This repository currently implements **Module 1: Experiment + Prompt Object sche
 - Prompt Object YAML schema for Playground-editable model/prompt/tool bundles
 - AgentEval-inspired metric registry
 - Playground and tracing config contracts
+- TaskPack and TaskCase YAML schemas
+- Declarative task validator contracts
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
+- Example desktop basics taskpack
 - pytest coverage for schema validation and prompt rendering
 
 ## Install locally
@@ -31,6 +37,12 @@ agent-ab validate-experiment experiments/demo_openclaw_prompt_ab.yaml
 
 ```bash
 agent-ab validate-prompt prompts/baseline_openclaw.yaml
+```
+
+## Validate a taskpack
+
+```bash
+agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
 ```
 
 ## Render a prompt
@@ -77,6 +89,10 @@ agent-ab-workbench/
   prompts/
     baseline_openclaw.yaml
     candidate_playground.yaml
+  taskpacks/
+    desktop_basics/
+      tasks.yaml
+      workspaces/
   src/agent_ab/
     cli.py
     config.py
@@ -85,12 +101,14 @@ agent-ab-workbench/
       experiment.py
       metrics.py
       prompt_object.py
+      task.py
   tests/
     test_module1_schemas.py
+    test_module2_tasks.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 2 should add the task schema and validators so the experiment schema can point to real taskpacks.
+Module 3 should add the telemetry schema and trace store so future runner work can emit typed local spans.
