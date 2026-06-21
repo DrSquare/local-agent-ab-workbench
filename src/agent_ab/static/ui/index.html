@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Local Agent A/B Workbench</title>
+    <link rel="stylesheet" href="/ui/app.css">
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="rail" aria-label="Workbench navigation">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">AB</span>
+          <span>
+            <strong>Agent A/B</strong>
+            <small>local workbench</small>
+          </span>
+        </div>
+        <nav class="nav-list">
+          <button class="nav-item is-active" data-view="overview" type="button">Overview</button>
+          <button class="nav-item" data-view="runs" type="button">Runs</button>
+          <button class="nav-item" data-view="trace" type="button">Trace</button>
+          <button class="nav-item" data-view="playground" type="button">Playground</button>
+        </nav>
+        <div class="rail-footer">
+          <span class="status-dot" id="apiDot" aria-hidden="true"></span>
+          <span id="apiStatus">Checking API</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Offline desktop-agent evaluation</p>
+            <h1>Workbench shell</h1>
+          </div>
+          <button class="tool-button" id="refreshButton" type="button">Refresh</button>
+        </header>
+
+        <section class="view is-active" id="view-overview" aria-labelledby="overviewTitle">
+          <div class="section-heading">
+            <h2 id="overviewTitle">Local inventory</h2>
+            <span id="lastLoaded">Not loaded</span>
+          </div>
+          <div class="metrics-row" aria-label="Local workbench totals">
+            <div class="metric-tile">
+              <span>Experiments</span>
+              <strong id="experimentCount">0</strong>
+            </div>
+            <div class="metric-tile">
+              <span>TaskPacks</span>
+              <strong id="taskpackCount">0</strong>
+            </div>
+            <div class="metric-tile">
+              <span>Runs</span>
+              <strong id="runCount">0</strong>
+            </div>
+          </div>
+          <div class="split-grid">
+            <section class="panel" aria-labelledby="experimentsTitle">
+              <h3 id="experimentsTitle">Experiments</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Agents</th>
+                      <th>TaskPack</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="experimentRows"></tbody>
+                </table>
+              </div>
+            </section>
+            <section class="panel" aria-labelledby="taskpacksTitle">
+              <h3 id="taskpacksTitle">TaskPacks</h3>
+              <div id="taskpackList" class="list-stack"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-runs" aria-labelledby="runsTitle">
+          <div class="section-heading">
+            <h2 id="runsTitle">Runs</h2>
+            <span>Select a run to inspect its trace</span>
+          </div>
+          <section class="panel">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Run</th>
+                    <th>Task</th>
+                    <th>Variant</th>
+                    <th>Trace</th>
+                    <th>Artifacts</th>
+                  </tr>
+                </thead>
+                <tbody id="runRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="view-trace" aria-labelledby="traceTitle">
+          <div class="section-heading">
+            <h2 id="traceTitle">Trace</h2>
+            <span id="selectedRunLabel">No run selected</span>
+          </div>
+          <div class="trace-layout">
+            <section class="panel" aria-labelledby="traceTreeTitle">
+              <h3 id="traceTreeTitle">Span tree</h3>
+              <div id="traceTree" class="trace-tree"></div>
+            </section>
+            <section class="panel detail-panel" aria-labelledby="traceDetailTitle">
+              <h3 id="traceDetailTitle">Run detail</h3>
+              <dl id="traceDetails" class="detail-list"></dl>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-playground" aria-labelledby="playgroundTitle">
+          <div class="section-heading">
+            <h2 id="playgroundTitle">Playground replay</h2>
+            <span>Deterministic mock adapter only</span>
+          </div>
+          <div class="playground-layout">
+            <form class="panel form-grid" id="playgroundForm">
+              <label>
+                Experiment path
+                <input id="pgExperiment" name="experiment_path" required value="experiments/demo_openclaw_prompt_ab.yaml">
+              </label>
+              <label>
+                Variant
+                <input id="pgVariant" name="variant_id" required value="A">
+              </label>
+              <label>
+                Task
+                <input id="pgTask" name="task_id" required value="rename_todo">
+              </label>
+              <label>
+                Run ID
+                <input id="pgRunId" name="run_id" value="playground.rename_todo.ui">
+              </label>
+              <label>
+                View ID
+                <input id="pgViewId" name="view_id" value="view.rename_todo.ui">
+              </label>
+              <label class="check-row">
+                <input id="pgSaveView" name="save_view" type="checkbox" checked>
+                Save view
+              </label>
+              <button class="primary-button" type="submit">Run replay</button>
+              <p class="form-status" id="playgroundStatus" role="status"></p>
+            </form>
+            <section class="panel" aria-labelledby="viewsTitle">
+              <h3 id="viewsTitle">Saved views</h3>
+              <div id="viewList" class="list-stack"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/ui/app.js" defer></script>
+  </body>
+</html>

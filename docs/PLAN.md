@@ -36,6 +36,7 @@ Modules 1 through 5 are implemented with clear local-first boundaries:
 - Deterministic mock runner and local validator executor
 - Localhost-only FastAPI backend for discovery and trace inspection
 - Playground backend contracts, deterministic mock replay, and view persistence
+- Local frontend shell served from the FastAPI app
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
@@ -286,6 +287,8 @@ Deliverables:
 
 ### Module 7: Frontend Shell
 
+Status: implemented.
+
 Goal: provide the first local workbench UI.
 
 Deliverables:
@@ -294,6 +297,7 @@ Deliverables:
 - Task result table
 - Run summary
 - Trace and Playground navigation frame
+- Basic local API loading, empty, and error states
 
 ### Module 8: Trace Visualizer UI
 
@@ -407,11 +411,11 @@ concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-1. Add the first frontend app shell.
-2. Add experiment, taskpack, run, trace, and Playground navigation.
-3. Connect the shell to the Module 5 and Module 6 API endpoints.
-4. Add basic empty, loading, and error states.
-5. Add frontend verification for the core navigation flow.
+1. Add a richer trace tree with expand/collapse behavior.
+2. Add span detail panes for typed payloads.
+3. Add a timing-oriented waterfall or duration view.
+4. Add trace filtering by span kind and status.
+5. Add frontend verification for trace navigation and span inspection.
 
 ## References
 

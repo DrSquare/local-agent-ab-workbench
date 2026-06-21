@@ -54,6 +54,15 @@ Module 6 adds only Playground backend contracts and deterministic mock replay:
 
 Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, or UI code inside Module 6.
 
+Module 7 adds only the first local frontend shell:
+
+- No-build static HTML/CSS/JS served by FastAPI at `/ui`
+- Experiment, TaskPack, run, trace, and Playground navigation frame
+- Local API fetches only; no external assets or cloud calls
+- Basic empty, loading, and error states
+
+Do not add real model calls, OpenClaw execution, shell/browser/desktop automation, external frontend services, or desktop packaging inside Module 7.
+
 ## Coding rules
 
 - Use Python 3.11+.
@@ -77,4 +86,4 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 7: frontend shell.
+Implement Module 8: trace visualizer UI.

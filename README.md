@@ -10,6 +10,7 @@ This repository currently implements:
 - **Module 4: Runner core + deterministic mock adapter**
 - **Module 5: Local FastAPI backend**
 - **Module 6: Playground backend**
+- **Module 7: Frontend shell**
 
 ## What the implemented modules include
 
@@ -28,6 +29,7 @@ This repository currently implements:
 - Playground replay request/response contracts
 - Deterministic one-off Playground replay through the mock runner
 - Local Playground View persistence
+- No-build local frontend shell served from `/ui`
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -83,6 +85,7 @@ The server command rejects non-local bind hosts.
 Useful local API paths include:
 
 ```text
+GET  /ui
 GET  /experiments
 GET  /taskpacks
 GET  /runs
@@ -143,6 +146,11 @@ agent-ab-workbench/
     config.py
     playground.py
     server.py
+    static/
+      ui/
+        index.html
+        app.css
+        app.js
     schemas/
       common.py
       experiment.py
@@ -162,10 +170,11 @@ agent-ab-workbench/
     test_module4_runner.py
     test_module5_server.py
     test_module6_playground.py
+    test_module7_frontend.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Module 7 should add the first local frontend shell for experiment, run, trace, and Playground navigation.
+Module 8 should expand the trace visualizer UI with hierarchical span inspection and timing-oriented views.

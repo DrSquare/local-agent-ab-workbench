@@ -137,16 +137,19 @@ These choices are for the UI phase, not the schema modules.
 
 | Layer | Choice | Earliest module | Reason |
 |---|---|---|---|
-| App shell | React + Vite + TypeScript | Module 7 | Interactive local workbench UI |
-| Components | Radix UI or shadcn/ui | Module 7 | Accessible primitives with quick assembly |
-| Tables | TanStack Table | Module 7 | Sorting and filtering task results |
-| State/query | TanStack Query plus small local store | Module 7 | Local API cache and selected run/trace state |
+| App shell | No-build HTML/CSS/JS served by FastAPI | Module 7 | First local workbench shell without Node or registry setup |
+| Components | Native HTML controls plus project CSS | Module 7 | Accessible baseline with no external assets |
+| Tables | Native tables | Module 7 | Good enough for the first experiment/run/task views |
+| State/query | Small browser state module | Module 7 | Local API cache and selected run/trace state without extra dependencies |
 | Prompt editor | Monaco Editor | Module 9 | Prompt/YAML/JSON editing |
 | Trace tree | Virtualized tree first, React Flow if graph layout is needed | Module 8 | Hierarchical spans are tree-shaped initially |
 | Timeline | SVG or canvas waterfall | Module 8 | Span duration visualization |
 | Packaging | Tauri | Later | Desktop packaging after local web UI is stable |
 
 The first frontend should be a workbench, not a landing page.
+
+React, Vite, and TanStack remain reasonable later choices if the frontend grows
+past the no-build shell.
 
 ## Model and Agent Integration
 
@@ -234,7 +237,8 @@ Coverage expectations by phase:
 | Module 4 | Mock adapter determinism, validator execution, workspace lifecycle, artifact writing |
 | Backend | API response models, local-only binding assumptions, error shapes |
 | Module 6 | Playground request validation, mock replay output, view persistence |
-| Frontend | Core flows with Playwright once UI exists |
+| Module 7 | Frontend shell routes, local-only assets, API endpoint wiring |
+| Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 ## File Layout Direction
 
@@ -259,6 +263,11 @@ agent-ab-workbench/
     config.py
     playground.py
     server.py
+    static/
+      ui/
+        index.html
+        app.css
+        app.js
     schemas/
       common.py
       experiment.py
@@ -278,6 +287,7 @@ agent-ab-workbench/
     test_module4_runner.py
     test_module5_server.py
     test_module6_playground.py
+    test_module7_frontend.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and

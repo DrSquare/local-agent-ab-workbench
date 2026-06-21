@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import Field
 
 from agent_ab.config import ConfigLoadError, load_experiment, validate_taskpack_with_fixtures
@@ -20,6 +21,11 @@ from agent_ab.schemas.trace import TraceEnvelope, validate_trace_token
 from agent_ab.trace_store import read_trace_jsonl
 
 LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "::1"}
+_UI_ROOT = Path(__file__).parent / "static" / "ui"
+_UI_ASSETS = {
+    "app.css": "text/css",
+    "app.js": "application/javascript",
+}
 
 
 class HealthResponse(StrictBaseModel):
@@ -120,6 +126,22 @@ def create_app(
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(status="ok", project_root=str(root))
+
+    @app.get("/", include_in_schema=False)
+    def redirect_to_ui() -> RedirectResponse:
+        return RedirectResponse(url="/ui")
+
+    @app.get("/ui", include_in_schema=False)
+    @app.get("/ui/", include_in_schema=False)
+    def frontend_shell() -> FileResponse:
+        return FileResponse(_UI_ROOT / "index.html")
+
+    @app.get("/ui/{asset_name}", include_in_schema=False)
+    def frontend_asset(asset_name: str) -> FileResponse:
+        media_type = _UI_ASSETS.get(asset_name)
+        if media_type is None:
+            raise HTTPException(status_code=404, detail=f"frontend asset not found: {asset_name}")
+        return FileResponse(_UI_ROOT / asset_name, media_type=media_type)
 
     @app.get("/experiments", response_model=ExperimentListResponse)
     def list_experiments() -> ExperimentListResponse:

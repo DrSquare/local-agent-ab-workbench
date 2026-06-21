@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 6: Playground backend.
+Module 7: frontend shell.
 
 ## Status
 
@@ -16,15 +16,16 @@ Module 6: Playground backend.
 | Module 4 mock runner | Done | Run workspace lifecycle, validator executor, deterministic mock adapter, trace artifact writing, and tests are implemented. |
 | Module 5 local backend | Done | Localhost-only server command, experiment/taskpack discovery, run summaries, artifact listing, trace retrieval, and API tests are implemented. |
 | Module 6 Playground backend | Done | Playground request/response schemas, override validation, deterministic mock replay, view persistence, API endpoints, and tests are implemented. |
+| Module 7 frontend shell | Done | No-build static UI served from `/ui`, local API navigation, run/trace selection, Playground replay form, saved views list, and frontend route tests are implemented. |
 
-## Module 6 Acceptance Criteria
+## Module 7 Acceptance Criteria
 
-- Playground run request and response schemas validate strict local contracts.
-- Prompt, model, parameter, and tool-policy overrides are validated before replay.
-- One-off replay uses the deterministic mock runner only.
-- Playground Views are persisted as local JSON and can be listed/retrieved by the API.
-- Replays appear in the normal local run artifact listing.
-- No real OpenClaw, shell, browser, desktop, non-local network, model execution, or UI code is added.
+- The local API serves a usable frontend shell at `/ui`.
+- The shell shows experiment, TaskPack, run, trace, and Playground navigation.
+- Runs can be selected and their trace spans can be loaded from the local API.
+- Playground replay can be triggered through the Module 6 endpoint.
+- The UI uses no external assets, package registries, cloud calls, or desktop packaging.
+- No real OpenClaw, shell, browser, desktop, non-local network, or model execution is added.
 
 ## Working Rules
 
@@ -36,4 +37,4 @@ Module 6: Playground backend.
 
 ## Next Sprint Candidate
 
-Module 7: frontend shell.
+Module 8: trace visualizer UI.
