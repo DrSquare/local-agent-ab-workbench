@@ -14,10 +14,12 @@ from agent_ab.adapters.openclaw import prepare_openclaw_run
 from agent_ab.config import (
     ConfigLoadError,
     load_prompt_object,
+    validate_eval_set_with_tasks,
     validate_eval_task_with_taskpack,
     validate_experiment_bundle,
     validate_taskpack_with_fixtures,
 )
+from agent_ab.eval_runner import build_eval_run_plan, write_eval_run_plan
 from agent_ab.reporting import (
     ReportFormat,
     export_run_report,
@@ -121,6 +123,52 @@ def validate_eval_task_command(
     console.print(f"samples: {len(samples)} ({', '.join(sample.id for sample in samples)})")
     console.print(f"solver: {eval_task.solver.id}/{eval_task.solver.adapter}")
     console.print(f"scorers: {', '.join(scorer.id for scorer in eval_task.scorers)}")
+
+
+@app.command("validate-eval-set")
+def validate_eval_set_command(
+    path: Annotated[Path, typer.Argument(help="Path to EvalSet YAML.")],
+) -> None:
+    """Validate an EvalSet YAML file and every referenced EvalTask."""
+
+    try:
+        eval_set, resolved = validate_eval_set_with_tasks(path)
+    except ConfigLoadError as exc:
+        console.print(f"[red]Validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    sample_count = sum(len(samples) for _, _, _, samples in resolved)
+    console.print(f"[green]OK[/green] eval_set={eval_set.id}@v{eval_set.version}")
+    console.print(f"eval tasks: {len(resolved)}")
+    console.print(f"samples: {sample_count}")
+    console.print(f"task refs: {', '.join(ref_id for ref_id, _, _, _ in resolved)}")
+
+
+@app.command("plan-eval-set")
+def plan_eval_set_command(
+    path: Annotated[Path, typer.Argument(help="Path to EvalSet YAML.")],
+    run_root: Annotated[Path, typer.Option(help="Directory for planned EvalLog artifacts.")] = Path("runs/evals"),
+    output: Annotated[
+        Path | None,
+        typer.Option(help="Optional JSON output path for the EvalRunPlan artifact."),
+    ] = None,
+) -> None:
+    """Build a non-executing EvalSet run plan."""
+
+    try:
+        plan = build_eval_run_plan(path, run_root)
+    except (ConfigLoadError, ValueError) as exc:
+        console.print(f"[red]Plan failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] eval_set={plan.eval_set_id}@v{plan.eval_set_version}")
+    console.print(f"run_root: {plan.run_root}")
+    console.print(f"samples: {plan.total_samples}")
+    console.print(f"planned: {plan.planned_count}")
+    console.print(f"skipped_completed: {plan.skipped_completed_count}")
+    if output is not None:
+        plan_path = write_eval_run_plan(plan, output)
+        console.print(f"plan: {plan_path}")
 
 
 @app.command("generate-seed-taskpack")

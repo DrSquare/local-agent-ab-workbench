@@ -7,7 +7,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from agent_ab.schemas.eval import EvalSample, EvalTask
+from agent_ab.schemas.eval import EvalSample, EvalSet, EvalTask
 from agent_ab.schemas.experiment import ExperimentConfig
 from agent_ab.schemas.prompt_object import PromptObject
 from agent_ab.schemas.task import TaskPack
@@ -51,6 +51,10 @@ def load_eval_task(path: str | Path) -> EvalTask:
     return load_model(path, EvalTask)
 
 
+def load_eval_set(path: str | Path) -> EvalSet:
+    return load_model(path, EvalSet)
+
+
 def validate_taskpack_with_fixtures(path: str | Path) -> TaskPack:
     """Validate a taskpack YAML file and its declared workspace fixture directories."""
 
@@ -77,6 +81,23 @@ def validate_eval_task_with_taskpack(path: str | Path) -> tuple[EvalTask, TaskPa
     except ValueError as exc:
         raise ConfigLoadError(f"eval task sample selection failed for {path}: {exc}") from exc
     return eval_task, taskpack, samples
+
+
+def validate_eval_set_with_tasks(
+    path: str | Path,
+) -> tuple[EvalSet, list[tuple[str, EvalTask, TaskPack, list[EvalSample]]]]:
+    """Validate an EvalSet and every referenced EvalTask/TaskPack/sample selection."""
+
+    eval_set_path = Path(path)
+    eval_set = load_eval_set(eval_set_path)
+    resolved: list[tuple[str, EvalTask, TaskPack, list[EvalSample]]] = []
+    for ref_id, eval_task_path in eval_set.eval_task_paths(eval_set_path.parent).items():
+        try:
+            eval_task, taskpack, samples = validate_eval_task_with_taskpack(eval_task_path)
+        except ConfigLoadError as exc:
+            raise ConfigLoadError(f"eval task ref '{ref_id}' failed validation: {exc}") from exc
+        resolved.append((ref_id, eval_task, taskpack, samples))
+    return eval_set, resolved
 
 
 def validate_experiment_with_prompts(path: str | Path) -> tuple[ExperimentConfig, dict[str, PromptObject]]:
