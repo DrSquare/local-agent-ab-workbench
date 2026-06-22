@@ -72,8 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 12 plus post-MVP hardening and the first Module 13 seed
-generation slice are implemented with clear
+Modules 1 through 13 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -93,6 +92,8 @@ local-first boundaries:
 - Tracing config contract
 - Mercor APEX-inspired expert seed TaskPack generation
 - O*NET occupation/task IDs and NBER Appendix A.4-style IWA metadata on seed tasks
+- EvalTask, EvalSample, solver reference, scorer reference, and EvalLog schemas
+- EvalTask CLI validation over referenced TaskPacks and sample selections
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -498,7 +499,7 @@ Deliverables:
 
 ### Module 13: Inspect-Inspired Eval Core
 
-Status: partially implemented.
+Status: implemented.
 
 Goal: add explicit evaluation primitives underneath A/B comparison, reports, and
 Playground replay.
@@ -513,14 +514,17 @@ Implemented seed-generation slice:
 - Example `taskpacks/mercor_apex_expert_seeded/tasks.yaml`
 - Tests for schema strictness, deterministic generation, and CLI output
 
-Deliverables:
+Implemented eval-core slice:
 
 - `EvalTask` schema
 - `EvalSample` normalization from TaskPack tasks
-- Solver adapter contract that wraps mock and OpenClaw preparation
-- Scorer contract that can call existing validators and trace checks
+- Solver reference contract that validates registered or `custom.` adapters
+- Scorer reference contract for validators, metrics, trace checks, and `custom.`
+  scorers
 - Eval log envelope that references run config, trace, scores, artifacts, and errors
-- CLI validator for eval task configs
+- `agent-ab validate-eval-task` command
+- Example `evals/desktop_basics_eval.yaml`
+- Example `evals/mercor_apex_seed_eval.yaml`
 - Focused tests for schema strictness, sample selection, scorer references, and log shape
 
 Non-goals:
@@ -682,7 +686,8 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 - Should path policy be shared between experiment limits, prompt tools, and
   task validators through one common schema?
 - Should metric results attach directly to spans, task runs, or both?
-- Should `EvalTask` configs be separate files or embedded into experiment YAML?
+- Should EvalTask configs remain separate files long term, or should experiments
+  later reference eval sets that point to them?
 - Should scorer results be stored as span details, eval-log top-level scores, or both?
 - What is the minimum sandbox provider interface before Docker or external agents?
 - Which Module 17 GUI data should be precomputed by the backend versus derived
@@ -690,23 +695,23 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Continue Module 13: Inspect-inspired eval core. The expert seed generator is
-implemented; next, bind TaskPack samples to solver and scorer references through
-strict EvalTask and EvalLog contracts. The Arize-inspired GUI should follow
-those contracts instead of driving new data models; Module 17 starts after the
-eval-log shape is stable enough for dashboard, trace, and regression views.
+Proceed to Module 14: Eval Runner and Eval Sets. Module 13 now provides strict
+EvalTask and EvalLog contracts, example eval configs, and a CLI validator. The
+runner should consume those contracts without adding new real agent execution
+beyond existing mock and explicitly gated OpenClaw preparation.
 
-Module 13 acceptance criteria:
+Module 14 acceptance criteria:
 
-- EvalTask config validates with `extra="forbid"`.
-- EvalTask can select all samples or named samples from a TaskPack.
-- Solver adapter references are validated without executing real agents.
-- Scorer references can target existing validators and metric names.
-- EvalLog schema captures sample ID, solver ID, scorer results, trace reference,
-  artifacts, limits, and errors.
-- Existing A/B report and Playground concepts can be described as workflows over
-  EvalTask/EvalLog without breaking current commands.
-- Expert-seeded TaskPacks can be selected as EvalTask sample sources.
+- Eval run planning expands EvalTask samples into deterministic per-sample run
+  plans without executing real agents by default.
+- Eval sets can group one or more EvalTasks and variants.
+- Resume planning can skip completed EvalLog artifacts.
+- Failure thresholds and sample limits are validated before runtime work starts.
+- Aggregate status summaries are written from EvalLog-compatible data.
+- Existing A/B report and Playground concepts can still be described as
+  workflows over EvalTask/EvalLog without breaking current commands.
+- Module 17 GUI work consumes Module 14 read models rather than inventing new
+  frontend-only data shapes.
 
 Completed post-MVP hardening:
 

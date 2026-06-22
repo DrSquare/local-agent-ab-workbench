@@ -49,7 +49,7 @@ This revision separates the stack into:
 
 | Evaluation layer | Local workbench object | Stack choice |
 |---|---|---|
-| Task | Planned `EvalTask` schema | Pydantic v2 + YAML |
+| Task | `EvalTask` schema | Pydantic v2 + YAML |
 | Dataset | TaskPack plus normalized samples | Existing TaskPack YAML, expert seed generator, future sample selector |
 | Sample | TaskCase + workspace fixture + metadata | Existing task schema plus planned `EvalSample` view |
 | Solver/Agent | Adapter contract | Python protocol/class with mock, OpenClaw, generic CLI, local HTTP implementations |
@@ -59,9 +59,9 @@ This revision separates the stack into:
 | Sandbox | Execution provider | Local workspace provider first, Docker/provider extras later |
 | Analysis | Reports and scanner outputs | Built-in JSON/CSV first, optional dataframe extra later |
 
-Do not add `inspect-ai` as a required dependency in Module 13. The next step is
-to adopt compatible boundaries while preserving this project's local desktop
-agent contracts and YAML authoring model.
+Do not add `inspect-ai` as a required dependency. The workbench adopts
+compatible boundaries while preserving this project's local desktop-agent
+contracts and YAML authoring model.
 
 ## Arize-Inspired GUI Stack Map
 
@@ -245,7 +245,7 @@ module needs them. Prefer adapter-specific optional extras.
 
 ## Module 13 Evaluation Core Stack
 
-These choices should guide the next implementation module.
+These choices are active for the implemented Module 13 contract layer.
 
 | Need | Choice | Reason |
 |---|---|---|
@@ -259,6 +259,18 @@ These choices should guide the next implementation module.
 | Eval logs | JSON/JSONL plus SQLite index | Human-inspectable logs with local query support |
 | Analysis export | JSON/CSV initially | No new analytics dependency for Module 13 |
 | Inspect compatibility | Conceptual only | Avoids pulling cloud/model-provider assumptions into core |
+
+Implemented files:
+
+```text
+evals/desktop_basics_eval.yaml
+evals/mercor_apex_seed_eval.yaml
+src/agent_ab/schemas/eval.py
+tests/test_module13_eval_core.py
+```
+
+Module 14 should consume these contracts for planning and resumable local state
+rather than introducing new task, sample, solver, scorer, or log shapes.
 
 ## Safety and Sandbox Stack
 
@@ -370,6 +382,7 @@ agent-ab-workbench/
     WORKFLOW.md
   evals/
     desktop_basics_eval.yaml
+    mercor_apex_seed_eval.yaml
   experiments/
     demo_openclaw_prompt_ab.yaml
   prompts/

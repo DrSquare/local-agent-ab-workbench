@@ -7,6 +7,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+from agent_ab.schemas.eval import EvalSample, EvalTask
 from agent_ab.schemas.experiment import ExperimentConfig
 from agent_ab.schemas.prompt_object import PromptObject
 from agent_ab.schemas.task import TaskPack
@@ -46,6 +47,10 @@ def load_taskpack(path: str | Path) -> TaskPack:
     return load_model(path, TaskPack)
 
 
+def load_eval_task(path: str | Path) -> EvalTask:
+    return load_model(path, EvalTask)
+
+
 def validate_taskpack_with_fixtures(path: str | Path) -> TaskPack:
     """Validate a taskpack YAML file and its declared workspace fixture directories."""
 
@@ -59,6 +64,19 @@ def validate_taskpack_with_fixtures(path: str | Path) -> TaskPack:
     if missing:
         raise ConfigLoadError(f"task workspace fixture directories do not exist: {missing}")
     return taskpack
+
+
+def validate_eval_task_with_taskpack(path: str | Path) -> tuple[EvalTask, TaskPack, list[EvalSample]]:
+    """Validate an EvalTask YAML file and its referenced TaskPack/sample selection."""
+
+    eval_task_path = Path(path)
+    eval_task = load_eval_task(eval_task_path)
+    taskpack = validate_taskpack_with_fixtures(eval_task.taskpack_path(eval_task_path.parent))
+    try:
+        samples = eval_task.selected_samples(taskpack)
+    except ValueError as exc:
+        raise ConfigLoadError(f"eval task sample selection failed for {path}: {exc}") from exc
+    return eval_task, taskpack, samples
 
 
 def validate_experiment_with_prompts(path: str | Path) -> tuple[ExperimentConfig, dict[str, PromptObject]]:

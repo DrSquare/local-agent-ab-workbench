@@ -14,6 +14,7 @@ from agent_ab.adapters.openclaw import prepare_openclaw_run
 from agent_ab.config import (
     ConfigLoadError,
     load_prompt_object,
+    validate_eval_task_with_taskpack,
     validate_experiment_bundle,
     validate_taskpack_with_fixtures,
 )
@@ -101,6 +102,25 @@ def validate_taskpack_command(
     console.print(f"[green]OK[/green] taskpack={taskpack.id}@v{taskpack.version}")
     console.print(f"tasks: {len(taskpack.tasks)}")
     console.print(f"task ids: {', '.join(task.id for task in taskpack.tasks)}")
+
+
+@app.command("validate-eval-task")
+def validate_eval_task_command(
+    path: Annotated[Path, typer.Argument(help="Path to EvalTask YAML.")],
+) -> None:
+    """Validate an EvalTask YAML file and referenced TaskPack samples."""
+
+    try:
+        eval_task, taskpack, samples = validate_eval_task_with_taskpack(path)
+    except ConfigLoadError as exc:
+        console.print(f"[red]Validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] eval_task={eval_task.id}@v{eval_task.version}")
+    console.print(f"taskpack: {taskpack.id}@v{taskpack.version}")
+    console.print(f"samples: {len(samples)} ({', '.join(sample.id for sample in samples)})")
+    console.print(f"solver: {eval_task.solver.id}/{eval_task.solver.adapter}")
+    console.print(f"scorers: {', '.join(scorer.id for scorer in eval_task.scorers)}")
 
 
 @app.command("generate-seed-taskpack")
