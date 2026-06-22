@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "agent-ab-workbench"
 version = "0.1.0"
-description = "Local offline A/B testing workbench schemas for desktop AI agents."
+description = "Local offline evaluation workbench schemas for desktop AI agents."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
-  { name = "Local Agent A/B Workbench" }
+  { name = "Local Agent Evaluation Workbench" }
 ]
 dependencies = [
   "pydantic>=2.7",

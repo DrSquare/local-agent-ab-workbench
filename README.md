@@ -1,6 +1,8 @@
-# Local Agent A/B Workbench
+# Local Agent Evaluation Workbench
 
-A local, offline-first A/B testing and debugging workbench for desktop AI agents such as OpenClaw-style local assistants.
+A local, offline-first evaluation and debugging workbench for desktop AI agents such as OpenClaw-style local assistants.
+
+The roadmap is now Inspect-inspired: TaskPacks become local datasets, agent adapters act as solvers, validators and scorers grade outcomes, trace artifacts become eval logs, and guardrails/sandboxes protect real execution. A/B comparison remains an important workflow, but it is treated as one evaluation mode rather than the whole product.
 
 This repository currently implements:
 
@@ -16,6 +18,7 @@ This repository currently implements:
 - **Module 10: OpenClaw adapter preparation**
 - **Module 11: Guardrails and sandbox policy**
 - **Module 12: Demo and reporting**
+- **Module 13A: Expert seed TaskPack generation**
 
 ## What the implemented modules include
 
@@ -42,10 +45,25 @@ This repository currently implements:
 - Local demo runner plus JSON and CSV run report exports
 - Aggregate task/variant comparison reports across repeated local runs
 - Safety-gated OpenClaw execution helper requiring explicit opt-in
+- Mercor APEX-inspired expert seed generation with O*NET and NBER Appendix A.4 metadata
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
+- Example expert seed taskpack
 - pytest coverage for schema validation and prompt rendering
+
+## Product direction
+
+The next milestone is an evaluation core modeled around reusable components:
+
+- `EvalTask`: binds a TaskPack sample set to a solver/agent adapter and scorer set.
+- `Dataset/Sample`: normalizes desktop tasks into repeatable local samples.
+- `Solver/Agent`: wraps deterministic mock, OpenClaw, and future CLI/local HTTP agents behind one contract.
+- `Scorer`: turns validators, trace checks, and optional model-graded checks into comparable scores.
+- `EvalLog`: makes run traces, scores, config, and artifacts queryable and replayable.
+- `Sandbox`: keeps real tool and desktop execution behind explicit local policy.
+
+This keeps the workbench compatible with Inspect-style evaluation thinking without making `inspect-ai` a core dependency.
 
 ## Install locally
 
@@ -77,6 +95,20 @@ agent-ab validate-prompt prompts/baseline_openclaw.yaml
 ```bash
 agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
 ```
+
+## Generate an expert seed taskpack
+
+```bash
+agent-ab generate-seed-taskpack \
+  --output taskpacks/mercor_apex_expert_seeded/tasks.yaml
+agent-ab validate-taskpack taskpacks/mercor_apex_expert_seeded/tasks.yaml
+```
+
+The built-in seeds use public Mercor APEX role/sample-task facts, O*NET occupation
+and task IDs, and NBER Appendix A.4-style IWA classification metadata. The full
+APEX-Agents dataset is gated, so the generator does not crawl it and marks the
+generated tasks as requiring human review or licensed task artifacts before real
+benchmark use.
 
 ## Run a deterministic mock task
 
@@ -170,6 +202,7 @@ agent-ab-workbench/
   .github/
     PULL_REQUEST_TEMPLATE.md
   docs/
+    INSPECT_ALIGNMENT.md
     KNOWN_LIMITATIONS.md
     PLAN.md
     TECH_STACK.md
@@ -184,6 +217,9 @@ agent-ab-workbench/
     desktop_basics/
       tasks.yaml
       workspaces/
+    mercor_apex_expert_seeded/
+      tasks.yaml
+      workspaces/
     openclaw_demo/
       tasks.yaml
       workspaces/
@@ -196,6 +232,7 @@ agent-ab-workbench/
     playground.py
     reporting.py
     server.py
+    task_seed_generation.py
     static/
       ui/
         index.html
@@ -228,10 +265,13 @@ agent-ab-workbench/
     test_module10_openclaw_adapter.py
     test_module11_guardrails.py
     test_module12_reporting.py
+    test_module13_seed_generation.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-All planned MVP modules are implemented. Next work should focus on post-MVP hardening, aggregate reporting, and safety-gated real adapter execution.
+Continue Module 13 by adding the EvalTask core: explicit sample selection,
+solver references, scorer references, and EvalLog contracts over existing
+TaskPacks, including the expert seed taskpack.
