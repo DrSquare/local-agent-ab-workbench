@@ -72,7 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 16 plus post-MVP hardening are implemented with clear
+Modules 1 through 17 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -104,6 +104,11 @@ local-first boundaries:
   endpoint, and timeout checks
 - EvalLog-compatible sandbox approval and denial events plus scanner
   classification for sandbox denial findings
+- Observability read models for dashboard summaries, eval-run rows, regression
+  rows, trace links, Playground handoffs, and sandbox status
+- Local `/observability` API endpoint over EvalRunPlan/EvalLog artifacts
+- Dashboard, Evaluate, Observe, Improve, and Settings routes in the existing
+  no-build frontend shell
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -615,24 +620,25 @@ Implemented deliverables:
 
 ### Module 17: Arize-Inspired Observability and Eval GUI
 
-Status: planned.
+Status: implemented.
 
 Goal: turn EvalTask and EvalLog data into a local observe/evaluate/improve
 cockpit.
 
-Deliverables:
+Implemented deliverables:
 
 - Workbench dashboard with eval health summary, recent runs, pass-rate trends,
   and regression counts
-- Hash-routed no-build UI modes for Dashboard, Evaluate, Observe, Improve, and
+- No-build UI modes for Dashboard, Evaluate, Observe, Improve, and
   Settings
 - Evaluate mode with run tables, task/sample rows, scorer outcomes, status,
-  latency, artifact links, and trace links
-- Observe mode with trace/session drilldown joined to eval samples and scorer
-  outputs
-- Improve mode handoff from failed or regressed samples into Playground replay
-- Backend read models or API response shapes for dashboard summaries, eval-run
-  rows, regression rows, and Playground handoff payloads
+  latency, artifact links, trace links, and sandbox denial badges
+- Observe mode with trace/session drilldown reusing the local trace visualizer
+- Improve mode handoff from failed or errored samples into Playground replay
+- Backend read models for dashboard summaries, eval-run rows, regression rows,
+  trace links, Playground handoff payloads, artifact references, and sandbox status
+- `/observability` API endpoint with optional EvalRunPlan path selection and
+  newest-plan discovery under the runs root
 - Local-only UI assets and API calls served from the existing FastAPI backend
 - OpenInference/OpenTelemetry-compatible labels where they clarify spans and
   trace relationships
@@ -732,24 +738,22 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Proceed to Module 17: Arize-Inspired Observability and Eval GUI. Module 16 now
-separates safety policy from execution backends and exposes sandbox denial
-events in EvalLog-compatible metadata. The next module should define backend
-read models before expanding the existing static frontend shell.
+Proceed to Module 18: Eval Analysis and Regression Review UI. Module 17 now
+exposes local dashboard, eval-row, regression, trace-link, Playground handoff,
+artifact, and sandbox status read models through the API and static shell. The
+next module should make repeated eval runs easier to compare, triage, annotate,
+and export from the GUI.
 
-Module 17 acceptance criteria:
+Module 18 acceptance criteria:
 
-- Backend read models expose dashboard summaries, eval-run rows, regression
-  rows, trace links, scorer evidence, artifact references, and sandbox status.
-- Hash-routed no-build UI modes expose Dashboard, Evaluate, Observe, Improve,
-  and Settings.
-- Evaluate mode shows task/sample status, scorer outcomes, pass rates, score
-  deltas, latency, artifact links, trace links, and sandbox denial badges.
-- Observe mode joins trace/session spans with eval sample and scorer context.
-- Improve mode can hand failed or regressed samples to Playground with original
-  prompt, model, parameters, tool policy, trace, scorer, and sandbox context.
-- UI assets remain local-only with no external fonts, scripts, CDNs, Arize SDK,
-  Phoenix dependency, or cloud telemetry.
+- Regression review supports repeated-run and variant comparisons over EvalLog
+  aggregates.
+- Regression rows show previous score, current score, delta, trace link, sample
+  metadata, solver, and variant.
+- Failure taxonomy and sandbox-denial filters work without cloud graders.
+- Saved triage notes are linked to EvalTask, EvalLog, sample, and trace IDs.
+- Export links point to local JSON/CSV analysis artifacts.
+- Responsive table layouts remain usable on laptop and narrow screens.
 
 Completed post-MVP hardening:
 

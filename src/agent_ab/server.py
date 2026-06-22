@@ -14,6 +14,12 @@ from agent_ab.config import (
     load_prompt_object,
     validate_taskpack_with_fixtures,
 )
+from agent_ab.observability import (
+    ObservabilityReadModel,
+    build_observability_read_model,
+    empty_observability_read_model,
+    find_latest_eval_plan,
+)
 from agent_ab.playground import list_playground_views, load_playground_view, run_playground_task
 from agent_ab.schemas.common import LocalModelRegistry, StrictBaseModel
 from agent_ab.schemas.playground import (
@@ -222,6 +228,20 @@ def create_app(
             traces=traces,
         )
 
+    @app.get("/observability", response_model=ObservabilityReadModel)
+    def get_observability(plan_path: str | None = None) -> ObservabilityReadModel:
+        try:
+            if plan_path is None:
+                eval_plan_path = find_latest_eval_plan(root, runs)
+                if eval_plan_path is None:
+                    return empty_observability_read_model("No EvalRunPlan found under the runs root.")
+            else:
+                safe_plan_path = validate_project_relative_path(plan_path, "plan_path")
+                eval_plan_path = _safe_project_file(root, safe_plan_path, "plan_path")
+            return build_observability_read_model(eval_plan_path, project_root=root)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     @app.post("/playground/runs", response_model=PlaygroundRunResponse)
     def create_playground_run(request: PlaygroundRunRequest) -> PlaygroundRunResponse:
         try:
@@ -243,7 +263,7 @@ def create_app(
         try:
             safe_experiment_path = validate_project_relative_path(experiment_path, "experiment_path")
             safe_variant_id = validate_trace_token(variant_id, "variant_id")
-            experiment_file = _safe_project_file(root, safe_experiment_path)
+            experiment_file = _safe_project_file(root, safe_experiment_path, "experiment_path")
             experiment = load_experiment(experiment_file)
             if safe_variant_id not in experiment.agents:
                 raise ValueError(f"variant id not found in experiment: {safe_variant_id}")
@@ -416,8 +436,8 @@ def _safe_run_dir(runs_root: Path, run_id: str) -> Path:
     return candidate
 
 
-def _safe_project_file(project_root: Path, relative_path: str) -> Path:
-    safe_path = validate_project_relative_path(relative_path, "experiment_path")
+def _safe_project_file(project_root: Path, relative_path: str, field_name: str) -> Path:
+    safe_path = validate_project_relative_path(relative_path, field_name)
     root = project_root.resolve()
     candidate = (root / safe_path).resolve()
     if root not in candidate.parents:

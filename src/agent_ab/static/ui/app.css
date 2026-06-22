@@ -1,17 +1,19 @@
 :root {
-  --paper: #f6f2e9;
-  --panel: #fffaf2;
-  --ink: #1c2421;
-  --muted: #5d665f;
-  --line: #d8d0c2;
-  --rail: #162420;
-  --rail-soft: #223631;
-  --teal: #0b6a78;
-  --copper: #b76224;
-  --moss: #2d7650;
-  --red: #a1423c;
-  --blue: #2d5d8a;
-  --focus: #f4b740;
+  --paper: #edf2ee;
+  --panel: #fbfcf7;
+  --panel-soft: #f2f6ef;
+  --ink: #17201c;
+  --muted: #5f6c64;
+  --line: #c8d1ca;
+  --rail: #17302d;
+  --rail-soft: #214540;
+  --teal: #087982;
+  --copper: #b45f2a;
+  --moss: #2f7d58;
+  --red: #a4433f;
+  --blue: #385c9b;
+  --plum: #68436f;
+  --focus: #e7b84b;
   color-scheme: light;
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
 }
@@ -24,7 +26,7 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    linear-gradient(90deg, rgba(22, 36, 32, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(23, 32, 28, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
     var(--paper);
   color: var(--ink);
 }
@@ -75,7 +77,7 @@ textarea:focus-visible {
   height: 44px;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  background: #223631;
+  background: #214540;
   color: #f8c05b;
   font-family: "Cascadia Mono", Consolas, monospace;
   font-weight: 700;
@@ -199,7 +201,7 @@ h3 {
 
 .metrics-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -208,7 +210,7 @@ h3 {
 .panel {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 250, 242, 0.92);
+  background: rgba(251, 252, 247, 0.95);
 }
 
 .metric-tile {
@@ -267,12 +269,28 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 8px 10px;
-  background: #fffdf8;
+  background: white;
   color: var(--ink);
 }
 
 .panel {
   padding: 16px;
+}
+
+.regression-panel,
+.run-heading {
+  margin-top: 16px;
+}
+
+.compact-heading {
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .panel-title {
@@ -309,7 +327,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: #f1eadc;
+  background: #e7eee7;
 }
 
 .run-row {
@@ -341,6 +359,24 @@ tbody tr:hover {
 .badge.error {
   background: #f3d9d6;
   color: var(--red);
+}
+
+.badge.neutral {
+  background: #e7eced;
+  color: var(--blue);
+}
+
+.table-subtext {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-top: 3px;
+}
+
+.table-action {
+  min-width: 66px;
+  min-height: 34px;
+  padding: 6px 10px;
 }
 
 .list-stack {
@@ -384,7 +420,7 @@ tbody tr:hover {
   align-items: center;
   padding: 9px 10px;
   border-left: 4px solid var(--blue);
-  background: #f5efe4;
+  background: var(--panel-soft);
 }
 
 .span-node.is-selected {
@@ -443,7 +479,7 @@ tbody tr:hover {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #f5efe4;
+  background: var(--panel-soft);
   color: var(--ink);
   font-family: "Cascadia Mono", Consolas, monospace;
   font-size: 0.78rem;
@@ -469,7 +505,7 @@ tbody tr:hover {
   border: 1px solid transparent;
   border-radius: 6px;
   padding: 8px;
-  background: #f8f1e6;
+  background: var(--panel-soft);
   color: var(--ink);
   text-align: left;
 }
@@ -520,7 +556,7 @@ tbody tr:hover {
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 9px 10px;
-  background: #fffdf8;
+  background: white;
   color: var(--ink);
 }
 
@@ -541,7 +577,7 @@ tbody tr:hover {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #f8f1e6;
+  background: var(--panel-soft);
 }
 
 .prompt-card label,
@@ -580,7 +616,7 @@ tbody tr:hover {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #f8f1e6;
+  background: var(--panel-soft);
 }
 
 .rendered-message pre {
@@ -624,6 +660,10 @@ tbody tr:hover {
   .prompt-card,
   .action-panel,
   .metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-grid {
     grid-template-columns: 1fr;
   }
 

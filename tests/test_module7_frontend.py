@@ -19,10 +19,11 @@ def test_frontend_shell_serves_local_assets(tmp_path: Path) -> None:
     assert html.status_code == 200
     assert css.status_code == 200
     assert js.status_code == 200
-    assert "Workbench shell" in html.text
+    assert "Workbench dashboard" in html.text
     assert "Run replay" in html.text
     assert "/experiments" in js.text
     assert "/runs" in js.text
+    assert "/observability" in js.text
     assert "/playground/runs" in js.text
     assert "/playground/views" in js.text
     assert "https://" not in html.text + css.text + js.text

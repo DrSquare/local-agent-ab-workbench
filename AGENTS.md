@@ -140,9 +140,11 @@ Next architectural direction:
 - Sandbox provider contracts map existing guardrails into provider-level
   workspace, command, network, timeout, artifact, and approval/denial event
   policy without adding new real execution paths.
-- Next implementation should add Module 17 Observe/Evaluate/Improve read
-  models and GUI routes over EvalTask, EvalLog, trace, scorer, artifact, and
-  sandbox status data.
+- Observe/Evaluate/Improve read models and GUI routes expose EvalTask, EvalLog,
+  trace, scorer, artifact, and sandbox status data through the local API and
+  existing no-build frontend shell.
+- Next implementation should add Module 18 repeated-eval regression review UI
+  over the Module 17 read models.
 
 ## Coding rules
 
@@ -181,7 +183,7 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 17: Arize-Inspired Observability and Eval GUI after reviewing
-`PLAN.md`, `TECH_STACK.md`, and `sprint.md`. Start with backend read models over
-EvalTask, EvalLog, trace, scorer, artifact, and sandbox status data before
-expanding the existing no-build frontend shell.
+Implement Module 18: Eval Analysis and Regression Review UI after reviewing
+`PLAN.md`, `TECH_STACK.md`, and `sprint.md`. Build on the Module 17
+observability read models with repeated-run comparison, score deltas, failure
+taxonomy filters, saved triage notes, and local export links.

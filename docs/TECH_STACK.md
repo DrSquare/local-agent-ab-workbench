@@ -84,21 +84,34 @@ external fonts, or CDN assets as required dependencies for the GUI.
 
 ## Module 17 Frontend Architecture
 
-Module 17 should stay on the existing static frontend unless the implementation
-proves the no-build shell is a bottleneck. The first goal is stable data flow,
-not framework migration.
+Module 17 stays on the existing static frontend. The implemented goal is stable
+data flow through backend read models, not framework migration.
 
 | Concern | Initial choice | Review checkpoint |
 |---|---|---|
-| Routing | Hash routes in `app.js` | Revisit only if nested route state becomes unmaintainable |
-| Data access | Small typed fetch wrappers around local APIs | Backend responses should be fixture-testable without a browser |
-| View models | Backend read models for dashboard, eval rows, trace links, and Playground handoff | Avoid rebuilding aggregate logic in browser state |
+| Routing | Existing view switching in `app.js` | Revisit hash routes only if nested route state becomes necessary |
+| Data access | Small typed fetch wrappers around local APIs | Backend responses are fixture-tested without a browser |
+| View models | Backend read models for dashboard, eval rows, regression rows, trace links, sandbox status, and Playground handoff | Avoid rebuilding aggregate logic in browser state |
 | Components | Plain HTML templates plus CSS utility classes | Split into `components/` only after duplication appears |
 | Tables | Native tables with sticky headers, compact density, and filter controls | Consider TanStack only if sorting/filtering becomes too complex |
 | Visualizations | CSS/SVG bars and badges | Add a chart library only for real aggregate visualization needs |
 | Accessibility | Keyboard navigation, visible focus, semantic tables, status text | Playwright checks should cover keyboard-critical flows |
 | Responsiveness | Laptop-first dense layout, then narrow responsive fallback | No overlapping controls or hidden action buttons |
 | Offline proof | Tests assert local asset loading and no external network dependencies | Required before any GUI module is marked done |
+
+## Module 17 Observability GUI Stack
+
+These choices are active for the implemented observe/evaluate/improve shell.
+
+| Need | Choice | Reason |
+|---|---|---|
+| Read models | `agent_ab.observability` Pydantic models | Stable API payloads for dashboard, eval rows, regressions, trace links, handoffs, and sandbox status |
+| API | `GET /observability` | One local endpoint over EvalRunPlan/EvalLog artifacts with optional plan-path selection |
+| Dashboard | Existing static UI metric tiles and compact tables | Shows local inventory, eval health, pass rate, denials, and regression queue |
+| Evaluate | Native table over eval rows | Keeps scorer, trace, artifact, sandbox, and handoff references scan-friendly |
+| Observe | Existing trace visualizer route | Reuses span tree, filters, detail pane, and waterfall timing |
+| Improve | Existing Playground route plus eval handoff | Failed/error eval rows can seed Playground review context |
+| Settings | Local posture details | Shows local asset, eval plan, log, and sandbox status without cloud telemetry |
 
 ## Current Core Stack
 
@@ -397,7 +410,7 @@ Coverage expectations by phase:
 | Post-MVP | Aggregate comparison exports, explicit OpenClaw execution opt-in, optional Playwright browser tests, PR/release workflow docs, guardrail edge-case tests |
 | Module 13 | Expert seed schema/generation, EvalTask strict schema, sample selection, solver/scorer references, eval-log contract |
 | Module 16 | Sandbox provider strict schemas, local provider example, Docker contract validation, guardrail mapping, approval/denial events, scanner sandbox-denial classification |
-| Module 17 | Observe/evaluate/improve navigation, eval dashboard summaries, trace/session drilldown, local-only assets, responsive dashboard layout |
+| Module 17 | Observability read models, `/observability` API, dashboard/evaluate/observe/improve/settings routes, local-only assets, responsive dashboard layout |
 | Module 18 | Regression tables, score deltas, failure filters, export links, saved triage notes |
 | Module 19 | Prompt/harness comparison, Playground handoff, candidate promotion, rerun queue behavior |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
@@ -446,6 +459,7 @@ agent-ab-workbench/
     cli.py
     config.py
     eval_runner.py
+    observability.py
     playground.py
     sandbox.py
     server.py

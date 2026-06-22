@@ -65,7 +65,7 @@ def test_browser_ui_loads_inventory_and_trace(live_ui_server: str) -> None:
             assert int(page.locator("#experimentCount").inner_text()) >= 2
             assert page.locator("#runCount").inner_text() == "1"
 
-            page.click('[data-view="runs"]')
+            page.click('[data-view="evaluate"]')
             page.click("tr.run-row")
             page.wait_for_selector(".span-node", timeout=5000)
 
@@ -84,7 +84,7 @@ def test_browser_playground_replay_roundtrip(live_ui_server: str) -> None:
             page.goto(f"{live_ui_server}/ui")
             page.wait_for_selector("#apiDot.is-ok", timeout=5000)
 
-            page.click('[data-view="playground"]')
+            page.click('[data-view="improve"]')
             page.fill("#pgRunId", "playground.rename_todo.browser")
             page.click('[data-action="replay"]')
             page.wait_for_function(

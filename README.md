@@ -23,6 +23,7 @@ This repository currently implements:
 - **Module 14: EvalSet planning**
 - **Module 15: EvalLog analysis and scanner exports**
 - **Module 16: Sandbox provider contracts**
+- **Module 17: Observability and eval GUI read models**
 
 ## What the implemented modules include
 
@@ -61,6 +62,10 @@ This repository currently implements:
 - RunLimits-to-sandbox mapping over existing guardrail helpers
 - EvalLog-compatible sandbox approval and denial events
 - Scanner classification for sandbox denial events
+- Observability read models for dashboard summaries, eval rows, regression
+  rows, trace links, Playground handoffs, and sandbox status
+- Local `/observability` API endpoint
+- Dashboard, Evaluate, Observe, Improve, and Settings routes in the no-build UI
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -197,6 +202,7 @@ GET  /ui
 GET  /experiments
 GET  /taskpacks
 GET  /runs
+GET  /observability
 GET  /playground/defaults
 POST /playground/runs
 GET  /playground/views
@@ -282,6 +288,7 @@ agent-ab-workbench/
     config.py
     eval_runner.py
     guardrails.py
+    observability.py
     playground.py
     reporting.py
     sandbox.py
@@ -326,12 +333,13 @@ agent-ab-workbench/
     test_module14_eval_runner.py
     test_module15_analysis_scanner.py
     test_module16_sandbox_provider.py
+    test_module17_observability_gui.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Proceed to Module 17 by adding local Observe/Evaluate/Improve read models and
-GUI routes over EvalTask, EvalLog, trace, scorer, artifact, and sandbox status
-data.
+Proceed to Module 18 by adding repeated-eval regression review UI over the
+Module 17 read models, including score deltas, failure taxonomy filters, saved
+triage notes, and local export links.

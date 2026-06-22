@@ -22,6 +22,7 @@ The current workbench has strong local foundations:
 - Mock and OpenClaw adapter preparation.
 - Offline-first defaults and explicit execution gates.
 - EvalTask, EvalSet, EvalLog, analysis, and sandbox provider contracts.
+- Local observability read models and UI routes over eval logs, traces, handoffs, and sandbox status.
 
 The weak point is architectural vocabulary. The repo currently centers on A/B experiments and Playground replay, but those are workflows built on top of a deeper evaluation model. Without explicit `Dataset`, `Sample`, `Solver`, `Scorer`, and `EvalLog` concepts, future adapters and reports will keep growing around ad hoc run artifacts.
 
@@ -62,3 +63,4 @@ The weak point is architectural vocabulary. The repo currently centers on A/B ex
 - Existing A/B comparison and Playground replay continue to work as workflows over eval logs.
 - Real adapters cannot execute without an explicit solver and sandbox policy.
 - Logs are sufficiently structured for UI inspection, CSV/JSON export, and future scanner workflows.
+- Dashboard and eval GUI views consume read models derived from local logs rather than cloud telemetry.

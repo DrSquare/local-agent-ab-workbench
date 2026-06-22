@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 16: Sandbox Provider Interface.
+Module 17: Arize-Inspired Observability and Eval GUI.
 
 ## Status
 
@@ -35,6 +35,7 @@ Module 16: Sandbox Provider Interface.
 | Module 14 Eval Runner and Eval Sets | Done | EvalSet validation, deterministic EvalRunPlan generation, resume/skip detection over EvalLog JSON, failure/sample limits, plan JSON export, CLI commands, and tests are implemented without new real execution. |
 | Module 15 Analysis and Scanner Layer | Done | EvalRunPlan/EvalLog loading, per-sample JSON/CSV exports, aggregate summaries, local scanner findings, failure taxonomy hooks, CLI commands, and tests are implemented. |
 | Module 16 Sandbox Provider Interface | Done | Provider-level workspace, command, network, timeout, artifact, and approval/denial event contracts map onto existing guardrails without adding new execution. |
+| Module 17 Observability and Eval GUI | Done | Backend read models, `/observability`, Dashboard/Evaluate/Observe/Improve/Settings routes, eval rows, regression queue, sandbox status, and Playground handoff are implemented. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -94,6 +95,23 @@ Module 16: Sandbox Provider Interface.
 - Browser-level tests cover navigation, dashboard data loading, trace drilldown,
   Playground handoff, responsive layout, and offline asset assumptions.
 
+## Module 17 Acceptance Criteria
+
+- Backend read models expose dashboard summaries, eval-run rows, regression
+  rows, trace links, scorer evidence, artifact references, Playground handoffs,
+  and sandbox status.
+- The local API exposes `/observability` over EvalRunPlan/EvalLog artifacts.
+- No-build UI modes expose Dashboard, Evaluate, Observe, Improve, and Settings.
+- Evaluate mode shows task/sample status, scorer outcomes, pass rates, score
+  deltas, latency, trace links, and sandbox denial badges.
+- Observe mode keeps trace/session drilldown available through the local trace
+  visualizer.
+- Improve mode can hand failed or errored samples to Playground review context.
+- UI assets remain local-only with no external fonts, scripts, CDNs, Arize SDK,
+  Phoenix dependency, or cloud telemetry.
+- Module 17 tests cover backend read models, API payloads, static UI assets,
+  local-only assumptions, and regression ordering.
+
 ## Completed Post-MVP Criteria
 
 - Repeated local runs can be grouped by task and variant.
@@ -116,6 +134,6 @@ Module 16: Sandbox Provider Interface.
 
 ## Next Sprint Candidate
 
-Module 17: Arize-Inspired Observability and Eval GUI. Start with backend read
-models over EvalTask, EvalLog, trace, scorer, artifact, and sandbox status data
-before expanding the existing no-build frontend shell.
+Module 18: Eval Analysis and Regression Review UI. Build on the Module 17 read
+models with repeated-run comparison, score deltas, failure taxonomy filters,
+saved triage notes, and local export links.

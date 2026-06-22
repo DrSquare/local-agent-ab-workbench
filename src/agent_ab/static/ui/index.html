@@ -17,10 +17,11 @@
           </span>
         </div>
         <nav class="nav-list">
-          <button class="nav-item is-active" data-view="overview" type="button">Overview</button>
-          <button class="nav-item" data-view="runs" type="button">Runs</button>
-          <button class="nav-item" data-view="trace" type="button">Trace</button>
-          <button class="nav-item" data-view="playground" type="button">Playground</button>
+          <button class="nav-item is-active" data-view="dashboard" type="button">Dashboard</button>
+          <button class="nav-item" data-view="evaluate" type="button">Evaluate</button>
+          <button class="nav-item" data-view="observe" type="button">Observe</button>
+          <button class="nav-item" data-view="improve" type="button">Improve</button>
+          <button class="nav-item" data-view="settings" type="button">Settings</button>
         </nav>
         <div class="rail-footer">
           <span class="status-dot" id="apiDot" aria-hidden="true"></span>
@@ -31,15 +32,15 @@
       <main class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Offline desktop-agent evaluation</p>
-            <h1>Workbench shell</h1>
+            <p class="eyebrow">Offline agent evaluation cockpit</p>
+            <h1>Workbench dashboard</h1>
           </div>
           <button class="tool-button" id="refreshButton" type="button">Refresh</button>
         </header>
 
-        <section class="view is-active" id="view-overview" aria-labelledby="overviewTitle">
+        <section class="view is-active" id="view-dashboard" aria-labelledby="dashboardTitle">
           <div class="section-heading">
-            <h2 id="overviewTitle">Local inventory</h2>
+            <h2 id="dashboardTitle">Local status</h2>
             <span id="lastLoaded">Not loaded</span>
           </div>
           <div class="metrics-row" aria-label="Local workbench totals">
@@ -54,6 +55,18 @@
             <div class="metric-tile">
               <span>Runs</span>
               <strong id="runCount">0</strong>
+            </div>
+            <div class="metric-tile">
+              <span>Eval samples</span>
+              <strong id="evalSampleCount">0</strong>
+            </div>
+            <div class="metric-tile">
+              <span>Pass rate</span>
+              <strong id="evalPassRate">-</strong>
+            </div>
+            <div class="metric-tile">
+              <span>Sandbox denials</span>
+              <strong id="sandboxDenialCount">0</strong>
             </div>
           </div>
           <div class="split-grid">
@@ -78,11 +91,53 @@
               <div id="taskpackList" class="list-stack"></div>
             </section>
           </div>
+          <section class="panel regression-panel" aria-labelledby="regressionTitle">
+            <div class="section-heading compact-heading">
+              <h3 id="regressionTitle">Regression queue</h3>
+              <span id="regressionCount">0 flagged</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sample</th>
+                    <th>Previous</th>
+                    <th>Current</th>
+                    <th>Delta</th>
+                    <th>Trace</th>
+                  </tr>
+                </thead>
+                <tbody id="regressionRows"></tbody>
+              </table>
+            </div>
+          </section>
         </section>
 
-        <section class="view" id="view-runs" aria-labelledby="runsTitle">
+        <section class="view" id="view-evaluate" aria-labelledby="evaluateTitle">
           <div class="section-heading">
-            <h2 id="runsTitle">Runs</h2>
+            <h2 id="evaluateTitle">Evaluate</h2>
+            <span id="evalPlanSource">No eval plan loaded</span>
+          </div>
+          <section class="panel">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Sample</th>
+                    <th>Solver</th>
+                    <th>Score</th>
+                    <th>Trace</th>
+                    <th>Sandbox</th>
+                    <th>Improve</th>
+                  </tr>
+                </thead>
+                <tbody id="evalRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <div class="section-heading run-heading">
+            <h3 id="runsTitle">Run artifacts</h3>
             <span>Select a run to inspect its trace</span>
           </div>
           <section class="panel">
@@ -103,9 +158,9 @@
           </section>
         </section>
 
-        <section class="view" id="view-trace" aria-labelledby="traceTitle">
+        <section class="view" id="view-observe" aria-labelledby="traceTitle">
           <div class="section-heading">
-            <h2 id="traceTitle">Trace</h2>
+            <h2 id="traceTitle">Observe</h2>
             <span id="selectedRunLabel">No run selected</span>
           </div>
           <div class="trace-controls panel" aria-label="Trace controls">
@@ -140,9 +195,9 @@
           </section>
         </section>
 
-        <section class="view" id="view-playground" aria-labelledby="playgroundTitle">
+        <section class="view" id="view-improve" aria-labelledby="playgroundTitle">
           <div class="section-heading">
-            <h2 id="playgroundTitle">Playground</h2>
+            <h2 id="playgroundTitle">Improve</h2>
             <span>Deterministic mock adapter only</span>
           </div>
           <div class="playground-layout">
@@ -264,6 +319,23 @@
                 <div id="viewList" class="list-stack"></div>
               </section>
             </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-settings" aria-labelledby="settingsTitle">
+          <div class="section-heading">
+            <h2 id="settingsTitle">Settings</h2>
+            <span>Local runtime posture</span>
+          </div>
+          <div class="settings-grid">
+            <section class="panel" aria-labelledby="privacyTitle">
+              <h3 id="privacyTitle">Privacy</h3>
+              <dl class="detail-list" id="privacyDetails"></dl>
+            </section>
+            <section class="panel" aria-labelledby="sandboxTitle">
+              <h3 id="sandboxTitle">Sandbox</h3>
+              <dl class="detail-list" id="sandboxDetails"></dl>
+            </section>
           </div>
         </section>
       </main>
