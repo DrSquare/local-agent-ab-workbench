@@ -4,20 +4,25 @@
 
 The previous stack document mixed current dependencies with later MVP choices.
 That made FastAPI, React, SQLite, Tauri, and adapter work look equally current
-even though the repository is still in Module 1 schema validation.
+when the repository was still in its schema-only stage.
 
 Post-MVP review against Inspect AI adds a stronger architectural critique:
 the stack needs a stable evaluation core, not just experiment/reporting
 surfaces. Inspect's task/dataset/solver/scorer/log/sandbox pattern is the
 reference shape for that core.
 
+Review against Arize adds a GUI critique: once EvalTask and EvalLog contracts
+exist, the frontend should be planned as a local observe/evaluate/improve
+workbench rather than a set of unrelated utility pages.
+
 This revision separates the stack into:
 
 - Current core stack used by implemented modules.
-- Module 2 stack needed for taskpack contracts.
+- Implemented taskpack, backend, trace, Playground, reporting, and adapter
+  choices.
 - Deferred runtime, backend, and frontend choices.
 - Dependency rules that preserve the offline-first goal.
-- Planned evaluation-core components inspired by Inspect AI.
+- Planned evaluation-core and GUI components inspired by Inspect AI and Arize.
 
 ## Design Principles
 
@@ -37,6 +42,8 @@ This revision separates the stack into:
   sandboxes should have explicit contracts.
 - Logs first: every run should produce a structured eval log that can be
   inspected, replayed, compared, and scanned.
+- Observe/evaluate/improve first: the GUI should make trace inspection,
+  regression review, and prompt/harness iteration feel like one local loop.
 
 ## Inspect-Inspired Architecture Map
 
@@ -56,9 +63,47 @@ Do not add `inspect-ai` as a required dependency in Module 13. The next step is
 to adopt compatible boundaries while preserving this project's local desktop
 agent contracts and YAML authoring model.
 
+## Arize-Inspired GUI Stack Map
+
+Arize is a product and UX reference, not a dependency. The local GUI should
+borrow the observe/evaluate/improve organization while staying offline-first and
+served from the local FastAPI app.
+
+| GUI layer | Local stack choice | Notes |
+|---|---|---|
+| Workbench shell | Existing static HTML/CSS/JS | Keep no-build until the UI needs a framework |
+| Observe | Trace/session explorer over local trace APIs | Span tree, status/kind filters, details, timing, artifacts |
+| Evaluate | Eval dashboard over EvalTask/EvalLog APIs | Run status, scorer outcomes, pass rates, regressions, score deltas |
+| Improve | Playground-linked comparison views | Prompt, params, tool policy, harness, and candidate promotion |
+| Learn/review | Local notes and failure clusters | JSON/SQLite-backed initially; no cloud account needed |
+| Visualization | CSS/SVG first, optional chart library later | Avoid chart dependencies until aggregate views require them |
+| Standards | OpenInference/OpenTelemetry-compatible naming | Use familiar span/trace/session terms without proprietary formats |
+
+Do not add Arize-hosted products, Phoenix, hosted scripts, telemetry SDKs,
+external fonts, or CDN assets as required dependencies for the GUI.
+
+## Module 17 Frontend Architecture
+
+Module 17 should stay on the existing static frontend unless the implementation
+proves the no-build shell is a bottleneck. The first goal is stable data flow,
+not framework migration.
+
+| Concern | Initial choice | Review checkpoint |
+|---|---|---|
+| Routing | Hash routes in `app.js` | Revisit only if nested route state becomes unmaintainable |
+| Data access | Small typed fetch wrappers around local APIs | Backend responses should be fixture-testable without a browser |
+| View models | Backend read models for dashboard, eval rows, trace links, and Playground handoff | Avoid rebuilding aggregate logic in browser state |
+| Components | Plain HTML templates plus CSS utility classes | Split into `components/` only after duplication appears |
+| Tables | Native tables with sticky headers, compact density, and filter controls | Consider TanStack only if sorting/filtering becomes too complex |
+| Visualizations | CSS/SVG bars and badges | Add a chart library only for real aggregate visualization needs |
+| Accessibility | Keyboard navigation, visible focus, semantic tables, status text | Playwright checks should cover keyboard-critical flows |
+| Responsiveness | Laptop-first dense layout, then narrow responsive fallback | No overlapping controls or hidden action buttons |
+| Offline proof | Tests assert local asset loading and no external network dependencies | Required before any GUI module is marked done |
+
 ## Current Core Stack
 
-This is the base stack that remains active through Module 5.
+This is the base stack that remains active for config validation, CLI workflows,
+local APIs, and docs-backed roadmap work.
 
 | Layer | Choice | Status | Reason |
 |---|---|---|---|
@@ -173,12 +218,17 @@ These choices are for the UI phase, not the schema modules.
 | Playground result view | Native detail lists and rendered-message panels | Module 9 | Replay feedback without adding chart/editor dependencies |
 | Trace tree | Native expandable tree in the static shell | Module 8 | Hierarchical spans are tree-shaped initially |
 | Timeline | CSS waterfall bars | Module 8 | Span duration visualization without canvas or graph dependencies |
+| Eval dashboard | Static shell dashboard backed by local EvalLog APIs | Module 17 | Arize-inspired Evaluate view without a framework rewrite |
+| Regression review | Native tables with sticky columns and dense filters | Module 18 | Prefer readable local data grids before adding table dependencies |
+| Prompt/harness comparison | Playground-linked comparison panels | Module 19 | Improve loop over local configs and rerun queues |
 | Packaging | Tauri | Later | Desktop packaging after local web UI is stable |
 
 The first frontend should be a workbench, not a landing page.
 
 React, Vite, and TanStack remain reasonable later choices if the frontend grows
-past the no-build shell.
+past the no-build shell. A framework migration should happen only after the
+EvalTask/EvalLog API shape is stable and the static shell becomes harder to
+maintain than replace.
 
 ## Model and Agent Integration
 
@@ -292,7 +342,20 @@ Coverage expectations by phase:
 | Module 12 | Demo helper, JSON/CSV report export, reporting CLI, known limitations docs |
 | Post-MVP | Aggregate comparison exports, explicit OpenClaw execution opt-in, optional Playwright browser tests, PR/release workflow docs, guardrail edge-case tests |
 | Module 13 | Expert seed schema/generation, EvalTask strict schema, sample selection, solver/scorer references, eval-log contract |
+| Module 17 | Observe/evaluate/improve navigation, eval dashboard summaries, trace/session drilldown, local-only assets, responsive dashboard layout |
+| Module 18 | Regression tables, score deltas, failure filters, export links, saved triage notes |
+| Module 19 | Prompt/harness comparison, Playground handoff, candidate promotion, rerun queue behavior |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
+
+Module 17 fixture expectations:
+
+- API tests cover dashboard summaries, eval-run rows, regression rows, trace
+  links, and Playground handoff payloads.
+- Browser tests cover Dashboard -> Evaluate -> Observe -> Improve navigation.
+- Frontend tests use local fixture data; no test should require a live model,
+  real OpenClaw run, external network call, or hosted asset.
+- Screenshot checks should cover at least one desktop viewport and one narrow
+  viewport once the Module 17 UI is implemented.
 
 ## File Layout Direction
 
@@ -329,6 +392,8 @@ agent-ab-workbench/
         index.html
         app.css
         app.js
+        components/
+        views/
     schemas/
       common.py
       eval.py
@@ -354,6 +419,7 @@ agent-ab-workbench/
     test_module7_frontend.py
     test_module13_seed_generation.py
     test_module13_eval_core.py
+    test_module17_observability_gui.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and
@@ -365,6 +431,7 @@ Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and
 - O*NET program: https://www.dol.gov/agencies/eta/onet
 - O*NET Task Statements data dictionary: https://www.onetcenter.org/dictionary/30.3/text/task_statements.html
 - NBER Working Paper 34255, Appendix A.4: https://www.nber.org/system/files/working_papers/w34255/w34255.pdf
+- Arize homepage: https://arize.com/
 - Arize Quickstart Guide: https://arize.com/resource/arize-quickstart-guide/
 - AgentEval .NET toolkit: https://agenteval.dev/
 - AgentEval DAG paper: https://arxiv.org/abs/2604.23581

@@ -2,7 +2,8 @@
 
 ## Current Sprint
 
-Module 13: Expert seed generation and Inspect-inspired eval core.
+Module 13: Expert seed generation, Inspect-inspired eval core, and
+Arize-inspired GUI planning.
 
 ## Status
 
@@ -29,6 +30,8 @@ Module 13: Expert seed generation and Inspect-inspired eval core.
 | Post-MVP guardrail edge cases | Done | Command normalization, run-dir path policy, POSIX root handling, and real-adapter trace aliases are covered. |
 | Inspect AI reference review | Done | Mission, plan, tech stack, and sprint tracker now use task/dataset/solver/scorer/log/sandbox concepts as the next architecture reference. |
 | Module 13 expert seed generation | Done | Public Mercor APEX seeds can generate a TaskPack with O*NET Task IDs and NBER Appendix A.4-style IWA metadata. |
+| Arize-inspired GUI plan | Done | Plan, tech stack, and sprint tracker now define a local Observe/Evaluate/Improve GUI roadmap without adding Arize or cloud telemetry dependencies. |
+| Arize GUI self-review | Done | Roadmap now includes Module 17 information architecture, backend read-model expectations, static frontend architecture, and fixture-based test requirements. |
 | Module 13 EvalTask core | Planned | Define strict EvalTask, EvalSample, solver reference, scorer reference, and EvalLog contracts over existing and expert-seeded TaskPacks before adding more real execution. |
 
 ## Module 13 Seed Generation Acceptance Criteria
@@ -52,6 +55,29 @@ Module 13: Expert seed generation and Inspect-inspired eval core.
 - Current A/B reporting and Playground replay can be described as workflows over EvalTask/EvalLog.
 - Module 13 tests cover every new schema rule.
 
+## Arize-Inspired GUI Acceptance Criteria
+
+- Module 17 starts only after EvalTask and EvalLog contracts are stable enough
+  to drive dashboard, trace, and regression views.
+- The first GUI screen is the workbench dashboard, not a landing page.
+- Top-level navigation exposes Observe, Evaluate, and Improve modes.
+- Module 17 includes Dashboard, Evaluate, Observe, Improve, and Settings routes
+  in the existing no-build frontend shell.
+- Observe mode joins trace/session spans, artifacts, errors, timing, and scorer
+  context.
+- Evaluate mode shows run status, pass rates, scorer results, score deltas,
+  regressions, task metadata, and trace links.
+- Improve mode opens failed or regressed samples in Playground with original
+  prompt, model, parameters, tool policy, trace, and scorer context.
+- Backend read models cover dashboard summaries, eval-run rows, regression
+  rows, trace links, and Playground handoff payloads before UI complexity grows.
+- Regression review supports variant and repeated-run comparison before
+  candidate promotion.
+- Frontend assets remain local-only: no external fonts, scripts, CDNs, images,
+  cloud telemetry, Arize SDK, or Phoenix dependency.
+- Browser-level tests cover navigation, dashboard data loading, trace drilldown,
+  Playground handoff, responsive layout, and offline asset assumptions.
+
 ## Completed Post-MVP Criteria
 
 - Repeated local runs can be grouped by task and variant.
@@ -74,4 +100,6 @@ Module 13: Expert seed generation and Inspect-inspired eval core.
 
 ## Next Sprint Candidate
 
-Module 13 continuation: EvalTask schema, normalized sample selection, scorer references, and EvalLog contract.
+First finish Module 13 continuation: EvalTask schema, normalized sample
+selection, scorer references, and EvalLog contract. Then start Module 17:
+Arize-inspired local observability and eval GUI over those stable contracts.
