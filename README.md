@@ -18,6 +18,7 @@ This repository currently implements:
 - **Module 10: OpenClaw adapter preparation**
 - **Module 11: Guardrails and sandbox policy**
 - **Module 12: Demo and reporting**
+- **Module 13A: Expert seed TaskPack generation**
 
 ## What the implemented modules include
 
@@ -44,9 +45,11 @@ This repository currently implements:
 - Local demo runner plus JSON and CSV run report exports
 - Aggregate task/variant comparison reports across repeated local runs
 - Safety-gated OpenClaw execution helper requiring explicit opt-in
+- Mercor APEX-inspired expert seed generation with O*NET and NBER Appendix A.4 metadata
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
+- Example expert seed taskpack
 - pytest coverage for schema validation and prompt rendering
 
 ## Product direction
@@ -92,6 +95,20 @@ agent-ab validate-prompt prompts/baseline_openclaw.yaml
 ```bash
 agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
 ```
+
+## Generate an expert seed taskpack
+
+```bash
+agent-ab generate-seed-taskpack \
+  --output taskpacks/mercor_apex_expert_seeded/tasks.yaml
+agent-ab validate-taskpack taskpacks/mercor_apex_expert_seeded/tasks.yaml
+```
+
+The built-in seeds use public Mercor APEX role/sample-task facts, O*NET occupation
+and task IDs, and NBER Appendix A.4-style IWA classification metadata. The full
+APEX-Agents dataset is gated, so the generator does not crawl it and marks the
+generated tasks as requiring human review or licensed task artifacts before real
+benchmark use.
 
 ## Run a deterministic mock task
 
@@ -200,6 +217,9 @@ agent-ab-workbench/
     desktop_basics/
       tasks.yaml
       workspaces/
+    mercor_apex_expert_seeded/
+      tasks.yaml
+      workspaces/
     openclaw_demo/
       tasks.yaml
       workspaces/
@@ -212,6 +232,7 @@ agent-ab-workbench/
     playground.py
     reporting.py
     server.py
+    task_seed_generation.py
     static/
       ui/
         index.html
@@ -244,10 +265,13 @@ agent-ab-workbench/
     test_module10_openclaw_adapter.py
     test_module11_guardrails.py
     test_module12_reporting.py
+    test_module13_seed_generation.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-All planned MVP modules are implemented. Next work should focus on post-MVP hardening, aggregate reporting, and safety-gated real adapter execution.
+Continue Module 13 by adding the EvalTask core: explicit sample selection,
+solver references, scorer references, and EvalLog contracts over existing
+TaskPacks, including the expert seed taskpack.

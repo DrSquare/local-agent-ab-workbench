@@ -11,6 +11,10 @@ eval logs, analysis, and sandboxed execution. A/B comparison, trace debugging,
 and Playground replay remain core workflows, but they sit on top of a reusable
 evaluation model rather than defining the model themselves.
 
+The future GUI should turn those contracts into a local Observe, Evaluate, and
+Improve cockpit inspired by Arize's agent-engineering UX while preserving the
+project's offline-first and user-controlled storage requirements.
+
 ## Planning Critique
 
 The original plan had the right product loop, but it mixed long-term runtime and
@@ -29,6 +33,12 @@ core." The workbench should not clone Inspect or depend on it by default; it
 should adopt the component boundaries that make evaluations easier to compose,
 resume, analyze, and extend.
 
+The Arize reference adds a complementary product critique: the existing shell
+has useful local screens, but the roadmap should name the full agent debugging
+loop as a coherent GUI. Users should be able to observe traces, evaluate quality
+and regressions, then improve prompts or harnesses without jumping between
+unrelated views.
+
 ## Inspect AI Reference Takeaways
 
 | Inspect idea | Workbench adaptation |
@@ -42,9 +52,28 @@ resume, analyze, and extend.
 | Sandboxes gate tools | Disposable workspaces plus path, command, endpoint, timeout, and redaction policy |
 | Analysis scans logs | Reports, comparisons, and future scanners operate over local eval logs |
 
+## Arize UX Reference Takeaways
+
+Arize is a UX and workflow reference for the next GUI phase. The workbench
+should adapt its observe/evaluate/improve loop locally without depending on
+Arize-hosted products, Phoenix, or managed observability.
+
+| Arize idea | Local workbench adaptation |
+|---|---|
+| Observe what the agent did | Trace/session explorer with span hierarchy, tool calls, artifacts, errors, timing, and local trace links |
+| Evaluate whether quality changed | Eval dashboard with task/sample status, scorer results, pass rates, score deltas, and regression flags |
+| Improve prompts and harnesses | Playground-linked prompt, parameter, and harness comparison before candidate promotion |
+| Continual learning loop | Local run history, failure clusters, saved notes, and rerun prompts that guide the next eval design |
+| Open standards | OpenInference/OpenTelemetry-compatible naming where useful, with no proprietary trace format requirement |
+
+This is a design reference only. External cloud calls, managed telemetry
+services, hosted assets, and Arize-specific dependencies remain out of scope for
+the core offline workbench.
+
 ## Current State
 
-Modules 1 through 12 plus post-MVP hardening are implemented with clear
+Modules 1 through 12 plus post-MVP hardening and the first Module 13 seed
+generation slice are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -62,6 +91,8 @@ local-first boundaries:
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
+- Mercor APEX-inspired expert seed TaskPack generation
+- O*NET occupation/task IDs and NBER Appendix A.4-style IWA metadata on seed tasks
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -182,6 +213,57 @@ Expected workflows:
 | TR-8 | Open in Playground | The selected task/span can be replayed with the same context |
 | TR-9 | Compare traces | A and B trace trees can be compared side by side |
 | TR-10 | Export trace | Trace JSON/JSONL can be exported locally |
+
+### Arize-Inspired GUI/UX Direction
+
+The next GUI implementation should organize the product around a compact
+desktop-agent debugging cockpit:
+
+| Surface | Local UX |
+|---|---|
+| Observe | Trace/session explorer showing what the agent did, including span hierarchy, tool calls, artifacts, errors, screenshots when available, and timing |
+| Evaluate | Eval dashboard showing run status, pass rates, scorer results, regressions, score deltas, task metadata, and trace links |
+| Improve | Playground-linked prompt and harness iteration with before/after comparison and candidate promotion |
+| Learn | Local run history, failure clusters, saved review notes, and rerun queues for future eval design |
+
+GUI implementation acceptance criteria:
+
+- The first screen is the workbench dashboard, not a marketing or landing page.
+- Navigation exposes Observe, Evaluate, and Improve as stable top-level modes.
+- Eval views join EvalTask, EvalLog, trace, scorer, and artifact references.
+- Trace/session drilldown supports span filters, status filters, details, and
+  links back to eval samples.
+- Regression review highlights changed outcomes, score deltas, and failing
+  samples across variants or repeated runs.
+- Improve workflows hand failed or regressed samples to the Playground with the
+  original prompt, model, parameters, tool policy, trace, and scorer context.
+- UI assets are served locally by the FastAPI app; no external fonts, scripts,
+  CDNs, images, or cloud telemetry are required.
+
+Implementation critique and revision:
+
+- Avoid a surface-level clone of Arize marketing language. The local workbench
+  should use a dense engineering dashboard with compact tables, trace drawers,
+  filters, and side-by-side comparison panels.
+- Do not start Module 17 by choosing a frontend framework. Start by defining
+  stable backend read models over EvalTask, EvalLog, trace, scorer, and artifact
+  data, then render them through the existing no-build shell.
+- Keep Observe, Evaluate, and Improve connected by IDs. A failing row should
+  carry enough references to open the trace, inspect scorer evidence, and launch
+  Playground replay without manual lookup.
+- Treat local privacy state as visible product state. Any workflow that would
+  use a real adapter, external endpoint, or non-local artifact should show the
+  relevant guardrail status before execution is prepared.
+
+Module 17 information architecture:
+
+| Route/mode | Primary content | Required data |
+|---|---|---|
+| Dashboard | Recent eval runs, health summary, regression count, slowest samples, and next rerun queue | Eval run summaries, aggregate scores, timestamps, run status |
+| Evaluate | Dense eval-run table with task/sample, variant, solver, scorer status, score deltas, latency, artifacts, and trace links | EvalTask, EvalLog, scorer results, artifact index |
+| Observe | Trace/session drilldown with span tree, filters, selected-span details, timing, artifacts, and scorer evidence | Trace envelope, span details, linked EvalLog IDs |
+| Improve | Playground handoff and before/after comparison for prompt, parameters, tool policy, harness, and candidate variant metadata | Playground View, prompt object, eval sample, trace context |
+| Settings | Local paths, privacy posture, adapter availability, and feature flags | Config discovery, guardrail status, optional dependency status |
 
 ## Module Roadmap
 
@@ -416,10 +498,20 @@ Deliverables:
 
 ### Module 13: Inspect-Inspired Eval Core
 
-Status: planned.
+Status: partially implemented.
 
 Goal: add explicit evaluation primitives underneath A/B comparison, reports, and
 Playground replay.
+
+Implemented seed-generation slice:
+
+- Strict expert seed metadata models
+- Built-in public Mercor APEX role/sample-task seeds
+- O*NET occupation and Task ID metadata
+- NBER Appendix A.4-style GWA/IWA/DWA classification metadata
+- `agent-ab generate-seed-taskpack` command
+- Example `taskpacks/mercor_apex_expert_seeded/tasks.yaml`
+- Tests for schema strictness, deterministic generation, and CLI output
 
 Deliverables:
 
@@ -479,6 +571,67 @@ Deliverables:
 - Optional Docker provider design, not required dependency
 - Tool approval and denial events in eval logs
 
+### Module 17: Arize-Inspired Observability and Eval GUI
+
+Status: planned.
+
+Goal: turn EvalTask and EvalLog data into a local observe/evaluate/improve
+cockpit.
+
+Deliverables:
+
+- Workbench dashboard with eval health summary, recent runs, pass-rate trends,
+  and regression counts
+- Hash-routed no-build UI modes for Dashboard, Evaluate, Observe, Improve, and
+  Settings
+- Evaluate mode with run tables, task/sample rows, scorer outcomes, status,
+  latency, artifact links, and trace links
+- Observe mode with trace/session drilldown joined to eval samples and scorer
+  outputs
+- Improve mode handoff from failed or regressed samples into Playground replay
+- Backend read models or API response shapes for dashboard summaries, eval-run
+  rows, regression rows, and Playground handoff payloads
+- Local-only UI assets and API calls served from the existing FastAPI backend
+- OpenInference/OpenTelemetry-compatible labels where they clarify spans and
+  trace relationships
+
+Non-goals:
+
+- No managed observability dependency
+- No external frontend assets or telemetry calls
+- No frontend framework rewrite until EvalTask and EvalLog contracts stabilize
+
+### Module 18: Eval Analysis and Regression Review UI
+
+Status: planned.
+
+Goal: make repeated eval runs easier to compare, triage, and export from the
+local GUI.
+
+Deliverables:
+
+- Variant and run comparison views over EvalLog aggregates
+- Regression table with previous score, current score, delta, trace link, and
+  sample metadata
+- Failure taxonomy filters and saved triage notes
+- Export links for local JSON/CSV analysis artifacts
+- Responsive table layouts that remain usable on laptop screens
+
+### Module 19: Prompt and Harness Improvement Loop UI
+
+Status: planned.
+
+Goal: close the local loop between eval failures, Playground experiments, and
+candidate variants.
+
+Deliverables:
+
+- Side-by-side prompt, parameter, tool-policy, and harness comparison
+- Candidate promotion workflow that writes reviewable local config changes
+- Rerun queue seeded from selected regressions or failure clusters
+- Saved improvement notes linked to EvalTask, EvalLog, and Playground View IDs
+- Guardrail reminders for any workflow that prepares real adapter execution
+
 ## Metric Strategy
 
 The metric registry is AgentEval-inspired and local-first, but Module 13 should
@@ -532,10 +685,16 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 - Should `EvalTask` configs be separate files or embedded into experiment YAML?
 - Should scorer results be stored as span details, eval-log top-level scores, or both?
 - What is the minimum sandbox provider interface before Docker or external agents?
+- Which Module 17 GUI data should be precomputed by the backend versus derived
+  in the browser from EvalLog and trace API responses?
 
 ## Immediate Next Work
 
-Implement Module 13: Inspect-inspired eval core.
+Continue Module 13: Inspect-inspired eval core. The expert seed generator is
+implemented; next, bind TaskPack samples to solver and scorer references through
+strict EvalTask and EvalLog contracts. The Arize-inspired GUI should follow
+those contracts instead of driving new data models; Module 17 starts after the
+eval-log shape is stable enough for dashboard, trace, and regression views.
 
 Module 13 acceptance criteria:
 
@@ -547,6 +706,7 @@ Module 13 acceptance criteria:
   artifacts, limits, and errors.
 - Existing A/B report and Playground concepts can be described as workflows over
   EvalTask/EvalLog without breaking current commands.
+- Expert-seeded TaskPacks can be selected as EvalTask sample sources.
 
 Completed post-MVP hardening:
 
@@ -555,11 +715,18 @@ Completed post-MVP hardening:
 - Browser-level UI tests that run when Playwright is available.
 - PR/release workflow documentation and PR template.
 - Windows/POSIX command/path edge-case coverage and real-adapter trace alias handling.
+- Expert seed TaskPack generation from public Mercor APEX, O*NET, and NBER
+  Appendix A.4 metadata.
 
 ## References
 
+- Mercor APEX Agents leaderboard: https://www.mercor.com/apex/apex-agents-leaderboard/
+- O*NET program: https://www.dol.gov/agencies/eta/onet
+- O*NET Task Statements data dictionary: https://www.onetcenter.org/dictionary/30.3/text/task_statements.html
+- NBER Working Paper 34255, Appendix A.4: https://www.nber.org/system/files/working_papers/w34255/w34255.pdf
 - Inspect AI repository: https://github.com/UKGovernmentBEIS/inspect_ai
 - Inspect AI docs: https://inspect.aisi.org.uk/
+- Arize homepage: https://arize.com/
 - Arize Quickstart Guide: https://arize.com/resource/arize-quickstart-guide/
 - AgentEval .NET toolkit: https://agenteval.dev/
 - AgentEval DAG paper: https://arxiv.org/abs/2604.23581

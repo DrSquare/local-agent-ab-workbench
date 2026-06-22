@@ -125,6 +125,10 @@ Post-MVP hardening adds:
 
 Next architectural direction:
 
+- Expert seed generation uses public Mercor APEX role/sample-task facts, O*NET
+  occupation/task IDs, and NBER Appendix A.4-style IWA metadata to produce
+  reviewable TaskPacks. It must remain offline-first and must not crawl gated
+  datasets.
 - EvalTask contracts that bind TaskPack samples, solver adapters, scorer sets, limits, and logging.
 - Dataset/Sample normalization for local desktop tasks.
 - Solver/Agent adapter interface for mock, OpenClaw, generic CLI, and local HTTP agents.
@@ -148,6 +152,8 @@ python -m pip install -e '.[dev]'
 pytest
 agent-ab validate-experiment experiments/demo_openclaw_prompt_ab.yaml
 agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
+agent-ab generate-seed-taskpack --output taskpacks/mercor_apex_expert_seeded/tasks.yaml
+agent-ab validate-taskpack taskpacks/mercor_apex_expert_seeded/tasks.yaml
 agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_rename_todo
 agent-ab run-demo --output-root demo_output
 agent-ab export-runs demo_output/runs --output demo_output/reports/runs.csv --format csv
@@ -158,4 +164,6 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement the Inspect-inspired EvalTask core after reviewing `PLAN.md`, `TECH_STACK.md`, and `sprint.md`.
+Implement the Inspect-inspired EvalTask core after reviewing `PLAN.md`,
+`TECH_STACK.md`, and `sprint.md`. Include existing TaskPacks and
+`taskpacks/mercor_apex_expert_seeded/tasks.yaml` in sample-selection coverage.
