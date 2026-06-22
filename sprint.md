@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 14: Eval Runner planning over Inspect-inspired eval contracts.
+Module 15: EvalLog analysis and scanner layer.
 
 ## Status
 
@@ -33,7 +33,8 @@ Module 14: Eval Runner planning over Inspect-inspired eval contracts.
 | Arize GUI self-review | Done | Roadmap now includes Module 17 information architecture, backend read-model expectations, static frontend architecture, and fixture-based test requirements. |
 | Module 13 EvalTask core | Done | Strict EvalTask, EvalSample, solver reference, scorer reference, EvalLog contracts, example eval configs, CLI validation, and tests are implemented. |
 | Module 14 Eval Runner and Eval Sets | Done | EvalSet validation, deterministic EvalRunPlan generation, resume/skip detection over EvalLog JSON, failure/sample limits, plan JSON export, CLI commands, and tests are implemented without new real execution. |
-| Module 15 Analysis and Scanner Layer | Planned | Add EvalRunPlan/EvalLog loading, per-sample exports, aggregate summaries, scanner contracts, and failure taxonomy hooks. |
+| Module 15 Analysis and Scanner Layer | Done | EvalRunPlan/EvalLog loading, per-sample JSON/CSV exports, aggregate summaries, local scanner findings, failure taxonomy hooks, CLI commands, and tests are implemented. |
+| Module 16 Sandbox Provider Interface | Planned | Add provider-level workspace, command, network, timeout, artifact, and approval/denial event contracts over existing guardrails. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -101,6 +102,6 @@ Module 14: Eval Runner planning over Inspect-inspired eval contracts.
 
 ## Next Sprint Candidate
 
-Module 15: Analysis and Scanner Layer. Start with EvalRunPlan/EvalLog loading,
-per-sample JSON/CSV exports, aggregate summaries, and schema-first scanner
-contracts before adding UI/API read models.
+Module 16: Sandbox Provider Interface. Start with schema-first provider policy
+that maps existing guardrails into workspace, command, network, timeout,
+artifact, and approval/denial event contracts.

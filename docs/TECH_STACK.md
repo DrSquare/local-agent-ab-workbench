@@ -57,7 +57,7 @@ This revision separates the stack into:
 | Eval log | Run config + trace + scores + artifacts | JSON/JSONL files with SQLite index |
 | Eval set | EvalSet plus EvalRunPlan | YAML config plus resumable local state |
 | Sandbox | Execution provider | Local workspace provider first, Docker/provider extras later |
-| Analysis | Reports and scanner outputs | Built-in JSON/CSV first, optional dataframe extra later |
+| Analysis | EvalLog reports and scanner outputs | Built-in JSON/CSV first, optional dataframe extra later |
 
 Do not add `inspect-ai` as a required dependency. The workbench adopts
 compatible boundaries while preserving this project's local desktop-agent
@@ -285,6 +285,19 @@ These choices are active for the implemented non-executing planner layer.
 | Plan artifacts | JSON EvalRunPlan export | Local, inspectable input for Module 15 analysis and Module 17 GUI |
 | Execution compatibility | Conceptual only | Avoids new real execution until runner/sandbox policy expands |
 
+## Module 15 Analysis and Scanner Stack
+
+These choices are active for local EvalRunPlan/EvalLog analysis.
+
+| Need | Choice | Reason |
+|---|---|---|
+| EvalLog loading | JSON EvalLog validation from EvalRunPlan paths | Keeps analysis tied to strict contracts |
+| Per-sample export | JSON/CSV rows | Human-reviewable and spreadsheet-friendly |
+| Aggregate export | Grouped Python summaries | No dataframe dependency needed yet |
+| Scanner | Rule-based local findings | Works offline and avoids model grader dependency |
+| Failure taxonomy | Enum-backed categories | Stable enough for reports and future UI filters |
+| Module 17 readiness | Report/read-model rows | Dashboard and regression views can consume the same shapes later |
+
 ## Safety and Sandbox Stack
 
 The schema already models safety intent. Runtime enforcement comes later.
@@ -410,6 +423,7 @@ agent-ab-workbench/
       tasks.yaml
       workspaces/
   src/agent_ab/
+    analysis.py
     cli.py
     config.py
     eval_runner.py
@@ -447,6 +461,7 @@ agent-ab-workbench/
     test_module13_seed_generation.py
     test_module13_eval_core.py
     test_module14_eval_runner.py
+    test_module15_analysis_scanner.py
     test_module17_observability_gui.py
 ```
 

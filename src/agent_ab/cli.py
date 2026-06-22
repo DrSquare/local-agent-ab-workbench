@@ -11,6 +11,11 @@ from rich.console import Console
 from rich.table import Table
 
 from agent_ab.adapters.openclaw import prepare_openclaw_run
+from agent_ab.analysis import (
+    export_eval_aggregate_report,
+    export_eval_log_report,
+    export_eval_scan_report,
+)
 from agent_ab.config import (
     ConfigLoadError,
     load_prompt_object,
@@ -288,6 +293,60 @@ def compare_runs_command(
         output = Path("reports/comparison.csv")
     report_path = export_variant_comparison_report(runs_root, output, report_format)
     console.print(f"[green]OK[/green] comparison={report_path}")
+
+
+@app.command("export-eval-logs")
+def export_eval_logs_command(
+    plan: Annotated[Path, typer.Argument(help="Path to EvalRunPlan JSON.")],
+    output: Annotated[Path, typer.Option(help="Output report path.")] = Path("reports/eval_logs.json"),
+    report_format: Annotated[ReportFormat, typer.Option("--format", help="Report format.")] = ReportFormat.JSON,
+) -> None:
+    """Export per-sample EvalLog rows from an EvalRunPlan."""
+
+    if output == Path("reports/eval_logs.json") and report_format == ReportFormat.CSV:
+        output = Path("reports/eval_logs.csv")
+    try:
+        report_path = export_eval_log_report(plan, output, report_format)
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Eval log export failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]OK[/green] eval_logs={report_path}")
+
+
+@app.command("export-eval-aggregates")
+def export_eval_aggregates_command(
+    plan: Annotated[Path, typer.Argument(help="Path to EvalRunPlan JSON.")],
+    output: Annotated[Path, typer.Option(help="Output report path.")] = Path("reports/eval_aggregates.json"),
+    report_format: Annotated[ReportFormat, typer.Option("--format", help="Report format.")] = ReportFormat.JSON,
+) -> None:
+    """Export aggregate EvalLog summaries from an EvalRunPlan."""
+
+    if output == Path("reports/eval_aggregates.json") and report_format == ReportFormat.CSV:
+        output = Path("reports/eval_aggregates.csv")
+    try:
+        report_path = export_eval_aggregate_report(plan, output, report_format)
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Eval aggregate export failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]OK[/green] eval_aggregates={report_path}")
+
+
+@app.command("scan-eval-logs")
+def scan_eval_logs_command(
+    plan: Annotated[Path, typer.Argument(help="Path to EvalRunPlan JSON.")],
+    output: Annotated[Path, typer.Option(help="Output scanner report path.")] = Path("reports/eval_findings.json"),
+    report_format: Annotated[ReportFormat, typer.Option("--format", help="Report format.")] = ReportFormat.JSON,
+) -> None:
+    """Run local rule-based scanner checks over EvalLogs from an EvalRunPlan."""
+
+    if output == Path("reports/eval_findings.json") and report_format == ReportFormat.CSV:
+        output = Path("reports/eval_findings.csv")
+    try:
+        report_path = export_eval_scan_report(plan, output, report_format)
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Eval scan failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]OK[/green] eval_findings={report_path}")
 
 
 @app.command("run-demo")
