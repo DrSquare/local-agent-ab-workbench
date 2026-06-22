@@ -21,6 +21,7 @@ This repository currently implements:
 - **Module 13A: Expert seed TaskPack generation**
 - **Module 13B: EvalTask core contracts**
 - **Module 14: EvalSet planning**
+- **Module 15: EvalLog analysis and scanner exports**
 
 ## What the implemented modules include
 
@@ -52,6 +53,8 @@ This repository currently implements:
 - EvalTask validation against referenced TaskPacks and sample selections
 - EvalSet validation, deterministic EvalRunPlan generation, resume/skip
   detection, and plan JSON export
+- EvalRunPlan/EvalLog loading, per-sample reports, aggregate reports, and local
+  scanner findings with failure taxonomy categories
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -116,6 +119,14 @@ agent-ab validate-eval-set evals/local_eval_set.yaml
 agent-ab plan-eval-set evals/local_eval_set.yaml \
   --run-root runs/evals \
   --output runs/evals/local_module14_eval_set/plan.json
+```
+
+## Export eval analysis reports
+
+```bash
+agent-ab export-eval-logs runs/evals/local_module14_eval_set/plan.json
+agent-ab export-eval-aggregates runs/evals/local_module14_eval_set/plan.json
+agent-ab scan-eval-logs runs/evals/local_module14_eval_set/plan.json
 ```
 
 ## Generate an expert seed taskpack
@@ -252,6 +263,7 @@ agent-ab-workbench/
   src/agent_ab/
     adapters/
       openclaw.py
+    analysis.py
     cli.py
     config.py
     eval_runner.py
@@ -296,11 +308,13 @@ agent-ab-workbench/
     test_module13_eval_core.py
     test_module13_seed_generation.py
     test_module14_eval_runner.py
+    test_module15_analysis_scanner.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Proceed to Module 15 by adding analysis and scanner contracts over EvalRunPlan
-and EvalLog artifacts. Keep cloud/model graders optional and schema-first.
+Proceed to Module 16 by adding sandbox provider contracts that map existing
+guardrails into provider-level workspace, command, network, timeout, and
+artifact policy.

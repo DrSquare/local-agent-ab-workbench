@@ -135,8 +135,10 @@ Next architectural direction:
 - EvalLog contracts reference traces, scores, artifacts, limits, errors, and metadata.
 - EvalSet contracts and EvalRunPlan artifacts expand samples deterministically
   without launching agents.
-- Next implementation should add analysis/scanner contracts over EvalLog and
-  EvalRunPlan artifacts before new real execution paths.
+- EvalRunPlan/EvalLog analysis exports and local scanner findings are available
+  without cloud/model grader dependencies.
+- Next implementation should add sandbox provider contracts before new real
+  execution paths.
 
 ## Coding rules
 
@@ -161,6 +163,9 @@ agent-ab validate-eval-task evals/desktop_basics_eval.yaml
 agent-ab validate-eval-task evals/mercor_apex_seed_eval.yaml
 agent-ab validate-eval-set evals/local_eval_set.yaml
 agent-ab plan-eval-set evals/local_eval_set.yaml --run-root runs/evals --output runs/evals/local_module14_eval_set/plan.json
+agent-ab export-eval-logs runs/evals/local_module14_eval_set/plan.json
+agent-ab export-eval-aggregates runs/evals/local_module14_eval_set/plan.json
+agent-ab scan-eval-logs runs/evals/local_module14_eval_set/plan.json
 agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_rename_todo
 agent-ab run-demo --output-root demo_output
 agent-ab export-runs demo_output/runs --output demo_output/reports/runs.csv --format csv
@@ -171,7 +176,7 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 15: Analysis and Scanner Layer after reviewing `PLAN.md`,
-`TECH_STACK.md`, and `sprint.md`. Start with EvalRunPlan/EvalLog loading,
-per-sample exports, aggregate summaries, and schema-first scanner/failure
-taxonomy contracts.
+Implement Module 16: Sandbox Provider Interface after reviewing `PLAN.md`,
+`TECH_STACK.md`, and `sprint.md`. Start with schema-first provider policy that
+maps existing guardrails into workspace, command, network, timeout, artifact,
+and approval/denial event contracts.

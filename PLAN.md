@@ -72,7 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 14 plus post-MVP hardening are implemented with clear
+Modules 1 through 15 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -96,6 +96,8 @@ local-first boundaries:
 - EvalTask CLI validation over referenced TaskPacks and sample selections
 - EvalSet schema, EvalRunPlan schema, deterministic non-executing run planning,
   resume/skip detection, and plan JSON export
+- EvalRunPlan/EvalLog analysis exports, aggregate summaries, and local
+  rule-based scanner findings with failure taxonomy hooks
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -563,17 +565,27 @@ Non-goals:
 
 ### Module 15: Analysis and Scanner Layer
 
-Status: planned.
+Status: implemented.
 
 Goal: make eval logs queryable for reports, comparisons, and qualitative review.
 
-Deliverables:
+Implemented deliverables:
 
 - Per-sample JSON/CSV export
 - Per-eval aggregate export
 - Trace and transcript scanner contract
 - Failure taxonomy hooks
-- UI/API endpoints over eval logs
+- Rule-based local scanner over EvalLog status, errors, scorer failures, and
+  missing trace references
+- `agent-ab export-eval-logs` command
+- `agent-ab export-eval-aggregates` command
+- `agent-ab scan-eval-logs` command
+- Focused tests for EvalRunPlan loading, per-sample rows, aggregate rows,
+  scanner findings, and CLI exports
+
+Deferred:
+
+- UI/API endpoints over eval logs move to Module 17 after read models stabilize.
 
 ### Module 16: Sandbox Provider Interface
 
@@ -709,23 +721,22 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Proceed to Module 15: Analysis and Scanner Layer. Module 14 now provides
-EvalSet validation and deterministic EvalRunPlan artifacts over EvalTask and
-EvalLog contracts without adding real execution. The next module should make
-those planned/completed logs queryable for reports, comparisons, and qualitative
-review.
+Proceed to Module 16: Sandbox Provider Interface. Module 15 now makes
+EvalRunPlan and EvalLog artifacts queryable through local reports and scanner
+findings without cloud graders. The next module should separate safety policy
+from execution backends before any broader real-agent runner work.
 
-Module 15 acceptance criteria:
+Module 16 acceptance criteria:
 
-- EvalLog artifacts can be loaded from EvalRunPlan output paths.
-- Per-sample JSON/CSV exports operate over EvalLog-compatible data.
-- Per-eval aggregate exports summarize status, scorer results, traces, and
-  artifacts.
-- Scanner contracts can classify traces/transcripts without requiring cloud
-  model graders.
-- Failure taxonomy hooks are schema-first and optional.
-- UI/API read models are shaped for Module 17 dashboard and regression views.
-- Existing run reports remain backward compatible.
+- Sandbox provider schema separates provider identity, workspace policy, command
+  policy, network policy, timeout policy, and artifact policy.
+- Local workspace provider can be described without Docker or cloud dependency.
+- Optional Docker provider remains a design/contract only, not a required
+  dependency.
+- Tool approval and denial events are representable in EvalLog-compatible
+  metadata.
+- Existing guardrail helpers can map into provider policy without regressions.
+- Module 15 scanner can classify sandbox denial events once logs include them.
 
 Completed post-MVP hardening:
 
