@@ -3,6 +3,7 @@ const state = {
   taskpacks: [],
   runs: [],
   views: [],
+  observability: null,
   selectedRun: null,
   selectedTrace: null,
   selectedSpanId: null,
@@ -46,18 +47,20 @@ function activateView(name) {
 async function loadAll(options = {}) {
   const { refreshPlaygroundDefaults = true } = options;
   setApiStatus(false, "Loading");
-  const [health, experiments, taskpacks, runs, views] = await Promise.all([
+  const [health, experiments, taskpacks, runs, views, observability] = await Promise.all([
     fetchJson("/health"),
     fetchJson("/experiments"),
     fetchJson("/taskpacks"),
     fetchJson("/runs"),
     fetchJson("/playground/views"),
+    fetchJson("/observability"),
   ]);
 
   state.experiments = experiments.experiments || [];
   state.taskpacks = taskpacks.taskpacks || [];
   state.runs = runs.runs || [];
   state.views = views.views || [];
+  state.observability = observability;
   renderAll();
   if (refreshPlaygroundDefaults) {
     await loadPlaygroundDefaults({ silent: true });
@@ -70,12 +73,81 @@ function renderAll() {
   $("#experimentCount").textContent = state.experiments.length;
   $("#taskpackCount").textContent = state.taskpacks.length;
   $("#runCount").textContent = state.runs.length;
+  renderObservability();
   renderExperiments();
   renderTaskpacks();
   renderRuns();
   renderViews();
   renderTrace();
   renderPlaygroundResult();
+}
+
+function renderObservability() {
+  const observability = state.observability || {};
+  const dashboard = observability.dashboard || {};
+  const sandbox = observability.sandbox || {};
+  $("#evalSampleCount").textContent = dashboard.total_samples || 0;
+  $("#evalPassRate").textContent = dashboard.pass_rate === null || dashboard.pass_rate === undefined
+    ? "-"
+    : `${Math.round(dashboard.pass_rate * 100)}%`;
+  $("#sandboxDenialCount").textContent = dashboard.sandbox_denial_count || 0;
+  $("#regressionCount").textContent = `${dashboard.regression_count || 0} flagged`;
+  $("#evalPlanSource").textContent = dashboard.source_plan_path || dashboard.message || "No eval plan loaded";
+  renderEvalRows(observability.eval_rows || []);
+  renderRegressionRows(observability.regression_rows || []);
+  renderSettingsDetails(dashboard, sandbox);
+}
+
+function renderEvalRows(rows) {
+  $("#evalRows").innerHTML = rows.map((row) => `
+    <tr>
+      <td>${badge(row.status, statusTone(row.status))}</td>
+      <td>
+        <strong>${escapeHtml(row.sample_id)}</strong>
+        <span class="table-subtext">${escapeHtml(row.task_id)}</span>
+      </td>
+      <td>
+        ${escapeHtml(row.solver_id)}
+        <span class="table-subtext">${escapeHtml(row.variant_id || "-")}</span>
+      </td>
+      <td>${scoreLabel(row)}</td>
+      <td>${row.trace ? escapeHtml(row.trace.trace_id) : "-"}</td>
+      <td>${row.sandbox?.denial_count ? badge(`${row.sandbox.denial_count} denied`, "error") : badge("clear", "ok")}</td>
+      <td>
+        ${row.status === "failed" || row.status === "error"
+          ? `<button class="tool-button table-action handoff-button" data-eval-run-id="${escapeAttribute(row.eval_run_id)}" type="button">Open</button>`
+          : "-"}
+      </td>
+    </tr>
+  `).join("") || emptyRow("No eval rows found", 7);
+}
+
+function renderRegressionRows(rows) {
+  $("#regressionRows").innerHTML = rows.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.sample_id)}</td>
+      <td>${badge(row.previous_status, statusTone(row.previous_status))}</td>
+      <td>${badge(row.current_status, statusTone(row.current_status))}</td>
+      <td>${row.delta === null || row.delta === undefined ? "-" : escapeHtml(row.delta.toFixed(3))}</td>
+      <td>${escapeHtml(row.trace_id || "-")}</td>
+    </tr>
+  `).join("") || emptyRow("No regressions found", 5);
+}
+
+function renderSettingsDetails(dashboard, sandbox) {
+  $("#privacyDetails").innerHTML = detailRows({
+    "Project root": "local",
+    "External assets": "none",
+    "Eval plan": dashboard.source_plan_path || "-",
+    "Loaded logs": dashboard.loaded_log_count || 0,
+  });
+  $("#sandboxDetails").innerHTML = detailRows({
+    "Approvals": sandbox.approval_count || 0,
+    "Denials": sandbox.denial_count || 0,
+    "Denied tools": (sandbox.denied_tools || []).join(", ") || "-",
+    "Policy areas": (sandbox.policy_areas || []).join(", ") || "-",
+    "Latest denial": sandbox.latest_denial_reason || "-",
+  });
 }
 
 function renderExperiments() {
@@ -170,7 +242,7 @@ async function selectRun(runId) {
   state.selectedTrace = null;
   state.selectedSpanId = null;
   state.collapsedSpanIds.clear();
-  activateView("trace");
+  activateView("observe");
   renderTrace();
   if (!run) return;
 
@@ -429,6 +501,25 @@ function applyPlaygroundView(view) {
   renderPlaygroundResult();
 }
 
+function applyPlaygroundHandoff(evalRunId) {
+  const handoff = (state.observability?.playground_handoffs || [])
+    .find((item) => item.eval_run_id === evalRunId);
+  if (!handoff) return;
+  activateView("improve");
+  $("#pgTask").value = handoff.task_id || $("#pgTask").value;
+  if (handoff.variant_id) {
+    $("#pgVariant").value = handoff.variant_id;
+  }
+  $("#pgRunId").value = "";
+  $("#pgLabel").value = `Review ${handoff.sample_id}`;
+  $("#pgPromptVariables").value = JSON.stringify(
+    handoff.query ? { task_query: handoff.query } : {},
+    null,
+    2,
+  );
+  $("#playgroundStatus").textContent = `Loaded ${handoff.sample_id}`;
+}
+
 function applyPlaygroundOverridesToForm(overrides) {
   if (overrides.messages) {
     renderPromptEditors(overrides.messages);
@@ -604,6 +695,20 @@ function badge(label, tone) {
   return `<span class="badge ${tone}">${escapeHtml(label)}</span>`;
 }
 
+function scoreLabel(row) {
+  if (row.avg_numeric_score === null || row.avg_numeric_score === undefined) {
+    return row.scorer_count ? `${row.scorer_count} scorers` : "-";
+  }
+  return `${row.avg_numeric_score.toFixed(3)} (${row.failed_scorer_count || 0} failed)`;
+}
+
+function statusTone(status) {
+  if (status === "passed") return "ok";
+  if (status === "failed" || status === "error") return "error";
+  if (status === "planned" || status === "skipped_completed" || status === "skipped") return "warn";
+  return "neutral";
+}
+
 function emptyRow(message, colspan) {
   return `<tr><td colspan="${colspan}"><div class="empty">${escapeHtml(message)}</div></td></tr>`;
 }
@@ -676,6 +781,13 @@ $("#runRows").addEventListener("keydown", (event) => {
   if (row) {
     event.preventDefault();
     selectRun(row.dataset.runId);
+  }
+});
+
+$("#evalRows").addEventListener("click", (event) => {
+  const button = event.target.closest(".handoff-button");
+  if (button) {
+    applyPlaygroundHandoff(button.dataset.evalRunId);
   }
 });
 
