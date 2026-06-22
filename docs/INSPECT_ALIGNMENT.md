@@ -21,6 +21,7 @@ The current workbench has strong local foundations:
 - Local trace storage and UI inspection.
 - Mock and OpenClaw adapter preparation.
 - Offline-first defaults and explicit execution gates.
+- EvalTask, EvalSet, EvalLog, analysis, and sandbox provider contracts.
 
 The weak point is architectural vocabulary. The repo currently centers on A/B experiments and Playground replay, but those are workflows built on top of a deeper evaluation model. Without explicit `Dataset`, `Sample`, `Solver`, `Scorer`, and `EvalLog` concepts, future adapters and reports will keep growing around ad hoc run artifacts.
 
@@ -53,7 +54,7 @@ The weak point is architectural vocabulary. The repo currently centers on A/B ex
 3. Rename or wrap validators as scorers so scoring is not tied only to filesystem checks.
 4. Promote run artifacts into an eval log contract that includes config, transcript, trace, scores, artifacts, and errors.
 5. Add analysis APIs that can produce per-sample and per-eval tables from local logs.
-6. Define a sandbox provider contract before adding additional real adapters.
+6. Define a sandbox provider contract before adding additional real adapters. Done in Module 16.
 
 ## Success Criteria
 

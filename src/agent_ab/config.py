@@ -10,6 +10,7 @@ from pydantic import BaseModel, ValidationError
 from agent_ab.schemas.eval import EvalSample, EvalSet, EvalTask
 from agent_ab.schemas.experiment import ExperimentConfig
 from agent_ab.schemas.prompt_object import PromptObject
+from agent_ab.schemas.sandbox import SandboxProvider
 from agent_ab.schemas.task import TaskPack
 from agent_ab.yaml_io import YamlConfigError, load_yaml_mapping
 
@@ -53,6 +54,16 @@ def load_eval_task(path: str | Path) -> EvalTask:
 
 def load_eval_set(path: str | Path) -> EvalSet:
     return load_model(path, EvalSet)
+
+
+def load_sandbox_provider(path: str | Path) -> SandboxProvider:
+    return load_model(path, SandboxProvider)
+
+
+def validate_sandbox_provider(path: str | Path) -> SandboxProvider:
+    """Validate a sandbox provider config without executing the provider."""
+
+    return load_sandbox_provider(path)
 
 
 def validate_taskpack_with_fixtures(path: str | Path) -> TaskPack:

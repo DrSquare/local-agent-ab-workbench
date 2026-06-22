@@ -72,7 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 15 plus post-MVP hardening are implemented with clear
+Modules 1 through 16 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -98,13 +98,19 @@ local-first boundaries:
   resume/skip detection, and plan JSON export
 - EvalRunPlan/EvalLog analysis exports, aggregate summaries, and local
   rule-based scanner findings with failure taxonomy hooks
+- Sandbox provider contracts for local workspace execution policy and optional
+  Docker provider design without a Docker runtime dependency
+- Guardrail mapping from sandbox provider policy into existing path, command,
+  endpoint, and timeout checks
+- EvalLog-compatible sandbox approval and denial events plus scanner
+  classification for sandbox denial findings
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
 Real OpenClaw execution is available only behind explicit opt-in and guardrail
 checks. Additional real shell, browser, desktop, non-local network, and model
-execution remain out of scope until the eval core can bind solver and sandbox
-policy explicitly.
+execution remain out of scope until future runner modules explicitly bind solver
+and sandbox provider policy.
 
 ## Primary User Story
 
@@ -589,17 +595,23 @@ Deferred:
 
 ### Module 16: Sandbox Provider Interface
 
-Status: planned.
+Status: implemented.
 
 Goal: separate safety policy from execution backend so real adapters can use
 the same guardrail contract.
 
-Deliverables:
+Implemented deliverables:
 
-- Sandbox provider schema
-- Local workspace provider
-- Optional Docker provider design, not required dependency
-- Tool approval and denial events in eval logs
+- Strict sandbox provider schema with separate workspace, command, network,
+  timeout, artifact, and provider identity policy
+- Local workspace provider example in `sandboxes/local_workspace.yaml`
+- Optional Docker provider contract without adding Docker as a dependency or
+  launching containers
+- RunLimits-to-provider and provider-to-RunLimits mapping helpers over existing
+  guardrails
+- Tool approval and denial event schemas that serialize into
+  `EvalLog.metadata["sandbox_events"]`
+- Scanner taxonomy support for sandbox denial findings
 
 ### Module 17: Arize-Inspired Observability and Eval GUI
 
@@ -715,28 +727,29 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 - Should EvalTask configs remain separate files long term, or should experiments
   later reference eval sets that point to them?
 - Should scorer results be stored as span details, eval-log top-level scores, or both?
-- What is the minimum sandbox provider interface before Docker or external agents?
 - Which Module 17 GUI data should be precomputed by the backend versus derived
   in the browser from EvalLog and trace API responses?
 
 ## Immediate Next Work
 
-Proceed to Module 16: Sandbox Provider Interface. Module 15 now makes
-EvalRunPlan and EvalLog artifacts queryable through local reports and scanner
-findings without cloud graders. The next module should separate safety policy
-from execution backends before any broader real-agent runner work.
+Proceed to Module 17: Arize-Inspired Observability and Eval GUI. Module 16 now
+separates safety policy from execution backends and exposes sandbox denial
+events in EvalLog-compatible metadata. The next module should define backend
+read models before expanding the existing static frontend shell.
 
-Module 16 acceptance criteria:
+Module 17 acceptance criteria:
 
-- Sandbox provider schema separates provider identity, workspace policy, command
-  policy, network policy, timeout policy, and artifact policy.
-- Local workspace provider can be described without Docker or cloud dependency.
-- Optional Docker provider remains a design/contract only, not a required
-  dependency.
-- Tool approval and denial events are representable in EvalLog-compatible
-  metadata.
-- Existing guardrail helpers can map into provider policy without regressions.
-- Module 15 scanner can classify sandbox denial events once logs include them.
+- Backend read models expose dashboard summaries, eval-run rows, regression
+  rows, trace links, scorer evidence, artifact references, and sandbox status.
+- Hash-routed no-build UI modes expose Dashboard, Evaluate, Observe, Improve,
+  and Settings.
+- Evaluate mode shows task/sample status, scorer outcomes, pass rates, score
+  deltas, latency, artifact links, trace links, and sandbox denial badges.
+- Observe mode joins trace/session spans with eval sample and scorer context.
+- Improve mode can hand failed or regressed samples to Playground with original
+  prompt, model, parameters, tool policy, trace, scorer, and sandbox context.
+- UI assets remain local-only with no external fonts, scripts, CDNs, Arize SDK,
+  Phoenix dependency, or cloud telemetry.
 
 Completed post-MVP hardening:
 

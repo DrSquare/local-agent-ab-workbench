@@ -1,0 +1,44 @@
+id: local_workspace_default
+version: 1
+kind: local_workspace
+description: Default offline local workspace sandbox policy.
+workspace:
+  workspace_root: $RUN_WORKSPACE
+  allowed_paths:
+    - $RUN_WORKSPACE
+  blocked_paths:
+    - $HOME
+  require_isolated_workspace: true
+  cleanup: false
+command:
+  allow_shell: false
+  allowed_commands: []
+  blocked_commands:
+    - curl
+    - powershell
+  require_confirmation:
+    - openclaw
+network:
+  allow_network: false
+  network_allowlist:
+    - localhost
+    - 127.0.0.1
+    - ::1
+timeout:
+  max_seconds_per_task: 180
+  max_steps_per_task: 40
+  max_parallelism: 1
+artifacts:
+  root: runs
+  keep_success_artifacts: true
+  keep_failure_artifacts: true
+  write_jsonl: true
+  write_sqlite: true
+  sqlite_path: runs/agent_ab.sqlite
+  redact_secrets: true
+tags:
+  - offline
+  - local
+metadata:
+  module: 16
+  docker_runtime: not_required

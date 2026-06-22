@@ -298,19 +298,35 @@ These choices are active for local EvalRunPlan/EvalLog analysis.
 | Failure taxonomy | Enum-backed categories | Stable enough for reports and future UI filters |
 | Module 17 readiness | Report/read-model rows | Dashboard and regression views can consume the same shapes later |
 
+## Module 16 Sandbox Provider Stack
+
+These choices are active for provider-level safety policy contracts.
+
+| Need | Choice | Reason |
+|---|---|---|
+| Provider schema | Pydantic v2 + YAML | Reviewable local policy files with strict key rejection |
+| Local provider | `local_workspace` policy | Describes current disposable workspace behavior without new dependencies |
+| Docker provider | Schema-only `docker` contract | Allows future design review without requiring Docker or launching containers |
+| Guardrail mapping | `SandboxProvider` <-> `RunLimits` helpers | Reuses tested path, command, endpoint, and timeout enforcement |
+| Approval/denial events | Strict `SandboxEvent` records in EvalLog metadata | Keeps logs backward compatible while exposing safety decisions |
+| Scanner integration | `sandbox_denial` taxonomy | Lets reports and future UI highlight policy-blocked actions |
+
 ## Safety and Sandbox Stack
 
-The schema already models safety intent. Runtime enforcement comes later.
+Safety policy is now split between existing guardrail enforcement and explicit
+sandbox provider contracts. Broader real execution still requires future runner
+work that binds a solver to a provider.
 
 | Area | Contract now | Runtime later |
 |---|---|---|
-| Workspace isolation | `$RUN_WORKSPACE` allowed path | Disposable per-run workspace |
-| Filesystem safety | Allowed and blocked path lists | Path resolution and enforcement |
-| Shell safety | Blocked command list | Command parser and policy engine |
-| Network safety | `allow_network` and localhost allowlist | Adapter-level network policy |
-| Timeouts | Per-task and Playground timeout fields | Process and tool timeout enforcement |
-| Artifacts | Local artifact root | JSONL/filesystem writers |
-| Redaction | `redact_secrets` flag | Secret scanning and redacted previews |
+| Workspace isolation | `SandboxWorkspacePolicy` | Disposable per-run workspace lifecycle |
+| Filesystem safety | Provider allowed and blocked path lists | Existing path resolution and enforcement |
+| Shell safety | Provider command policy | Existing command parser plus provider allowlist and confirmation checks |
+| Network safety | Provider network policy | Existing endpoint checks plus adapter-level network policy |
+| Timeouts | Provider timeout policy | Existing timeout checks plus future process/tool cancellation |
+| Artifacts | Provider artifact policy | JSONL/filesystem writers and future retention controls |
+| Redaction | Provider artifact redaction flag | Existing secret scanning and redacted previews |
+| Events | `SandboxEvent` approval/denial metadata | Future UI badges and run gating workflows |
 
 Safety enforcement should be tested on Windows and POSIX path formats before
 real desktop-agent runs are enabled.
@@ -380,6 +396,7 @@ Coverage expectations by phase:
 | Module 12 | Demo helper, JSON/CSV report export, reporting CLI, known limitations docs |
 | Post-MVP | Aggregate comparison exports, explicit OpenClaw execution opt-in, optional Playwright browser tests, PR/release workflow docs, guardrail edge-case tests |
 | Module 13 | Expert seed schema/generation, EvalTask strict schema, sample selection, solver/scorer references, eval-log contract |
+| Module 16 | Sandbox provider strict schemas, local provider example, Docker contract validation, guardrail mapping, approval/denial events, scanner sandbox-denial classification |
 | Module 17 | Observe/evaluate/improve navigation, eval dashboard summaries, trace/session drilldown, local-only assets, responsive dashboard layout |
 | Module 18 | Regression tables, score deltas, failure filters, export links, saved triage notes |
 | Module 19 | Prompt/harness comparison, Playground handoff, candidate promotion, rerun queue behavior |
@@ -415,6 +432,8 @@ agent-ab-workbench/
   prompts/
     baseline_openclaw.yaml
     candidate_playground.yaml
+  sandboxes/
+    local_workspace.yaml
   taskpacks/
     desktop_basics/
       tasks.yaml
@@ -428,6 +447,7 @@ agent-ab-workbench/
     config.py
     eval_runner.py
     playground.py
+    sandbox.py
     server.py
     static/
       ui/
@@ -444,6 +464,7 @@ agent-ab-workbench/
       playground.py
       prompt_object.py
       run.py
+      sandbox.py
       task.py
       trace.py
     runner.py
@@ -462,6 +483,7 @@ agent-ab-workbench/
     test_module13_eval_core.py
     test_module14_eval_runner.py
     test_module15_analysis_scanner.py
+    test_module16_sandbox_provider.py
     test_module17_observability_gui.py
 ```
 

@@ -137,8 +137,12 @@ Next architectural direction:
   without launching agents.
 - EvalRunPlan/EvalLog analysis exports and local scanner findings are available
   without cloud/model grader dependencies.
-- Next implementation should add sandbox provider contracts before new real
-  execution paths.
+- Sandbox provider contracts map existing guardrails into provider-level
+  workspace, command, network, timeout, artifact, and approval/denial event
+  policy without adding new real execution paths.
+- Next implementation should add Module 17 Observe/Evaluate/Improve read
+  models and GUI routes over EvalTask, EvalLog, trace, scorer, artifact, and
+  sandbox status data.
 
 ## Coding rules
 
@@ -166,6 +170,7 @@ agent-ab plan-eval-set evals/local_eval_set.yaml --run-root runs/evals --output 
 agent-ab export-eval-logs runs/evals/local_module14_eval_set/plan.json
 agent-ab export-eval-aggregates runs/evals/local_module14_eval_set/plan.json
 agent-ab scan-eval-logs runs/evals/local_module14_eval_set/plan.json
+agent-ab validate-sandbox-provider sandboxes/local_workspace.yaml
 agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_rename_todo
 agent-ab run-demo --output-root demo_output
 agent-ab export-runs demo_output/runs --output demo_output/reports/runs.csv --format csv
@@ -176,7 +181,7 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 16: Sandbox Provider Interface after reviewing `PLAN.md`,
-`TECH_STACK.md`, and `sprint.md`. Start with schema-first provider policy that
-maps existing guardrails into workspace, command, network, timeout, artifact,
-and approval/denial event contracts.
+Implement Module 17: Arize-Inspired Observability and Eval GUI after reviewing
+`PLAN.md`, `TECH_STACK.md`, and `sprint.md`. Start with backend read models over
+EvalTask, EvalLog, trace, scorer, artifact, and sandbox status data before
+expanding the existing no-build frontend shell.

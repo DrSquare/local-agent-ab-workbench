@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 15: EvalLog analysis and scanner layer.
+Module 16: Sandbox Provider Interface.
 
 ## Status
 
@@ -34,7 +34,7 @@ Module 15: EvalLog analysis and scanner layer.
 | Module 13 EvalTask core | Done | Strict EvalTask, EvalSample, solver reference, scorer reference, EvalLog contracts, example eval configs, CLI validation, and tests are implemented. |
 | Module 14 Eval Runner and Eval Sets | Done | EvalSet validation, deterministic EvalRunPlan generation, resume/skip detection over EvalLog JSON, failure/sample limits, plan JSON export, CLI commands, and tests are implemented without new real execution. |
 | Module 15 Analysis and Scanner Layer | Done | EvalRunPlan/EvalLog loading, per-sample JSON/CSV exports, aggregate summaries, local scanner findings, failure taxonomy hooks, CLI commands, and tests are implemented. |
-| Module 16 Sandbox Provider Interface | Planned | Add provider-level workspace, command, network, timeout, artifact, and approval/denial event contracts over existing guardrails. |
+| Module 16 Sandbox Provider Interface | Done | Provider-level workspace, command, network, timeout, artifact, and approval/denial event contracts map onto existing guardrails without adding new execution. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -56,6 +56,20 @@ Module 15: EvalLog analysis and scanner layer.
 - EvalLog schema captures sample ID, solver ID, scorer results, trace reference, artifacts, limits, errors, and metadata.
 - Current A/B reporting and Playground replay can be described as workflows over EvalTask/EvalLog.
 - Module 13 tests cover every new schema rule.
+
+## Module 16 Acceptance Criteria
+
+- Sandbox provider schema separates provider identity, workspace policy,
+  command policy, network policy, timeout policy, and artifact policy.
+- Local workspace provider is described without Docker or cloud dependency.
+- Optional Docker provider remains a design/contract only, not a required
+  dependency.
+- Tool approval and denial events are representable in EvalLog-compatible
+  metadata.
+- Existing guardrail helpers map into provider policy without regressions.
+- Module 15 scanner classifies sandbox denial events once logs include them.
+- Module 16 tests cover strict schema rules, guardrail mapping, CLI validation,
+  event metadata compatibility, and sandbox-denial scanner findings.
 
 ## Arize-Inspired GUI Acceptance Criteria
 
@@ -102,6 +116,6 @@ Module 15: EvalLog analysis and scanner layer.
 
 ## Next Sprint Candidate
 
-Module 16: Sandbox Provider Interface. Start with schema-first provider policy
-that maps existing guardrails into workspace, command, network, timeout,
-artifact, and approval/denial event contracts.
+Module 17: Arize-Inspired Observability and Eval GUI. Start with backend read
+models over EvalTask, EvalLog, trace, scorer, artifact, and sandbox status data
+before expanding the existing no-build frontend shell.
