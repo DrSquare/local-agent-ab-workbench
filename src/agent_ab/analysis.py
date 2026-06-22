@@ -23,6 +23,7 @@ class FindingSeverity(str, Enum):
 
 
 class FailureTaxonomy(str, Enum):
+    SANDBOX_DENIAL = "sandbox_denial"
     EVAL_ERROR = "eval_error"
     SCORER_FAILURE = "scorer_failure"
     MISSING_TRACE = "missing_trace"
@@ -208,6 +209,22 @@ def _row_from_loaded_log(loaded: LoadedEvalLog) -> EvalLogReportRow:
 def _findings_for_log(loaded: LoadedEvalLog) -> list[EvalScannerFinding]:
     log = loaded.log
     findings: list[EvalScannerFinding] = []
+    for event in _sandbox_denial_events(log):
+        findings.append(
+            _finding(
+                loaded,
+                FindingSeverity.ERROR if log.status == "error" else FindingSeverity.WARNING,
+                FailureTaxonomy.SANDBOX_DENIAL,
+                str(event.get("reason") or "Sandbox denied a tool action."),
+                {
+                    "event_id": event.get("id"),
+                    "provider_id": event.get("provider_id"),
+                    "tool_name": event.get("tool_name"),
+                    "policy_area": event.get("policy_area"),
+                    "requested_action": event.get("requested_action"),
+                },
+            )
+        )
     for error in log.errors:
         findings.append(
             _finding(
@@ -263,6 +280,8 @@ def _finding(
 
 
 def _taxonomy_for_log(log: EvalLog) -> str | None:
+    if _sandbox_denial_events(log):
+        return FailureTaxonomy.SANDBOX_DENIAL.value
     if log.errors:
         return FailureTaxonomy.EVAL_ERROR.value
     if any(result.passed is False for result in log.scorer_results):
@@ -272,6 +291,19 @@ def _taxonomy_for_log(log: EvalLog) -> str | None:
     if log.status == "failed":
         return FailureTaxonomy.UNKNOWN_FAILURE.value
     return None
+
+
+def _sandbox_denial_events(log: EvalLog) -> list[dict[str, Any]]:
+    events = log.metadata.get("sandbox_events")
+    if not isinstance(events, list):
+        return []
+    denial_events: list[dict[str, Any]] = []
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        if event.get("decision") == "denied" or event.get("event_type") == "tool_denial":
+            denial_events.append(event)
+    return denial_events
 
 
 def _average_numeric_score(logs: Iterable[EvalLog]) -> float | None:

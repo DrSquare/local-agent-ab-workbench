@@ -22,6 +22,7 @@ This repository currently implements:
 - **Module 13B: EvalTask core contracts**
 - **Module 14: EvalSet planning**
 - **Module 15: EvalLog analysis and scanner exports**
+- **Module 16: Sandbox provider contracts**
 
 ## What the implemented modules include
 
@@ -55,6 +56,11 @@ This repository currently implements:
   detection, and plan JSON export
 - EvalRunPlan/EvalLog loading, per-sample reports, aggregate reports, and local
   scanner findings with failure taxonomy categories
+- Sandbox provider schema for local workspace and optional Docker contract
+  policies
+- RunLimits-to-sandbox mapping over existing guardrail helpers
+- EvalLog-compatible sandbox approval and denial events
+- Scanner classification for sandbox denial events
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -127,6 +133,12 @@ agent-ab plan-eval-set evals/local_eval_set.yaml \
 agent-ab export-eval-logs runs/evals/local_module14_eval_set/plan.json
 agent-ab export-eval-aggregates runs/evals/local_module14_eval_set/plan.json
 agent-ab scan-eval-logs runs/evals/local_module14_eval_set/plan.json
+```
+
+## Validate a sandbox provider
+
+```bash
+agent-ab validate-sandbox-provider sandboxes/local_workspace.yaml
 ```
 
 ## Generate an expert seed taskpack
@@ -250,6 +262,8 @@ agent-ab-workbench/
   prompts/
     baseline_openclaw.yaml
     candidate_playground.yaml
+  sandboxes/
+    local_workspace.yaml
   taskpacks/
     desktop_basics/
       tasks.yaml
@@ -270,6 +284,7 @@ agent-ab-workbench/
     guardrails.py
     playground.py
     reporting.py
+    sandbox.py
     server.py
     task_seed_generation.py
     static/
@@ -285,6 +300,7 @@ agent-ab-workbench/
       playground.py
       prompt_object.py
       run.py
+      sandbox.py
       task.py
       trace.py
     runner.py
@@ -309,12 +325,13 @@ agent-ab-workbench/
     test_module13_seed_generation.py
     test_module14_eval_runner.py
     test_module15_analysis_scanner.py
+    test_module16_sandbox_provider.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Proceed to Module 16 by adding sandbox provider contracts that map existing
-guardrails into provider-level workspace, command, network, timeout, and
-artifact policy.
+Proceed to Module 17 by adding local Observe/Evaluate/Improve read models and
+GUI routes over EvalTask, EvalLog, trace, scorer, artifact, and sandbox status
+data.

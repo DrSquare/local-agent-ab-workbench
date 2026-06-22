@@ -22,6 +22,7 @@ from agent_ab.config import (
     validate_eval_set_with_tasks,
     validate_eval_task_with_taskpack,
     validate_experiment_bundle,
+    validate_sandbox_provider,
     validate_taskpack_with_fixtures,
 )
 from agent_ab.eval_runner import build_eval_run_plan, write_eval_run_plan
@@ -147,6 +148,25 @@ def validate_eval_set_command(
     console.print(f"eval tasks: {len(resolved)}")
     console.print(f"samples: {sample_count}")
     console.print(f"task refs: {', '.join(ref_id for ref_id, _, _, _ in resolved)}")
+
+
+@app.command("validate-sandbox-provider")
+def validate_sandbox_provider_command(
+    path: Annotated[Path, typer.Argument(help="Path to SandboxProvider YAML.")],
+) -> None:
+    """Validate a sandbox provider policy without executing it."""
+
+    try:
+        provider = validate_sandbox_provider(path)
+    except ConfigLoadError as exc:
+        console.print(f"[red]Validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] sandbox_provider={provider.id}@v{provider.version}")
+    console.print(f"kind: {provider.kind}")
+    console.print(f"allowed paths: {', '.join(provider.workspace.allowed_paths)}")
+    console.print(f"network: {'allowed' if provider.network.allow_network else 'local-only'}")
+    console.print(f"max seconds: {provider.timeout.max_seconds_per_task}")
 
 
 @app.command("plan-eval-set")
