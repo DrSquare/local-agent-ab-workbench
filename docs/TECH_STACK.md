@@ -43,7 +43,7 @@ This revision separates the stack into:
 | Evaluation layer | Local workbench object | Stack choice |
 |---|---|---|
 | Task | Planned `EvalTask` schema | Pydantic v2 + YAML |
-| Dataset | TaskPack plus normalized samples | Existing TaskPack YAML, future sample selector |
+| Dataset | TaskPack plus normalized samples | Existing TaskPack YAML, expert seed generator, future sample selector |
 | Sample | TaskCase + workspace fixture + metadata | Existing task schema plus planned `EvalSample` view |
 | Solver/Agent | Adapter contract | Python protocol/class with mock, OpenClaw, generic CLI, local HTTP implementations |
 | Scorer | Validator and trace scoring pipeline | Python scorer registry plus metric metadata |
@@ -199,6 +199,8 @@ These choices should guide the next implementation module.
 
 | Need | Choice | Reason |
 |---|---|---|
+| Expert seed generation | Pydantic v2 models + deterministic Python generator | Converts public expert-task seeds into normal TaskPack YAML without scraping |
+| Source metadata | Mercor APEX public facts + O*NET Task IDs + NBER IWA mapping | Makes provenance and taxonomy review explicit |
 | EvalTask schema | Pydantic v2 | Reuse strict config rules and `extra="forbid"` |
 | EvalTask files | YAML | Reviewable configs for local eval authoring |
 | Sample selection | TaskPack path plus explicit include/exclude lists | Keeps existing taskpacks reusable |
@@ -289,7 +291,7 @@ Coverage expectations by phase:
 | Module 11 | Path policy, blocked command policy, endpoint checks, timeout bounds, secret redaction |
 | Module 12 | Demo helper, JSON/CSV report export, reporting CLI, known limitations docs |
 | Post-MVP | Aggregate comparison exports, explicit OpenClaw execution opt-in, optional Playwright browser tests, PR/release workflow docs, guardrail edge-case tests |
-| Module 13 | EvalTask strict schema, sample selection, solver/scorer references, eval-log contract |
+| Module 13 | Expert seed schema/generation, EvalTask strict schema, sample selection, solver/scorer references, eval-log contract |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 ## File Layout Direction
@@ -314,6 +316,9 @@ agent-ab-workbench/
     desktop_basics/
       tasks.yaml
       workspaces/
+    mercor_apex_expert_seeded/
+      tasks.yaml
+      workspaces/
   src/agent_ab/
     cli.py
     config.py
@@ -335,6 +340,7 @@ agent-ab-workbench/
       task.py
       trace.py
     runner.py
+    task_seed_generation.py
     trace_store.py
     validators.py
     evals.py
@@ -346,6 +352,7 @@ agent-ab-workbench/
     test_module5_server.py
     test_module6_playground.py
     test_module7_frontend.py
+    test_module13_seed_generation.py
     test_module13_eval_core.py
 ```
 
@@ -354,6 +361,10 @@ Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and
 
 ## References
 
+- Mercor APEX Agents leaderboard: https://www.mercor.com/apex/apex-agents-leaderboard/
+- O*NET program: https://www.dol.gov/agencies/eta/onet
+- O*NET Task Statements data dictionary: https://www.onetcenter.org/dictionary/30.3/text/task_statements.html
+- NBER Working Paper 34255, Appendix A.4: https://www.nber.org/system/files/working_papers/w34255/w34255.pdf
 - Arize Quickstart Guide: https://arize.com/resource/arize-quickstart-guide/
 - AgentEval .NET toolkit: https://agenteval.dev/
 - AgentEval DAG paper: https://arxiv.org/abs/2604.23581

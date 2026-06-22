@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from pydantic import ValidationError
 from rich.console import Console
 from rich.table import Table
 
@@ -24,6 +25,11 @@ from agent_ab.reporting import (
 )
 from agent_ab.runner import run_mock_task
 from agent_ab.schemas.metrics import AGENTEVAL_METRIC_REGISTRY, MetricCategory, metric_names
+from agent_ab.task_seed_generation import (
+    SeedTaskGenerationConfig,
+    mercor_apex_public_seeds,
+    write_seed_taskpack,
+)
 
 app = typer.Typer(help="Local offline A/B workbench CLI.")
 console = Console()
@@ -95,6 +101,46 @@ def validate_taskpack_command(
     console.print(f"[green]OK[/green] taskpack={taskpack.id}@v{taskpack.version}")
     console.print(f"tasks: {len(taskpack.tasks)}")
     console.print(f"task ids: {', '.join(task.id for task in taskpack.tasks)}")
+
+
+@app.command("generate-seed-taskpack")
+def generate_seed_taskpack_command(
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Output TaskPack YAML path."),
+    ] = Path("taskpacks/mercor_apex_expert_seeded/tasks.yaml"),
+    taskpack_id: Annotated[
+        str,
+        typer.Option(help="Generated TaskPack ID."),
+    ] = "mercor_apex_expert_seeded",
+    workspace_fixture: Annotated[
+        str,
+        typer.Option(help="Relative workspace fixture path inside the TaskPack directory."),
+    ] = "workspaces/expert_seed",
+    variants_per_seed: Annotated[
+        int,
+        typer.Option(min=1, max=5, help="Deterministic variants to generate per built-in seed."),
+    ] = 1,
+) -> None:
+    """Generate a Mercor APEX/O*NET expert-seeded TaskPack without network access."""
+
+    try:
+        config = SeedTaskGenerationConfig(
+            taskpack_id=taskpack_id,
+            workspace_fixture=workspace_fixture,
+            variants_per_seed=variants_per_seed,
+            seeds=mercor_apex_public_seeds(),
+        )
+        taskpack = write_seed_taskpack(output, config)
+        validate_taskpack_with_fixtures(output)
+    except (ConfigLoadError, OSError, ValidationError, ValueError) as exc:
+        console.print(f"[red]Seed generation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] taskpack={taskpack.id}@v{taskpack.version}")
+    console.print(f"output: {output}")
+    console.print(f"tasks: {len(taskpack.tasks)}")
+    console.print(f"workspace fixture: {workspace_fixture}")
 
 
 @app.command("run-mock-task")

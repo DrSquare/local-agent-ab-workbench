@@ -44,7 +44,8 @@ resume, analyze, and extend.
 
 ## Current State
 
-Modules 1 through 12 plus post-MVP hardening are implemented with clear
+Modules 1 through 12 plus post-MVP hardening and the first Module 13 seed
+generation slice are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -62,6 +63,8 @@ local-first boundaries:
 - AgentEval-inspired metric registry
 - Playground config contract
 - Tracing config contract
+- Mercor APEX-inspired expert seed TaskPack generation
+- O*NET occupation/task IDs and NBER Appendix A.4-style IWA metadata on seed tasks
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -416,10 +419,20 @@ Deliverables:
 
 ### Module 13: Inspect-Inspired Eval Core
 
-Status: planned.
+Status: partially implemented.
 
 Goal: add explicit evaluation primitives underneath A/B comparison, reports, and
 Playground replay.
+
+Implemented seed-generation slice:
+
+- Strict expert seed metadata models
+- Built-in public Mercor APEX role/sample-task seeds
+- O*NET occupation and Task ID metadata
+- NBER Appendix A.4-style GWA/IWA/DWA classification metadata
+- `agent-ab generate-seed-taskpack` command
+- Example `taskpacks/mercor_apex_expert_seeded/tasks.yaml`
+- Tests for schema strictness, deterministic generation, and CLI output
 
 Deliverables:
 
@@ -535,7 +548,9 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Implement Module 13: Inspect-inspired eval core.
+Continue Module 13: Inspect-inspired eval core. The expert seed generator is
+implemented; next, bind TaskPack samples to solver and scorer references through
+strict EvalTask and EvalLog contracts.
 
 Module 13 acceptance criteria:
 
@@ -547,6 +562,7 @@ Module 13 acceptance criteria:
   artifacts, limits, and errors.
 - Existing A/B report and Playground concepts can be described as workflows over
   EvalTask/EvalLog without breaking current commands.
+- Expert-seeded TaskPacks can be selected as EvalTask sample sources.
 
 Completed post-MVP hardening:
 
@@ -555,9 +571,15 @@ Completed post-MVP hardening:
 - Browser-level UI tests that run when Playwright is available.
 - PR/release workflow documentation and PR template.
 - Windows/POSIX command/path edge-case coverage and real-adapter trace alias handling.
+- Expert seed TaskPack generation from public Mercor APEX, O*NET, and NBER
+  Appendix A.4 metadata.
 
 ## References
 
+- Mercor APEX Agents leaderboard: https://www.mercor.com/apex/apex-agents-leaderboard/
+- O*NET program: https://www.dol.gov/agencies/eta/onet
+- O*NET Task Statements data dictionary: https://www.onetcenter.org/dictionary/30.3/text/task_statements.html
+- NBER Working Paper 34255, Appendix A.4: https://www.nber.org/system/files/working_papers/w34255/w34255.pdf
 - Inspect AI repository: https://github.com/UKGovernmentBEIS/inspect_ai
 - Inspect AI docs: https://inspect.aisi.org.uk/
 - Arize Quickstart Guide: https://arize.com/resource/arize-quickstart-guide/
