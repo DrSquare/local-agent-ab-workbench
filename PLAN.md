@@ -72,7 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 13 plus post-MVP hardening are implemented with clear
+Modules 1 through 14 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -94,6 +94,8 @@ local-first boundaries:
 - O*NET occupation/task IDs and NBER Appendix A.4-style IWA metadata on seed tasks
 - EvalTask, EvalSample, solver reference, scorer reference, and EvalLog schemas
 - EvalTask CLI validation over referenced TaskPacks and sample selections
+- EvalSet schema, EvalRunPlan schema, deterministic non-executing run planning,
+  resume/skip detection, and plan JSON export
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -535,17 +537,29 @@ Non-goals:
 
 ### Module 14: Eval Runner and Eval Sets
 
-Status: planned.
+Status: implemented.
 
-Goal: run one or more eval tasks across variants with local resumability.
+Goal: plan one or more eval tasks across variants with local resumability before
+adding broader execution paths.
 
-Deliverables:
+Implemented deliverables:
 
 - Eval run planner
 - Eval set config
 - Resume and skip-completed behavior over local logs
 - Failure threshold and limit handling
 - Aggregate status summaries
+- `agent-ab validate-eval-set` command
+- `agent-ab plan-eval-set` command with optional JSON plan output
+- Example `evals/local_eval_set.yaml`
+- Focused tests for EvalSet validation, deterministic planning, resume behavior,
+  invalid completed-log handling, and CLI output
+
+Non-goals:
+
+- No new real agent execution path
+- No model grader runtime
+- No frontend changes
 
 ### Module 15: Analysis and Scanner Layer
 
@@ -695,23 +709,23 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Proceed to Module 14: Eval Runner and Eval Sets. Module 13 now provides strict
-EvalTask and EvalLog contracts, example eval configs, and a CLI validator. The
-runner should consume those contracts without adding new real agent execution
-beyond existing mock and explicitly gated OpenClaw preparation.
+Proceed to Module 15: Analysis and Scanner Layer. Module 14 now provides
+EvalSet validation and deterministic EvalRunPlan artifacts over EvalTask and
+EvalLog contracts without adding real execution. The next module should make
+those planned/completed logs queryable for reports, comparisons, and qualitative
+review.
 
-Module 14 acceptance criteria:
+Module 15 acceptance criteria:
 
-- Eval run planning expands EvalTask samples into deterministic per-sample run
-  plans without executing real agents by default.
-- Eval sets can group one or more EvalTasks and variants.
-- Resume planning can skip completed EvalLog artifacts.
-- Failure thresholds and sample limits are validated before runtime work starts.
-- Aggregate status summaries are written from EvalLog-compatible data.
-- Existing A/B report and Playground concepts can still be described as
-  workflows over EvalTask/EvalLog without breaking current commands.
-- Module 17 GUI work consumes Module 14 read models rather than inventing new
-  frontend-only data shapes.
+- EvalLog artifacts can be loaded from EvalRunPlan output paths.
+- Per-sample JSON/CSV exports operate over EvalLog-compatible data.
+- Per-eval aggregate exports summarize status, scorer results, traces, and
+  artifacts.
+- Scanner contracts can classify traces/transcripts without requiring cloud
+  model graders.
+- Failure taxonomy hooks are schema-first and optional.
+- UI/API read models are shaped for Module 17 dashboard and regression views.
+- Existing run reports remain backward compatible.
 
 Completed post-MVP hardening:
 

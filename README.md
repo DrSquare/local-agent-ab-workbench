@@ -20,6 +20,7 @@ This repository currently implements:
 - **Module 12: Demo and reporting**
 - **Module 13A: Expert seed TaskPack generation**
 - **Module 13B: EvalTask core contracts**
+- **Module 14: EvalSet planning**
 
 ## What the implemented modules include
 
@@ -49,6 +50,8 @@ This repository currently implements:
 - Mercor APEX-inspired expert seed generation with O*NET and NBER Appendix A.4 metadata
 - EvalTask, EvalSample, solver reference, scorer reference, and EvalLog schemas
 - EvalTask validation against referenced TaskPacks and sample selections
+- EvalSet validation, deterministic EvalRunPlan generation, resume/skip
+  detection, and plan JSON export
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -104,6 +107,15 @@ agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
 ```bash
 agent-ab validate-eval-task evals/desktop_basics_eval.yaml
 agent-ab validate-eval-task evals/mercor_apex_seed_eval.yaml
+```
+
+## Validate and plan an eval set
+
+```bash
+agent-ab validate-eval-set evals/local_eval_set.yaml
+agent-ab plan-eval-set evals/local_eval_set.yaml \
+  --run-root runs/evals \
+  --output runs/evals/local_module14_eval_set/plan.json
 ```
 
 ## Generate an expert seed taskpack
@@ -219,6 +231,7 @@ agent-ab-workbench/
     WORKFLOW.md
   evals/
     desktop_basics_eval.yaml
+    local_eval_set.yaml
     mercor_apex_seed_eval.yaml
   experiments/
     demo_openclaw_adapter.yaml
@@ -241,6 +254,7 @@ agent-ab-workbench/
       openclaw.py
     cli.py
     config.py
+    eval_runner.py
     guardrails.py
     playground.py
     reporting.py
@@ -281,12 +295,12 @@ agent-ab-workbench/
     test_module12_reporting.py
     test_module13_eval_core.py
     test_module13_seed_generation.py
+    test_module14_eval_runner.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Proceed to Module 14 by adding eval-run planning and eval-set contracts over the
-implemented EvalTask and EvalLog schemas. Keep real agent execution behind the
-existing explicit gates.
+Proceed to Module 15 by adding analysis and scanner contracts over EvalRunPlan
+and EvalLog artifacts. Keep cloud/model graders optional and schema-first.

@@ -133,7 +133,10 @@ Next architectural direction:
 - Dataset/Sample normalization for local desktop tasks is available through EvalSample.
 - Solver and scorer references validate adapter, validator, metric, trace, and custom names without executing agents.
 - EvalLog contracts reference traces, scores, artifacts, limits, errors, and metadata.
-- Next implementation should add eval-run planning and eval-set contracts before new real execution paths.
+- EvalSet contracts and EvalRunPlan artifacts expand samples deterministically
+  without launching agents.
+- Next implementation should add analysis/scanner contracts over EvalLog and
+  EvalRunPlan artifacts before new real execution paths.
 
 ## Coding rules
 
@@ -156,6 +159,8 @@ agent-ab generate-seed-taskpack --output taskpacks/mercor_apex_expert_seeded/tas
 agent-ab validate-taskpack taskpacks/mercor_apex_expert_seeded/tasks.yaml
 agent-ab validate-eval-task evals/desktop_basics_eval.yaml
 agent-ab validate-eval-task evals/mercor_apex_seed_eval.yaml
+agent-ab validate-eval-set evals/local_eval_set.yaml
+agent-ab plan-eval-set evals/local_eval_set.yaml --run-root runs/evals --output runs/evals/local_module14_eval_set/plan.json
 agent-ab prepare-openclaw-run experiments/demo_openclaw_adapter.yaml B openclaw_rename_todo
 agent-ab run-demo --output-root demo_output
 agent-ab export-runs demo_output/runs --output demo_output/reports/runs.csv --format csv
@@ -166,7 +171,7 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 14: Eval Runner and Eval Sets after reviewing `PLAN.md`,
-`TECH_STACK.md`, and `sprint.md`. Start with non-executing run planning over
-EvalTask samples, then add resumable EvalLog-aware state and aggregate status
-summaries before any new real adapter execution.
+Implement Module 15: Analysis and Scanner Layer after reviewing `PLAN.md`,
+`TECH_STACK.md`, and `sprint.md`. Start with EvalRunPlan/EvalLog loading,
+per-sample exports, aggregate summaries, and schema-first scanner/failure
+taxonomy contracts.

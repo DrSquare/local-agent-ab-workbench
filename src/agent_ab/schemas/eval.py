@@ -77,6 +77,11 @@ class EvalLogStatus(str, Enum):
     SKIPPED = "skipped"
 
 
+class EvalRunPlanStatus(str, Enum):
+    PLANNED = "planned"
+    SKIPPED_COMPLETED = "skipped_completed"
+
+
 class EvalSampleSelection(StrictBaseModel):
     """Select TaskPack tasks for an EvalTask.
 
@@ -275,6 +280,70 @@ class EvalTask(IdentifierMixin):
         )
 
 
+class EvalTaskRef(IdentifierMixin):
+    """EvalTask reference inside an EvalSet."""
+
+    path: str = Field(..., description="Relative or absolute path to an EvalTask YAML file.")
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("path")
+    @classmethod
+    def path_not_blank(cls, value: str) -> str:
+        return _non_blank(value, "eval task path")
+
+
+class EvalSet(IdentifierMixin):
+    """Collection of EvalTasks for resumable local planning."""
+
+    version: int = Field(default=1, ge=1)
+    description: str | None = None
+    eval_tasks: list[EvalTaskRef] = Field(min_length=1)
+    resume: bool = True
+    max_samples: int | None = Field(default=None, ge=1)
+    max_failures: int | None = Field(default=None, ge=0)
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("tags")
+    @classmethod
+    def tags_not_blank_or_duplicate(cls, value: list[str]) -> list[str]:
+        return _normalized_non_blank_list(value, "tag")
+
+    @model_validator(mode="after")
+    def eval_task_refs_are_unique(self) -> EvalSet:
+        ref_ids = [ref.id for ref in self.eval_tasks]
+        duplicates = sorted({ref_id for ref_id in ref_ids if ref_ids.count(ref_id) > 1})
+        if duplicates:
+            raise ValueError(f"duplicate eval task ref ids: {duplicates}")
+        return self
+
+    def eval_task_paths(self, base_dir: str | Path | None = None) -> dict[str, Path]:
+        root = Path(base_dir) if base_dir else Path.cwd()
+        paths: dict[str, Path] = {}
+        for ref in self.eval_tasks:
+            ref_path = Path(ref.path)
+            if not ref_path.is_absolute():
+                ref_path = root / ref_path
+            paths[ref.id] = ref_path
+        return paths
+
+    @classmethod
+    def from_yaml_file(cls, path: str | Path) -> EvalSet:
+        return cls.model_validate(load_yaml_mapping(path))
+
+    def to_yaml_file(self, path: str | Path) -> None:
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
+            yaml.safe_dump(
+                self.model_dump(mode="json", by_alias=True, exclude_none=True),
+                sort_keys=False,
+                allow_unicode=True,
+            ),
+            encoding="utf-8",
+        )
+
+
 class EvalTraceReference(StrictBaseModel):
     trace_id: str
     run_id: str | None = None
@@ -430,6 +499,91 @@ class EvalLog(StrictBaseModel):
             raise ValueError("status=error requires at least one error")
         if self.status in {EvalLogStatus.PASSED, EvalLogStatus.FAILED} and not self.scorer_results:
             raise ValueError("passed or failed eval logs require scorer_results")
+        return self
+
+
+class EvalSampleRunPlan(StrictBaseModel):
+    eval_task_id: str
+    eval_task_version: int = Field(default=1, ge=1)
+    eval_task_ref_id: str
+    sample_id: str
+    taskpack_id: str
+    task_id: str
+    solver_id: str
+    variant_id: str | None = None
+    eval_run_id: str
+    eval_log_path: str
+    status: EvalRunPlanStatus = EvalRunPlanStatus.PLANNED
+    scorer_ids: list[str] = Field(default_factory=list)
+    limits: RunLimits = Field(default_factory=RunLimits)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator(
+        "eval_task_id",
+        "eval_task_ref_id",
+        "sample_id",
+        "taskpack_id",
+        "task_id",
+        "solver_id",
+        "variant_id",
+    )
+    @classmethod
+    def ids_are_identifiers(cls, value: str | None, info) -> str | None:
+        if value is None:
+            return None
+        if not is_identifier(value):
+            raise ValueError(f"{info.field_name} must be a stable identifier")
+        return value
+
+    @field_validator("eval_run_id")
+    @classmethod
+    def eval_run_id_is_trace_token(cls, value: str) -> str:
+        return validate_trace_token(value, "eval_run_id")
+
+    @field_validator("eval_log_path")
+    @classmethod
+    def eval_log_path_not_blank(cls, value: str) -> str:
+        return _non_blank(value, "eval_log_path")
+
+    @field_validator("scorer_ids")
+    @classmethod
+    def scorer_ids_are_identifiers(cls, value: list[str]) -> list[str]:
+        return _validate_identifier_list(value, "scorer_id")
+
+
+class EvalRunPlan(StrictBaseModel):
+    eval_set_id: str
+    eval_set_version: int = Field(default=1, ge=1)
+    run_root: str
+    total_samples: int = Field(ge=0)
+    planned_count: int = Field(ge=0)
+    skipped_completed_count: int = Field(ge=0)
+    max_failures: int | None = Field(default=None, ge=0)
+    sample_runs: list[EvalSampleRunPlan] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("eval_set_id")
+    @classmethod
+    def eval_set_id_is_identifier(cls, value: str) -> str:
+        if not is_identifier(value):
+            raise ValueError("eval_set_id must be a stable identifier")
+        return value
+
+    @field_validator("run_root")
+    @classmethod
+    def run_root_not_blank(cls, value: str) -> str:
+        return _non_blank(value, "run_root")
+
+    @model_validator(mode="after")
+    def counts_match_sample_runs(self) -> EvalRunPlan:
+        planned = sum(run.status == EvalRunPlanStatus.PLANNED for run in self.sample_runs)
+        skipped = sum(run.status == EvalRunPlanStatus.SKIPPED_COMPLETED for run in self.sample_runs)
+        if self.total_samples != len(self.sample_runs):
+            raise ValueError("total_samples must equal sample_runs length")
+        if self.planned_count != planned:
+            raise ValueError("planned_count must match planned sample runs")
+        if self.skipped_completed_count != skipped:
+            raise ValueError("skipped_completed_count must match skipped sample runs")
         return self
 
 

@@ -1,0 +1,16 @@
+id: local_module14_eval_set
+version: 1
+description: Local EvalSet that groups deterministic and expert-seeded EvalTasks.
+eval_tasks:
+  - id: desktop_basics
+    path: desktop_basics_eval.yaml
+  - id: mercor_apex_seeds
+    path: mercor_apex_seed_eval.yaml
+resume: true
+max_samples: 10
+max_failures: 1
+tags:
+  - module14
+  - offline
+metadata:
+  purpose: Demonstrate non-executing EvalSet planning over EvalTask contracts.

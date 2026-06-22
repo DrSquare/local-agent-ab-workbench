@@ -2,8 +2,7 @@
 
 ## Current Sprint
 
-Module 13: Expert seed generation, Inspect-inspired eval core, and
-Arize-inspired GUI planning.
+Module 14: Eval Runner planning over Inspect-inspired eval contracts.
 
 ## Status
 
@@ -33,7 +32,8 @@ Arize-inspired GUI planning.
 | Arize-inspired GUI plan | Done | Plan, tech stack, and sprint tracker now define a local Observe/Evaluate/Improve GUI roadmap without adding Arize or cloud telemetry dependencies. |
 | Arize GUI self-review | Done | Roadmap now includes Module 17 information architecture, backend read-model expectations, static frontend architecture, and fixture-based test requirements. |
 | Module 13 EvalTask core | Done | Strict EvalTask, EvalSample, solver reference, scorer reference, EvalLog contracts, example eval configs, CLI validation, and tests are implemented. |
-| Module 14 Eval Runner and Eval Sets | Planned | Add eval run planning, eval set grouping, resumable state, failure thresholds, and aggregate status summaries over EvalTask/EvalLog contracts. |
+| Module 14 Eval Runner and Eval Sets | Done | EvalSet validation, deterministic EvalRunPlan generation, resume/skip detection over EvalLog JSON, failure/sample limits, plan JSON export, CLI commands, and tests are implemented without new real execution. |
+| Module 15 Analysis and Scanner Layer | Planned | Add EvalRunPlan/EvalLog loading, per-sample exports, aggregate summaries, scanner contracts, and failure taxonomy hooks. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -101,6 +101,6 @@ Arize-inspired GUI planning.
 
 ## Next Sprint Candidate
 
-Module 14: Eval Runner and Eval Sets. Start with non-executing run planning over
-EvalTask samples, then add resumable EvalLog-aware state and aggregate status
-summaries before any new real adapter execution.
+Module 15: Analysis and Scanner Layer. Start with EvalRunPlan/EvalLog loading,
+per-sample JSON/CSV exports, aggregate summaries, and schema-first scanner
+contracts before adding UI/API read models.

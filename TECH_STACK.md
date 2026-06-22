@@ -55,7 +55,7 @@ This revision separates the stack into:
 | Solver/Agent | Adapter contract | Python protocol/class with mock, OpenClaw, generic CLI, local HTTP implementations |
 | Scorer | Validator and trace scoring pipeline | Python scorer registry plus metric metadata |
 | Eval log | Run config + trace + scores + artifacts | JSON/JSONL files with SQLite index |
-| Eval set | Multi-task and multi-variant plan | YAML config plus resumable local state |
+| Eval set | EvalSet plus EvalRunPlan | YAML config plus resumable local state |
 | Sandbox | Execution provider | Local workspace provider first, Docker/provider extras later |
 | Analysis | Reports and scanner outputs | Built-in JSON/CSV first, optional dataframe extra later |
 
@@ -272,6 +272,19 @@ tests/test_module13_eval_core.py
 Module 14 should consume these contracts for planning and resumable local state
 rather than introducing new task, sample, solver, scorer, or log shapes.
 
+## Module 14 Eval Runner Planning Stack
+
+These choices are active for the implemented non-executing planner layer.
+
+| Need | Choice | Reason |
+|---|---|---|
+| EvalSet schema | Pydantic v2 + YAML | Reviewable grouping of EvalTasks |
+| EvalTask references | Relative paths from EvalSet YAML | Keeps eval suites portable inside the repo |
+| Run planning | Deterministic Python planner | Expands samples without launching agents |
+| Resume behavior | Existing EvalLog JSON validation | Skips only completed logs that still satisfy the schema |
+| Plan artifacts | JSON EvalRunPlan export | Local, inspectable input for Module 15 analysis and Module 17 GUI |
+| Execution compatibility | Conceptual only | Avoids new real execution until runner/sandbox policy expands |
+
 ## Safety and Sandbox Stack
 
 The schema already models safety intent. Runtime enforcement comes later.
@@ -382,6 +395,7 @@ agent-ab-workbench/
     WORKFLOW.md
   evals/
     desktop_basics_eval.yaml
+    local_eval_set.yaml
     mercor_apex_seed_eval.yaml
   experiments/
     demo_openclaw_prompt_ab.yaml
@@ -398,6 +412,7 @@ agent-ab-workbench/
   src/agent_ab/
     cli.py
     config.py
+    eval_runner.py
     playground.py
     server.py
     static/
@@ -421,7 +436,6 @@ agent-ab-workbench/
     task_seed_generation.py
     trace_store.py
     validators.py
-    evals.py
   tests/
     test_module1_schemas.py
     test_module2_tasks.py
@@ -432,6 +446,7 @@ agent-ab-workbench/
     test_module7_frontend.py
     test_module13_seed_generation.py
     test_module13_eval_core.py
+    test_module14_eval_runner.py
     test_module17_observability_gui.py
 ```
 
