@@ -1,0 +1,49 @@
+id: desktop_basics_mock_eval
+version: 1
+description: EvalTask over the deterministic desktop basics TaskPack using the mock solver.
+taskpack: ../taskpacks/desktop_basics/tasks.yaml
+samples:
+  include:
+    - '*'
+solver:
+  id: mock_solver
+  adapter: mock
+  variant_id: demo_mock
+scorers:
+  - id: declared_validators
+    type: validator
+    name: custom.declared_task_validators
+    required: true
+    description: Execute the validators declared on each TaskPack sample.
+  - id: task_success
+    type: metric
+    name: task_success
+    threshold: 1.0
+    required: true
+  - id: validator_pass_rate
+    type: metric
+    name: validator_pass_rate
+    threshold: 1.0
+    required: true
+limits:
+  max_seconds_per_task: 180
+  max_steps_per_task: 40
+  max_parallelism: 1
+  allowed_paths:
+    - $RUN_WORKSPACE
+  blocked_paths: []
+  blocked_commands: []
+  allow_network: false
+  network_allowlist:
+    - localhost
+    - 127.0.0.1
+tags:
+  - module13
+  - offline
+  - mock
+metadata:
+  workflow:
+    compatible_with:
+      - ab_report
+      - playground_replay
+      - trace_visualizer

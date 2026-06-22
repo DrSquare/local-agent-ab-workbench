@@ -19,6 +19,7 @@ This repository currently implements:
 - **Module 11: Guardrails and sandbox policy**
 - **Module 12: Demo and reporting**
 - **Module 13A: Expert seed TaskPack generation**
+- **Module 13B: EvalTask core contracts**
 
 ## What the implemented modules include
 
@@ -46,6 +47,8 @@ This repository currently implements:
 - Aggregate task/variant comparison reports across repeated local runs
 - Safety-gated OpenClaw execution helper requiring explicit opt-in
 - Mercor APEX-inspired expert seed generation with O*NET and NBER Appendix A.4 metadata
+- EvalTask, EvalSample, solver reference, scorer reference, and EvalLog schemas
+- EvalTask validation against referenced TaskPacks and sample selections
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -54,12 +57,12 @@ This repository currently implements:
 
 ## Product direction
 
-The next milestone is an evaluation core modeled around reusable components:
+The workbench evaluation core is modeled around reusable components:
 
 - `EvalTask`: binds a TaskPack sample set to a solver/agent adapter and scorer set.
 - `Dataset/Sample`: normalizes desktop tasks into repeatable local samples.
-- `Solver/Agent`: wraps deterministic mock, OpenClaw, and future CLI/local HTTP agents behind one contract.
-- `Scorer`: turns validators, trace checks, and optional model-graded checks into comparable scores.
+- `Solver/Agent`: references deterministic mock, OpenClaw, and future CLI/local HTTP agents behind one contract.
+- `Scorer`: references validators, trace checks, metrics, and optional model-graded checks as comparable scores.
 - `EvalLog`: makes run traces, scores, config, and artifacts queryable and replayable.
 - `Sandbox`: keeps real tool and desktop execution behind explicit local policy.
 
@@ -94,6 +97,13 @@ agent-ab validate-prompt prompts/baseline_openclaw.yaml
 
 ```bash
 agent-ab validate-taskpack taskpacks/desktop_basics/tasks.yaml
+```
+
+## Validate an eval task
+
+```bash
+agent-ab validate-eval-task evals/desktop_basics_eval.yaml
+agent-ab validate-eval-task evals/mercor_apex_seed_eval.yaml
 ```
 
 ## Generate an expert seed taskpack
@@ -207,6 +217,9 @@ agent-ab-workbench/
     PLAN.md
     TECH_STACK.md
     WORKFLOW.md
+  evals/
+    desktop_basics_eval.yaml
+    mercor_apex_seed_eval.yaml
   experiments/
     demo_openclaw_adapter.yaml
     demo_openclaw_prompt_ab.yaml
@@ -240,6 +253,7 @@ agent-ab-workbench/
         app.js
     schemas/
       common.py
+      eval.py
       experiment.py
       metrics.py
       playground.py
@@ -265,6 +279,7 @@ agent-ab-workbench/
     test_module10_openclaw_adapter.py
     test_module11_guardrails.py
     test_module12_reporting.py
+    test_module13_eval_core.py
     test_module13_seed_generation.py
   tests_tdd/
     README.md
@@ -272,6 +287,6 @@ agent-ab-workbench/
 
 ## Next module
 
-Continue Module 13 by adding the EvalTask core: explicit sample selection,
-solver references, scorer references, and EvalLog contracts over existing
-TaskPacks, including the expert seed taskpack.
+Proceed to Module 14 by adding eval-run planning and eval-set contracts over the
+implemented EvalTask and EvalLog schemas. Keep real agent execution behind the
+existing explicit gates.

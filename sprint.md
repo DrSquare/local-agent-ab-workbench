@@ -32,7 +32,8 @@ Arize-inspired GUI planning.
 | Module 13 expert seed generation | Done | Public Mercor APEX seeds can generate a TaskPack with O*NET Task IDs and NBER Appendix A.4-style IWA metadata. |
 | Arize-inspired GUI plan | Done | Plan, tech stack, and sprint tracker now define a local Observe/Evaluate/Improve GUI roadmap without adding Arize or cloud telemetry dependencies. |
 | Arize GUI self-review | Done | Roadmap now includes Module 17 information architecture, backend read-model expectations, static frontend architecture, and fixture-based test requirements. |
-| Module 13 EvalTask core | Planned | Define strict EvalTask, EvalSample, solver reference, scorer reference, and EvalLog contracts over existing and expert-seeded TaskPacks before adding more real execution. |
+| Module 13 EvalTask core | Done | Strict EvalTask, EvalSample, solver reference, scorer reference, EvalLog contracts, example eval configs, CLI validation, and tests are implemented. |
+| Module 14 Eval Runner and Eval Sets | Planned | Add eval run planning, eval set grouping, resumable state, failure thresholds, and aggregate status summaries over EvalTask/EvalLog contracts. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -100,6 +101,6 @@ Arize-inspired GUI planning.
 
 ## Next Sprint Candidate
 
-First finish Module 13 continuation: EvalTask schema, normalized sample
-selection, scorer references, and EvalLog contract. Then start Module 17:
-Arize-inspired local observability and eval GUI over those stable contracts.
+Module 14: Eval Runner and Eval Sets. Start with non-executing run planning over
+EvalTask samples, then add resumable EvalLog-aware state and aggregate status
+summaries before any new real adapter execution.

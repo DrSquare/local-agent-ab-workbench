@@ -1,0 +1,42 @@
+id: mercor_apex_expert_seed_eval
+version: 1
+description: EvalTask over Mercor APEX-inspired expert seed tasks for schema validation.
+taskpack: ../taskpacks/mercor_apex_expert_seeded/tasks.yaml
+samples:
+  include:
+    - investment_banking_merger_model
+    - management_consulting_market_score
+solver:
+  id: human_review_placeholder
+  adapter: custom.human_review
+scorers:
+  - id: expert_rubric
+    type: validator
+    name: custom.human_expert_rubric
+    required: true
+    description: Placeholder scorer for human or licensed model review.
+  - id: task_success
+    type: metric
+    name: task_success
+    required: false
+limits:
+  max_seconds_per_task: 600
+  max_steps_per_task: 80
+  max_parallelism: 1
+  allowed_paths:
+    - $RUN_WORKSPACE
+  blocked_paths: []
+  blocked_commands: []
+  allow_network: false
+  network_allowlist:
+    - localhost
+    - 127.0.0.1
+tags:
+  - module13
+  - source:mercor-apex-public
+  - taxonomy:onet
+  - classification:nber-appendix-a4
+metadata:
+  source_limitations:
+    - Built from public seed metadata only.
+    - Requires human review or licensed task artifacts before benchmark use.
