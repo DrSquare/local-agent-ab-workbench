@@ -25,6 +25,7 @@ This repository currently implements:
 - **Module 16: Sandbox provider contracts**
 - **Module 17: Observability and eval GUI read models**
 - **Module 18: Eval analysis and regression review UI**
+- **Module 19: Prompt and harness improvement loop UI**
 
 ## What the implemented modules include
 
@@ -71,6 +72,9 @@ This repository currently implements:
 - Failure taxonomy, status, and triage filters in the Evaluate view
 - Local triage notes linked to EvalTask, EvalLog, sample, and trace IDs
 - Local JSON/CSV export links for eval logs, aggregates, and scanner findings
+- Improve-view context handoff from selected regressions and failed eval rows
+- Local improvement notes, rerun queue entries, and candidate promotion artifacts
+- Guardrail reminders before promoted candidates are used for real adapter work
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -211,6 +215,10 @@ GET  /observability
 GET  /observability/export
 GET  /triage-notes
 POST /triage-notes
+GET  /improvements
+POST /improvements/notes
+POST /improvements/rerun-queue
+POST /improvements/promotions
 GET  /playground/defaults
 POST /playground/runs
 GET  /playground/views
@@ -295,6 +303,7 @@ agent-ab-workbench/
     cli.py
     config.py
     eval_runner.py
+    improvement.py
     guardrails.py
     observability.py
     playground.py
@@ -343,11 +352,12 @@ agent-ab-workbench/
     test_module16_sandbox_provider.py
     test_module17_observability_gui.py
     test_module18_regression_review_ui.py
+    test_module19_improvement_loop_ui.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Proceed to Module 19 by closing the improvement loop between selected
-regressions, Playground comparison, candidate promotion, and rerun queues.
+Proceed to Module 20 by binding EvalRunPlan samples to a guarded solver
+execution harness while keeping real adapter execution explicit and policy-gated.

@@ -127,6 +127,19 @@ review surface.
 | UI controls | Native tables, selects, form fields, and local links | Keeps the no-build shell responsive and accessible |
 | Persistence | Filesystem JSON for triage notes | Human-inspectable, local, and easy to migrate to SQLite later if needed |
 
+## Module 19 Improvement Loop Stack
+
+These choices are active for the implemented local improve-loop surface.
+
+| Need | Choice | Reason |
+|---|---|---|
+| Improvement artifacts | `agent_ab.improvement` Pydantic models | Keeps notes, rerun queue items, and promotion snapshots strict and local |
+| API | `GET /improvements`, `POST /improvements/notes`, `POST /improvements/rerun-queue`, `POST /improvements/promotions` | Provides one local loop around selected regressions and Playground Views |
+| Candidate promotion | JSON snapshots under the configured runs root | Writes reviewable artifacts without silently mutating source configs |
+| Rerun queue | Filesystem JSON under the runs root | Simple local queue that future execution modules can consume |
+| Notes | Filesystem JSON under the runs root | Links EvalTask, EvalLog, trace, triage note, and Playground View IDs without a database dependency |
+| Guardrail posture | Static reminders in the read model and UI | Keeps real-adapter risk visible before future execution work |
+
 ## Current Core Stack
 
 This is the base stack that remains active for config validation, CLI workflows,
@@ -427,6 +440,7 @@ Coverage expectations by phase:
 | Module 17 | Observability read models, `/observability` API, dashboard/evaluate/observe/improve/settings routes, local-only assets, responsive dashboard layout |
 | Module 18 | Regression tables, score deltas, failure filters, export links, saved triage notes |
 | Module 19 | Prompt/harness comparison, Playground handoff, candidate promotion, rerun queue behavior |
+| Module 20 | Guarded EvalRunPlan execution, solver dispatch, sandbox policy resolution, EvalLog writing |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 Module 17 fixture expectations:
@@ -473,6 +487,7 @@ agent-ab-workbench/
     cli.py
     config.py
     eval_runner.py
+    improvement.py
     observability.py
     playground.py
     sandbox.py
@@ -514,6 +529,7 @@ agent-ab-workbench/
     test_module16_sandbox_provider.py
     test_module17_observability_gui.py
     test_module18_regression_review_ui.py
+    test_module19_improvement_loop_ui.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and

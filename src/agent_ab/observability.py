@@ -114,8 +114,10 @@ class TriageNoteListResponse(StrictBaseModel):
 
 
 class PlaygroundHandoffReadModel(StrictBaseModel):
+    eval_task_id: str
     sample_id: str
     task_id: str
+    solver_id: str
     variant_id: str | None = None
     eval_run_id: str
     eval_log_path: str
@@ -362,8 +364,10 @@ def _eval_row_from_sample_run(
     ]
     sandbox = _sandbox_status(log.metadata.get("sandbox_events", []) if log else [])
     handoff = PlaygroundHandoffReadModel(
+        eval_task_id=sample_run.eval_task_id,
         sample_id=sample_run.sample_id,
         task_id=sample_run.task_id,
+        solver_id=sample_run.solver_id,
         variant_id=sample_run.variant_id,
         eval_run_id=sample_run.eval_run_id,
         eval_log_path=eval_log_path,

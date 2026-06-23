@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 18: Eval Analysis and Regression Review UI.
+Module 19: Prompt and Harness Improvement Loop UI.
 
 ## Status
 
@@ -37,6 +37,7 @@ Module 18: Eval Analysis and Regression Review UI.
 | Module 16 Sandbox Provider Interface | Done | Provider-level workspace, command, network, timeout, artifact, and approval/denial event contracts map onto existing guardrails without adding new execution. |
 | Module 17 Observability and Eval GUI | Done | Backend read models, `/observability`, Dashboard/Evaluate/Observe/Improve/Settings routes, eval rows, regression queue, sandbox status, and Playground handoff are implemented. |
 | Module 18 Regression Review UI | Done | Repeated-run and variant regression rows, failure/status/triage filters, local triage notes, export links, API routes, responsive styling, and focused tests are implemented. |
+| Module 19 Improvement Loop UI | Done | Selected regression/failure handoff, improvement notes, rerun queue entries, candidate promotion artifacts, guardrail reminders, API routes, and focused tests are implemented. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -127,6 +128,19 @@ Module 18: Eval Analysis and Regression Review UI.
   artifacts.
 - Responsive table and note layouts remain usable on laptop and narrow screens.
 
+## Module 19 Acceptance Criteria
+
+- Selected regression and failed eval rows can seed Playground comparison
+  context.
+- Prompt/result comparison context is visible before candidate promotion.
+- Candidate promotion writes reviewable local JSON artifacts rather than
+  mutating source configs silently.
+- Rerun queues can be seeded from selected regressions or failed eval rows.
+- Saved improvement notes link EvalTask, EvalLog, trace, triage note, and
+  Playground View IDs.
+- Guardrail reminders remain visible for workflows that prepare future real
+  adapter execution.
+
 ## Completed Post-MVP Criteria
 
 - Repeated local runs can be grouped by task and variant.
@@ -149,6 +163,6 @@ Module 18: Eval Analysis and Regression Review UI.
 
 ## Next Sprint Candidate
 
-Module 19: Prompt and Harness Improvement Loop UI. Build on Module 18 selected
-regressions and triage notes with Playground comparison context, candidate
-promotion artifacts, and rerun queues.
+Module 20: Guarded Eval Execution Harness. Bind EvalRunPlan samples to solver
+execution through sandbox provider policy, starting with deterministic mock
+execution and dry-run support while keeping real adapters explicitly gated.

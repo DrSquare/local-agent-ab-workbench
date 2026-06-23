@@ -145,9 +145,12 @@ Next architectural direction:
   existing no-build frontend shell.
 - Repeated-run and cross-variant regression review, triage notes, and local
   eval analysis export links are available in the GUI.
-- Next implementation should add Module 19 prompt and harness improvement loop
-  UI over selected regressions, Playground views, candidate promotion, and rerun
-  queues.
+- Prompt and harness improvement loop UI links selected regressions, Playground
+  Views, candidate promotion artifacts, rerun queues, and local improvement
+  notes.
+- Next implementation should add Module 20 guarded EvalRunPlan execution,
+  starting with deterministic mock solver dispatch and dry-run support while
+  keeping real adapters explicitly gated by sandbox provider policy.
 
 ## Coding rules
 
@@ -186,7 +189,8 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 19: Prompt and Harness Improvement Loop UI after reviewing
-`PLAN.md`, `TECH_STACK.md`, and `sprint.md`. Build on the Module 18 regression
-review surface with Playground comparison context, candidate promotion artifacts,
-rerun queues, saved improvement notes, and visible guardrail reminders.
+Implement Module 20: Guarded Eval Execution Harness after reviewing `PLAN.md`,
+`TECH_STACK.md`, and `sprint.md`. Bind EvalRunPlan samples to solver execution
+through sandbox provider policy, with deterministic mock execution first,
+dry-run support, EvalLog writing, resume handling, and explicit opt-in for any
+real adapter path.
