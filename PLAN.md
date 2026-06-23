@@ -72,7 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 18 plus post-MVP hardening are implemented with clear
+Modules 1 through 19 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -115,6 +115,12 @@ local-first boundaries:
 - Local triage note persistence linked to EvalTask, EvalLog, sample, and trace
   IDs
 - Local JSON/CSV export links for eval logs, aggregates, and scanner findings
+- Improve-view handoff from selected regressions and failed eval rows into
+  Playground comparison context
+- Local improvement notes, rerun queue entries, and candidate promotion
+  artifacts
+- Guardrail reminders before promoted candidates are used for real adapter
+  execution
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -679,18 +685,46 @@ Implemented deliverables:
 
 ### Module 19: Prompt and Harness Improvement Loop UI
 
-Status: planned.
+Status: implemented.
 
 Goal: close the local loop between eval failures, Playground experiments, and
 candidate variants.
 
+Implemented deliverables:
+
+- Selected regression and failed-eval handoff into the Improve view and
+  Playground form
+- Prompt/result comparison context for selected regression, failure, or saved
+  Playground View
+- Local improvement notes linked to EvalTask, EvalLog, trace, triage note, and
+  Playground View IDs
+- Rerun queue entries seeded from selected regressions or failed eval rows
+- Candidate promotion artifacts that snapshot Playground request and Prompt
+  Object JSON without mutating source configs
+- Guardrail reminders shown beside improvement actions before real adapter work
+  is prepared
+
+### Module 20: Guarded Eval Execution Harness
+
+Status: planned.
+
+Goal: bind EvalRunPlan samples to solver adapters through explicit sandbox
+provider policy while preserving deterministic mock execution and keeping real
+adapter execution opt-in.
+
 Deliverables:
 
-- Side-by-side prompt, parameter, tool-policy, and harness comparison
-- Candidate promotion workflow that writes reviewable local config changes
-- Rerun queue seeded from selected regressions or failure clusters
-- Saved improvement notes linked to EvalTask, EvalLog, and Playground View IDs
-- Guardrail reminders for any workflow that prepares real adapter execution
+- EvalRunPlan execution command that can run selected samples through the
+  deterministic mock solver first
+- Solver adapter dispatch contract shared by mock, prepared OpenClaw, generic
+  CLI, and future local HTTP adapters
+- Sandbox provider resolution for each EvalTask or sample run
+- Per-sample EvalLog writing compatible with Modules 15 through 19
+- Resume, skip-completed, and max-failure handling during execution
+- Dry-run and plan-only modes that show commands, workspaces, and guardrail
+  decisions before any real adapter is invoked
+- Tests proving real OpenClaw, shell, browser, desktop, model, and non-local
+  network execution remain blocked unless explicitly policy-gated
 
 ## Metric Strategy
 
@@ -750,25 +784,26 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Proceed to Module 19: Prompt and Harness Improvement Loop UI. Module 18 now
-exposes local regression review rows, filters, triage notes, and export links.
-The next module should close the local Improve loop by turning selected
-regressions into Playground comparisons, candidate config changes, and rerun
-queues.
+Proceed to Module 20: Guarded Eval Execution Harness. Module 19 now closes the
+local review loop from selected regressions to Playground comparison, local
+notes, rerun queues, and promotion artifacts. The next module should bind
+EvalRunPlan samples to solver execution through sandbox provider policy, with
+mock execution first and all real adapter execution staying explicitly gated.
 
-Module 19 acceptance criteria:
+Module 20 acceptance criteria:
 
-- Selected regression and failure rows can seed side-by-side Playground
-  comparison context.
-- Prompt, model parameter, tool-policy, and harness differences are visible
-  before candidate promotion.
-- Candidate promotion writes reviewable local config artifacts rather than
-  mutating source configs silently.
-- Rerun queues can be seeded from selected regressions or failure clusters.
-- Saved improvement notes link EvalTask, EvalLog, trace, triage note, and
-  Playground View IDs.
-- Guardrail reminders remain visible for any path that prepares real adapter
-  execution.
+- EvalRunPlan samples can execute through the deterministic mock solver and
+  write EvalLogs without changing existing analysis contracts.
+- Execution can be limited by eval task, sample ID, solver, variant, max
+  failures, and resume state.
+- Sandbox provider policy is resolved before each sample run and recorded in
+  EvalLog metadata.
+- Dry-run mode reports planned workspaces, commands, and guardrail decisions
+  without launching adapters.
+- Real OpenClaw, shell, browser, desktop, model, and non-local network paths
+  remain blocked unless explicitly enabled by policy and call-site opt-in.
+- Module 15 reports, Module 17 observability, Module 18 review, and Module 19
+  improvement flows can consume the generated EvalLogs.
 
 Completed post-MVP hardening:
 

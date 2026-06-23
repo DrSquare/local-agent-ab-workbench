@@ -19,6 +19,19 @@ from agent_ab.config import (
     load_prompt_object,
     validate_taskpack_with_fixtures,
 )
+from agent_ab.improvement import (
+    CandidatePromotion,
+    CandidatePromotionRequest,
+    ImprovementNote,
+    ImprovementNoteRequest,
+    ImprovementReadModel,
+    RerunQueueItem,
+    RerunQueueRequest,
+    build_improvement_read_model,
+    save_candidate_promotion,
+    save_improvement_note,
+    save_rerun_queue_item,
+)
 from agent_ab.observability import (
     ObservabilityReadModel,
     TriageNote,
@@ -294,6 +307,36 @@ def create_app(
         except (OSError, ValueError) as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+    @app.get("/improvements", response_model=ImprovementReadModel)
+    def get_improvements() -> ImprovementReadModel:
+        try:
+            return build_improvement_read_model(runs, root)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.post("/improvements/notes", response_model=ImprovementNote)
+    def create_or_update_improvement_note(request: ImprovementNoteRequest) -> ImprovementNote:
+        try:
+            return save_improvement_note(_improvement_notes_path(runs), request)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.post("/improvements/rerun-queue", response_model=RerunQueueItem)
+    def create_or_update_rerun_queue_item(request: RerunQueueRequest) -> RerunQueueItem:
+        try:
+            return save_rerun_queue_item(_rerun_queue_path(runs), request)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.post("/improvements/promotions", response_model=CandidatePromotion)
+    def create_candidate_promotion(request: CandidatePromotionRequest) -> CandidatePromotion:
+        try:
+            return save_candidate_promotion(root, playground_views, request, artifact_root=runs)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     @app.post("/playground/runs", response_model=PlaygroundRunResponse)
     def create_playground_run(request: PlaygroundRunRequest) -> PlaygroundRunResponse:
         try:
@@ -525,6 +568,14 @@ def _export_report_path(
 
 def _triage_notes_path(runs_root: Path) -> Path:
     return runs_root / "triage_notes.json"
+
+
+def _improvement_notes_path(runs_root: Path) -> Path:
+    return runs_root / "improvement_notes.json"
+
+
+def _rerun_queue_path(runs_root: Path) -> Path:
+    return runs_root / "rerun_queue.json"
 
 
 def _path_for_response(path: Path, project_root: Path) -> str:

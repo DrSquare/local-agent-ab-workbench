@@ -11,6 +11,7 @@ dist/
 
 # Local runtime artifacts
 runs/
+improvements/
 
 # Virtual environments
 .venv/

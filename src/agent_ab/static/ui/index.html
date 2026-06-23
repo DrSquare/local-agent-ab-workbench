@@ -202,6 +202,7 @@
                   Note
                   <textarea id="triageNoteBody" rows="7" placeholder="Record the root cause, owner, or next rerun decision."></textarea>
                 </label>
+                <button class="tool-button" id="openRegressionImproveButton" type="button">Open in Improve</button>
                 <button class="primary-button" id="saveTriageNoteButton" type="submit">Save note</button>
                 <p class="form-status" id="triageStatus" role="status"></p>
               </form>
@@ -381,6 +382,49 @@
               </section>
             </form>
             <div class="playground-side">
+              <section class="panel improvement-panel" aria-labelledby="improvementLoopTitle">
+                <h3 id="improvementLoopTitle">Improvement loop</h3>
+                <dl class="detail-list" id="improvementContext"></dl>
+                <h4>Comparison</h4>
+                <dl class="detail-list" id="improvementDiff"></dl>
+                <form class="improvement-note-form" id="improvementNoteForm">
+                  <label>
+                    Status
+                    <select id="improvementNoteStatus">
+                      <option value="open">Open</option>
+                      <option value="queued">Queued</option>
+                      <option value="promoted">Promoted</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                  </label>
+                  <label>
+                    Tags
+                    <input id="improvementNoteTags" placeholder="prompt, harness, rerun">
+                  </label>
+                  <label>
+                    Note
+                    <textarea id="improvementNoteBody" rows="5" placeholder="Record the candidate decision or rerun plan."></textarea>
+                  </label>
+                  <div class="improvement-actions">
+                    <button class="tool-button" id="queueRerunButton" type="button">Queue rerun</button>
+                    <button class="tool-button" id="promoteCandidateButton" type="button">Promote candidate</button>
+                    <button class="primary-button" type="submit">Save note</button>
+                  </div>
+                  <p class="form-status" id="improvementStatus" role="status"></p>
+                </form>
+              </section>
+              <section class="panel" aria-labelledby="guardrailRemindersTitle">
+                <h3 id="guardrailRemindersTitle">Guardrail reminders</h3>
+                <ul class="compact-list" id="guardrailReminderList"></ul>
+              </section>
+              <section class="panel" aria-labelledby="rerunQueueTitle">
+                <h3 id="rerunQueueTitle">Rerun queue</h3>
+                <div id="rerunQueueList" class="list-stack"></div>
+              </section>
+              <section class="panel" aria-labelledby="promotionTitle">
+                <h3 id="promotionTitle">Promotion artifacts</h3>
+                <div id="promotionList" class="list-stack"></div>
+              </section>
               <section class="panel" aria-labelledby="playgroundResultTitle">
                 <h3 id="playgroundResultTitle">Replay result</h3>
                 <div id="playgroundResult" class="result-panel"></div>

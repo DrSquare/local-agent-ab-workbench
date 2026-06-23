@@ -4,9 +4,11 @@ const state = {
   runs: [],
   views: [],
   observability: null,
+  improvements: null,
   selectedRun: null,
   selectedTrace: null,
   selectedSpanId: null,
+  selectedImprovement: null,
   playgroundDefaults: null,
   playgroundResult: null,
   collapsedSpanIds: new Set(),
@@ -53,13 +55,14 @@ function activateView(name) {
 async function loadAll(options = {}) {
   const { refreshPlaygroundDefaults = true } = options;
   setApiStatus(false, "Loading");
-  const [health, experiments, taskpacks, runs, views, observability] = await Promise.all([
+  const [health, experiments, taskpacks, runs, views, observability, improvements] = await Promise.all([
     fetchJson("/health"),
     fetchJson("/experiments"),
     fetchJson("/taskpacks"),
     fetchJson("/runs"),
     fetchJson("/playground/views"),
     fetchJson("/observability"),
+    fetchJson("/improvements"),
   ]);
 
   state.experiments = experiments.experiments || [];
@@ -67,6 +70,7 @@ async function loadAll(options = {}) {
   state.runs = runs.runs || [];
   state.views = views.views || [];
   state.observability = observability;
+  state.improvements = improvements;
   renderAll();
   if (refreshPlaygroundDefaults) {
     await loadPlaygroundDefaults({ silent: true });
@@ -86,6 +90,7 @@ function renderAll() {
   renderViews();
   renderTrace();
   renderPlaygroundResult();
+  renderImprovements();
 }
 
 function renderObservability() {
@@ -209,6 +214,196 @@ function clearTriageForm() {
   $("#triageNoteTags").value = "";
   $("#triageNoteBody").value = "";
   $("#triageStatus").textContent = "";
+}
+
+function renderImprovements() {
+  const improvements = state.improvements || {};
+  const selected = state.selectedImprovement;
+  $("#guardrailReminderList").innerHTML = (improvements.guardrail_reminders || []).map((item) => `
+    <li>${escapeHtml(item)}</li>
+  `).join("") || `<li>No guardrail reminders loaded</li>`;
+  $("#rerunQueueList").innerHTML = (improvements.rerun_queue || []).map((item) => `
+    <div class="list-item">
+      <strong>${escapeHtml(item.sample_id)}</strong>
+      <span>${escapeHtml(item.status)} - ${escapeHtml(item.reason)}</span>
+      <span>${escapeHtml(item.eval_run_id)}</span>
+    </div>
+  `).join("") || `<div class="empty">No queued reruns</div>`;
+  $("#promotionList").innerHTML = (improvements.promotions || []).map((item) => `
+    <div class="list-item">
+      <strong>${escapeHtml(item.label)}</strong>
+      <span>${escapeHtml(item.playground_view_id)} - ${escapeHtml(item.playground_run_id)}</span>
+      <span>${escapeHtml(item.artifact_path)}</span>
+    </div>
+  `).join("") || `<div class="empty">No promoted candidates</div>`;
+
+  if (!selected) {
+    $("#improvementContext").innerHTML = `<div class="empty">Select a regression or failed eval row</div>`;
+    $("#improvementDiff").innerHTML = `<div class="empty">No comparison context</div>`;
+    return;
+  }
+
+  $("#improvementContext").innerHTML = detailRows({
+    Source: selected.source,
+    Sample: selected.sample_id,
+    Task: selected.task_id,
+    Variant: selected.variant_id || "-",
+    "Eval run": selected.eval_run_id,
+    Trace: selected.trace_id || "-",
+    "Triage note": selected.triage_note_id || "-",
+  });
+  $("#improvementDiff").innerHTML = detailRows({
+    Comparison: selected.comparison_label || "-",
+    Previous: selected.previous_label || "-",
+    Current: selected.current_label || "-",
+    Delta: selected.delta_label || "-",
+  });
+}
+
+function selectedImprovementPayload() {
+  const selected = state.selectedImprovement;
+  if (!selected) return null;
+  return {
+    eval_task_id: selected.eval_task_id,
+    sample_id: selected.sample_id,
+    task_id: selected.task_id,
+    solver_id: selected.solver_id,
+    variant_id: selected.variant_id,
+    eval_run_id: selected.eval_run_id,
+    trace_id: selected.trace_id,
+    triage_note_id: selected.triage_note_id,
+  };
+}
+
+function applyRegressionToImprove(row) {
+  state.selectedImprovement = {
+    source: "regression_review",
+    eval_task_id: row.eval_task_id,
+    sample_id: row.sample_id,
+    task_id: row.task_id,
+    solver_id: row.solver_id,
+    variant_id: row.variant_id,
+    eval_run_id: row.current_eval_run_id,
+    trace_id: row.trace_id,
+    triage_note_id: row.latest_triage_note?.id,
+    comparison_label: row.comparison_label,
+    previous_label: `${row.previous_status} ${scoreText(row.previous_score)}`,
+    current_label: `${row.current_status} ${scoreText(row.current_score)}`,
+    delta_label: row.delta === null || row.delta === undefined ? "-" : row.delta.toFixed(3),
+  };
+  activateView("improve");
+  if (row.variant_id) {
+    syncSelectValues(
+      "#pgVariant",
+      uniqueValues([...(state.playgroundDefaults?.variants || []), row.variant_id]),
+      row.variant_id,
+    );
+  }
+  if (row.task_id) {
+    syncSelectValues(
+      "#pgTask",
+      uniqueValues([...(state.playgroundDefaults?.task_ids || []), row.task_id]),
+      row.task_id,
+    );
+  }
+  $("#pgRunId").value = "";
+  $("#pgViewId").value = "";
+  $("#pgLabel").value = `Improve ${row.sample_id}`;
+  $("#pgPromptVariables").value = JSON.stringify(
+    row.query ? { task_query: row.query } : {},
+    null,
+    2,
+  );
+  $("#improvementStatus").textContent = `Loaded ${row.sample_id}`;
+  renderImprovements();
+}
+
+async function queueSelectedRerun() {
+  const payload = selectedImprovementPayload();
+  if (!payload) {
+    $("#improvementStatus").textContent = "Select a regression or failed eval row first";
+    return;
+  }
+  try {
+    await fetchJson("/improvements/rerun-queue", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        source: state.selectedImprovement.source,
+        reason: $("#improvementNoteBody").value.trim() || "Review selected failure before rerun.",
+        status: "queued",
+        tags: parseList($("#improvementNoteTags").value),
+      }),
+    });
+    $("#improvementStatus").textContent = "Queued rerun";
+    await refreshImprovements();
+  } catch (error) {
+    $("#improvementStatus").textContent = error.message;
+  }
+}
+
+async function saveImprovementNote(event) {
+  event.preventDefault();
+  const payload = selectedImprovementPayload();
+  if (!payload) {
+    $("#improvementStatus").textContent = "Select a regression or failed eval row first";
+    return;
+  }
+  const body = $("#improvementNoteBody").value.trim();
+  if (!body) {
+    $("#improvementStatus").textContent = "Note cannot be blank";
+    return;
+  }
+  try {
+    await fetchJson("/improvements/notes", {
+      method: "POST",
+      body: JSON.stringify({
+        eval_task_id: payload.eval_task_id,
+        sample_id: payload.sample_id,
+        eval_run_id: payload.eval_run_id,
+        trace_id: payload.trace_id,
+        triage_note_id: payload.triage_note_id,
+        playground_view_id: state.playgroundResult?.view_id,
+        body,
+        status: $("#improvementNoteStatus").value,
+        tags: parseList($("#improvementNoteTags").value),
+      }),
+    });
+    $("#improvementStatus").textContent = "Saved improvement note";
+    await refreshImprovements();
+  } catch (error) {
+    $("#improvementStatus").textContent = error.message;
+  }
+}
+
+async function promoteSavedCandidate() {
+  const viewId = state.playgroundResult?.view_id || $("#pgViewId").value.trim();
+  if (!viewId) {
+    $("#improvementStatus").textContent = "Save or load a candidate before promotion";
+    return;
+  }
+  try {
+    await fetchJson("/improvements/promotions", {
+      method: "POST",
+      body: JSON.stringify({
+        playground_view_id: viewId,
+        label: $("#pgLabel").value.trim() || viewId,
+        source_eval_run_id: state.selectedImprovement?.eval_run_id,
+        source_trace_id: state.selectedImprovement?.trace_id,
+        source_triage_note_id: state.selectedImprovement?.triage_note_id,
+        notes: $("#improvementNoteBody").value.trim() || undefined,
+      }),
+    });
+    $("#improvementStatus").textContent = "Promoted candidate artifact";
+    await refreshImprovements();
+  } catch (error) {
+    $("#improvementStatus").textContent = error.message;
+  }
+}
+
+async function refreshImprovements() {
+  state.improvements = await fetchJson("/improvements");
+  renderImprovements();
 }
 
 async function saveTriageNote(event) {
@@ -613,7 +808,24 @@ function applyPlaygroundView(view) {
   $("#pgPromptVariables").value = JSON.stringify(request.prompt_variables || {}, null, 2);
   applyPlaygroundOverridesToForm(request.overrides || {});
   state.playgroundResult = response;
+  state.selectedImprovement = {
+    ...(state.selectedImprovement || {}),
+    source: "playground_view",
+    eval_task_id: state.selectedImprovement?.eval_task_id || "playground",
+    sample_id: request.task_id,
+    task_id: request.task_id,
+    solver_id: request.variant_id,
+    variant_id: request.variant_id,
+    eval_run_id: response.run_id,
+    trace_id: response.trace_id,
+    playground_view_id: view.id,
+    comparison_label: view.label || view.id,
+    previous_label: "Saved candidate",
+    current_label: response.status,
+    delta_label: "-",
+  };
   renderPlaygroundResult();
+  renderImprovements();
 }
 
 function applyPlaygroundHandoff(evalRunId) {
@@ -621,9 +833,19 @@ function applyPlaygroundHandoff(evalRunId) {
     .find((item) => item.eval_run_id === evalRunId);
   if (!handoff) return;
   activateView("improve");
-  $("#pgTask").value = handoff.task_id || $("#pgTask").value;
   if (handoff.variant_id) {
-    $("#pgVariant").value = handoff.variant_id;
+    syncSelectValues(
+      "#pgVariant",
+      uniqueValues([...(state.playgroundDefaults?.variants || []), handoff.variant_id]),
+      handoff.variant_id,
+    );
+  }
+  if (handoff.task_id) {
+    syncSelectValues(
+      "#pgTask",
+      uniqueValues([...(state.playgroundDefaults?.task_ids || []), handoff.task_id]),
+      handoff.task_id,
+    );
   }
   $("#pgRunId").value = "";
   $("#pgLabel").value = `Review ${handoff.sample_id}`;
@@ -632,7 +854,23 @@ function applyPlaygroundHandoff(evalRunId) {
     null,
     2,
   );
+  state.selectedImprovement = {
+    source: "eval_failure",
+    eval_task_id: handoff.eval_task_id,
+    sample_id: handoff.sample_id,
+    task_id: handoff.task_id,
+    solver_id: handoff.solver_id || handoff.variant_id || "unknown",
+    variant_id: handoff.variant_id,
+    eval_run_id: handoff.eval_run_id,
+    trace_id: handoff.trace_id,
+    triage_note_id: null,
+    comparison_label: handoff.failure_taxonomy || "failed eval",
+    previous_label: "-",
+    current_label: "failed",
+    delta_label: "-",
+  };
   $("#playgroundStatus").textContent = `Loaded ${handoff.sample_id}`;
+  renderImprovements();
 }
 
 function applyPlaygroundOverridesToForm(overrides) {
@@ -818,8 +1056,11 @@ function scoreLabel(row) {
 }
 
 function statusScore(status, score) {
-  const scoreText = score === null || score === undefined ? "-" : score.toFixed(3);
-  return `${badge(status, statusTone(status))} <span class="table-subtext">${escapeHtml(scoreText)}</span>`;
+  return `${badge(status, statusTone(status))} <span class="table-subtext">${escapeHtml(scoreText(score))}</span>`;
+}
+
+function scoreText(score) {
+  return score === null || score === undefined ? "-" : score.toFixed(3);
 }
 
 function statusTone(status) {
@@ -944,6 +1185,16 @@ $("#triageStatusFilter").addEventListener("change", (event) => {
 
 $("#triageForm").addEventListener("submit", saveTriageNote);
 
+$("#openRegressionImproveButton").addEventListener("click", () => {
+  const row = (state.observability?.regression_review?.rows || [])
+    .find((item) => item.key === state.selectedRegressionKey);
+  if (!row) {
+    $("#triageStatus").textContent = "Select a regression row first";
+    return;
+  }
+  applyRegressionToImprove(row);
+});
+
 $("#traceTree").addEventListener("click", (event) => {
   const toggle = event.target.closest(".span-toggle");
   if (toggle && !toggle.disabled) {
@@ -1031,6 +1282,16 @@ $("#viewList").addEventListener("click", async (event) => {
 });
 
 $("#playgroundForm").addEventListener("submit", submitPlayground);
+
+$("#queueRerunButton").addEventListener("click", () => {
+  queueSelectedRerun();
+});
+
+$("#promoteCandidateButton").addEventListener("click", () => {
+  promoteSavedCandidate();
+});
+
+$("#improvementNoteForm").addEventListener("submit", saveImprovementNote);
 
 loadAll().catch((error) => {
   setApiStatus(false, error.message);
