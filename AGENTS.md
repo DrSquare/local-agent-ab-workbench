@@ -143,8 +143,11 @@ Next architectural direction:
 - Observe/Evaluate/Improve read models and GUI routes expose EvalTask, EvalLog,
   trace, scorer, artifact, and sandbox status data through the local API and
   existing no-build frontend shell.
-- Next implementation should add Module 18 repeated-eval regression review UI
-  over the Module 17 read models.
+- Repeated-run and cross-variant regression review, triage notes, and local
+  eval analysis export links are available in the GUI.
+- Next implementation should add Module 19 prompt and harness improvement loop
+  UI over selected regressions, Playground views, candidate promotion, and rerun
+  queues.
 
 ## Coding rules
 
@@ -183,7 +186,7 @@ agent-ab metrics
 
 ## Next recommended task
 
-Implement Module 18: Eval Analysis and Regression Review UI after reviewing
-`PLAN.md`, `TECH_STACK.md`, and `sprint.md`. Build on the Module 17
-observability read models with repeated-run comparison, score deltas, failure
-taxonomy filters, saved triage notes, and local export links.
+Implement Module 19: Prompt and Harness Improvement Loop UI after reviewing
+`PLAN.md`, `TECH_STACK.md`, and `sprint.md`. Build on the Module 18 regression
+review surface with Playground comparison context, candidate promotion artifacts,
+rerun queues, saved improvement notes, and visible guardrail reminders.

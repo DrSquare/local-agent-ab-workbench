@@ -24,6 +24,7 @@ This repository currently implements:
 - **Module 15: EvalLog analysis and scanner exports**
 - **Module 16: Sandbox provider contracts**
 - **Module 17: Observability and eval GUI read models**
+- **Module 18: Eval analysis and regression review UI**
 
 ## What the implemented modules include
 
@@ -66,6 +67,10 @@ This repository currently implements:
   rows, trace links, Playground handoffs, and sandbox status
 - Local `/observability` API endpoint
 - Dashboard, Evaluate, Observe, Improve, and Settings routes in the no-build UI
+- Regression review rows for repeated-run and cross-variant eval comparisons
+- Failure taxonomy, status, and triage filters in the Evaluate view
+- Local triage notes linked to EvalTask, EvalLog, sample, and trace IDs
+- Local JSON/CSV export links for eval logs, aggregates, and scanner findings
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -203,6 +208,9 @@ GET  /experiments
 GET  /taskpacks
 GET  /runs
 GET  /observability
+GET  /observability/export
+GET  /triage-notes
+POST /triage-notes
 GET  /playground/defaults
 POST /playground/runs
 GET  /playground/views
@@ -334,12 +342,12 @@ agent-ab-workbench/
     test_module15_analysis_scanner.py
     test_module16_sandbox_provider.py
     test_module17_observability_gui.py
+    test_module18_regression_review_ui.py
   tests_tdd/
     README.md
 ```
 
 ## Next module
 
-Proceed to Module 18 by adding repeated-eval regression review UI over the
-Module 17 read models, including score deltas, failure taxonomy filters, saved
-triage notes, and local export links.
+Proceed to Module 19 by closing the improvement loop between selected
+regressions, Playground comparison, candidate promotion, and rerun queues.

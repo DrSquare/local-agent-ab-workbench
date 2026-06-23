@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import Field
 
+from agent_ab.analysis import (
+    export_eval_aggregate_report,
+    export_eval_log_report,
+    export_eval_scan_report,
+)
 from agent_ab.config import (
     ConfigLoadError,
     load_experiment,
@@ -16,11 +21,17 @@ from agent_ab.config import (
 )
 from agent_ab.observability import (
     ObservabilityReadModel,
+    TriageNote,
+    TriageNoteListResponse,
+    TriageNoteRequest,
     build_observability_read_model,
     empty_observability_read_model,
     find_latest_eval_plan,
+    load_triage_notes,
+    save_triage_note,
 )
 from agent_ab.playground import list_playground_views, load_playground_view, run_playground_task
+from agent_ab.reporting import ReportFormat
 from agent_ab.schemas.common import LocalModelRegistry, StrictBaseModel
 from agent_ab.schemas.playground import (
     PlaygroundRunRequest,
@@ -39,6 +50,7 @@ _UI_ASSETS = {
     "app.css": "text/css",
     "app.js": "application/javascript",
 }
+_REPORT_FORMAT_QUERY = Query(default=ReportFormat.JSON, alias="format")
 
 
 class HealthResponse(StrictBaseModel):
@@ -238,7 +250,47 @@ def create_app(
             else:
                 safe_plan_path = validate_project_relative_path(plan_path, "plan_path")
                 eval_plan_path = _safe_project_file(root, safe_plan_path, "plan_path")
-            return build_observability_read_model(eval_plan_path, project_root=root)
+            return build_observability_read_model(
+                eval_plan_path,
+                project_root=root,
+                triage_notes=load_triage_notes(_triage_notes_path(runs)),
+            )
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/observability/export")
+    def export_observability_report(
+        kind: str,
+        report_format: ReportFormat = _REPORT_FORMAT_QUERY,
+        plan_path: str | None = None,
+    ) -> FileResponse:
+        try:
+            eval_plan_path = _resolve_eval_plan_path(root, runs, plan_path)
+            report_path = _export_report_path(root, eval_plan_path, kind, report_format)
+            if kind == "eval_logs":
+                output_path = export_eval_log_report(eval_plan_path, report_path, report_format)
+            elif kind == "eval_aggregates":
+                output_path = export_eval_aggregate_report(eval_plan_path, report_path, report_format)
+            elif kind == "eval_findings":
+                output_path = export_eval_scan_report(eval_plan_path, report_path, report_format)
+            else:
+                raise ValueError(f"unknown observability export kind: {kind}")
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        media_type = "application/json" if report_format == ReportFormat.JSON else "text/csv"
+        return FileResponse(output_path, media_type=media_type, filename=Path(output_path).name)
+
+    @app.get("/triage-notes", response_model=TriageNoteListResponse)
+    def list_triage_notes() -> TriageNoteListResponse:
+        try:
+            return TriageNoteListResponse(notes=load_triage_notes(_triage_notes_path(runs)))
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.post("/triage-notes", response_model=TriageNote)
+    def create_or_update_triage_note(request: TriageNoteRequest) -> TriageNote:
+        try:
+            return save_triage_note(_triage_notes_path(runs), request)
         except (OSError, ValueError) as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -445,6 +497,34 @@ def _safe_project_file(project_root: Path, relative_path: str, field_name: str) 
     if not candidate.is_file():
         raise ValueError(f"file not found: {relative_path}")
     return candidate
+
+
+def _resolve_eval_plan_path(project_root: Path, runs_root: Path, plan_path: str | None) -> Path:
+    if plan_path is None:
+        eval_plan_path = find_latest_eval_plan(project_root, runs_root)
+        if eval_plan_path is None:
+            raise ValueError("No EvalRunPlan found under the runs root.")
+        return eval_plan_path
+    safe_plan_path = validate_project_relative_path(plan_path, "plan_path")
+    return _safe_project_file(project_root, safe_plan_path, "plan_path")
+
+
+def _export_report_path(
+    project_root: Path,
+    eval_plan_path: Path,
+    kind: str,
+    report_format: ReportFormat,
+) -> Path:
+    return (
+        project_root
+        / "reports"
+        / "observability"
+        / f"{eval_plan_path.stem}_{kind}.{report_format.value}"
+    )
+
+
+def _triage_notes_path(runs_root: Path) -> Path:
+    return runs_root / "triage_notes.json"
 
 
 def _path_for_response(path: Path, project_root: Path) -> str:
