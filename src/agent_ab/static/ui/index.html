@@ -136,6 +136,77 @@
               </table>
             </div>
           </section>
+          <section class="panel regression-review-panel" aria-labelledby="regressionReviewTitle">
+            <div class="section-heading compact-heading">
+              <h3 id="regressionReviewTitle">Regression review</h3>
+              <span id="triageSummary">No notes</span>
+            </div>
+            <div class="review-tools" aria-label="Regression review controls">
+              <label>
+                Failure taxonomy
+                <select id="regressionTaxonomyFilter">
+                  <option value="">All taxonomies</option>
+                </select>
+              </label>
+              <label>
+                Current status
+                <select id="regressionStatusFilter">
+                  <option value="">All statuses</option>
+                </select>
+              </label>
+              <label>
+                Triage status
+                <select id="triageStatusFilter">
+                  <option value="">All notes</option>
+                  <option value="missing">Missing note</option>
+                  <option value="open">Open</option>
+                  <option value="watching">Watching</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+              </label>
+            </div>
+            <div class="export-links" id="exportLinks" aria-label="Local analysis exports"></div>
+            <div class="review-layout">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Sample</th>
+                      <th>Variant</th>
+                      <th>Taxonomy</th>
+                      <th>Previous</th>
+                      <th>Current</th>
+                      <th>Delta</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="regressionReviewRows"></tbody>
+                </table>
+              </div>
+              <form class="triage-form" id="triageForm">
+                <h4>Review note</h4>
+                <p class="form-status" id="selectedRegressionLabel">Select a regression row</p>
+                <label>
+                  Status
+                  <select id="triageNoteStatus">
+                    <option value="open">Open</option>
+                    <option value="watching">Watching</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                </label>
+                <label>
+                  Tags
+                  <input id="triageNoteTags" placeholder="sandbox, prompt, scorer">
+                </label>
+                <label>
+                  Note
+                  <textarea id="triageNoteBody" rows="7" placeholder="Record the root cause, owner, or next rerun decision."></textarea>
+                </label>
+                <button class="primary-button" id="saveTriageNoteButton" type="submit">Save note</button>
+                <p class="form-status" id="triageStatus" role="status"></p>
+              </form>
+            </div>
+          </section>
           <div class="section-heading run-heading">
             <h3 id="runsTitle">Run artifacts</h3>
             <span>Select a run to inspect its trace</span>

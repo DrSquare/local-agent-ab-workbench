@@ -113,6 +113,20 @@ These choices are active for the implemented observe/evaluate/improve shell.
 | Improve | Existing Playground route plus eval handoff | Failed/error eval rows can seed Playground review context |
 | Settings | Local posture details | Shows local asset, eval plan, log, and sandbox status without cloud telemetry |
 
+## Module 18 Regression Review UI Stack
+
+These choices are active for the implemented eval-analysis and regression
+review surface.
+
+| Need | Choice | Reason |
+|---|---|---|
+| Regression rows | Extended `agent_ab.observability` read models | Keeps repeated-run and variant comparison logic server-side and testable |
+| Review API | `GET /observability` plus `GET /observability/export` | Reuses the existing dashboard payload while exposing local analysis artifacts |
+| Notes API | `GET /triage-notes` and `POST /triage-notes` | Stores review decisions under the local runs root without a database dependency |
+| Export formats | Existing JSON/CSV analysis writers | Avoids adding dataframe, charting, or cloud dependencies for Module 18 |
+| UI controls | Native tables, selects, form fields, and local links | Keeps the no-build shell responsive and accessible |
+| Persistence | Filesystem JSON for triage notes | Human-inspectable, local, and easy to migrate to SQLite later if needed |
+
 ## Current Core Stack
 
 This is the base stack that remains active for config validation, CLI workflows,
@@ -499,6 +513,7 @@ agent-ab-workbench/
     test_module15_analysis_scanner.py
     test_module16_sandbox_provider.py
     test_module17_observability_gui.py
+    test_module18_regression_review_ui.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and

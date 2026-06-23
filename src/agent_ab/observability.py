@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from agent_ab.analysis import LoadedEvalLog, build_eval_log_rows
-from agent_ab.schemas.common import StrictBaseModel
+from agent_ab.schemas.common import StrictBaseModel, _non_blank, _normalized_non_blank_list
 from agent_ab.schemas.eval import EvalLog, EvalRunPlan, EvalSampleRunPlan
+from agent_ab.schemas.trace import validate_trace_token
 
 
 class DashboardSummary(StrictBaseModel):
@@ -26,6 +29,7 @@ class DashboardSummary(StrictBaseModel):
     skipped_count: int = 0
     pass_rate: float | None = None
     regression_count: int = 0
+    triage_note_count: int = 0
     sandbox_denial_count: int = 0
     trace_link_count: int = 0
     artifact_count: int = 0
@@ -60,6 +64,53 @@ class SandboxStatusReadModel(StrictBaseModel):
     denied_tools: list[str] = Field(default_factory=list)
     policy_areas: list[str] = Field(default_factory=list)
     latest_denial_reason: str | None = None
+
+
+class TriageNoteRequest(StrictBaseModel):
+    id: str | None = None
+    eval_task_id: str
+    sample_id: str
+    eval_run_id: str
+    eval_log_path: str
+    trace_id: str | None = None
+    failure_taxonomy: str | None = None
+    body: str
+    status: str = "open"
+    tags: list[str] = Field(default_factory=list)
+
+    @field_validator("id", "eval_run_id", "trace_id")
+    @classmethod
+    def trace_tokens_are_valid(cls, value: str | None, info) -> str | None:
+        if value is None:
+            return None
+        return validate_trace_token(value, info.field_name)
+
+    @field_validator("eval_task_id", "sample_id", "eval_log_path", "body", "status")
+    @classmethod
+    def required_strings_not_blank(cls, value: str) -> str:
+        return _non_blank(value, "triage note field")
+
+    @field_validator("failure_taxonomy")
+    @classmethod
+    def optional_strings_not_blank(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _non_blank(value, "triage note field")
+
+    @field_validator("tags")
+    @classmethod
+    def tags_not_blank_or_duplicate(cls, value: list[str]) -> list[str]:
+        return _normalized_non_blank_list(value, "triage note tag")
+
+
+class TriageNote(TriageNoteRequest):
+    id: str
+    created_at_ms: int = Field(ge=0)
+    updated_at_ms: int = Field(ge=0)
+
+
+class TriageNoteListResponse(StrictBaseModel):
+    notes: list[TriageNote] = Field(default_factory=list)
 
 
 class PlaygroundHandoffReadModel(StrictBaseModel):
@@ -100,19 +151,48 @@ class EvalRunReadModel(StrictBaseModel):
 
 class RegressionReadModel(StrictBaseModel):
     key: str
+    comparison_kind: str
+    comparison_label: str
     eval_task_id: str
+    taskpack_id: str
     sample_id: str
+    task_id: str
     solver_id: str
+    previous_variant_id: str | None = None
     variant_id: str | None = None
+    query: str | None = None
     previous_eval_run_id: str
     current_eval_run_id: str
+    current_eval_log_path: str
     previous_status: str
     current_status: str
     previous_score: float | None = None
     current_score: float | None = None
     delta: float | None = None
     trace_id: str | None = None
+    trace_path: str | None = None
     failure_taxonomy: str | None = None
+    sandbox_denial_count: int = 0
+    triage_note_count: int = 0
+    latest_triage_note: TriageNote | None = None
+
+
+class ExportLinkReadModel(StrictBaseModel):
+    label: str
+    kind: str
+    format: str
+    path: str
+    url: str
+
+
+class RegressionReviewReadModel(StrictBaseModel):
+    rows: list[RegressionReadModel] = Field(default_factory=list)
+    failure_taxonomy_options: list[str] = Field(default_factory=list)
+    solver_options: list[str] = Field(default_factory=list)
+    variant_options: list[str] = Field(default_factory=list)
+    status_options: list[str] = Field(default_factory=list)
+    export_links: list[ExportLinkReadModel] = Field(default_factory=list)
+    triage_notes: list[TriageNote] = Field(default_factory=list)
 
 
 class ObservabilityReadModel(StrictBaseModel):
@@ -122,6 +202,7 @@ class ObservabilityReadModel(StrictBaseModel):
     trace_links: list[TraceLinkReadModel] = Field(default_factory=list)
     playground_handoffs: list[PlaygroundHandoffReadModel] = Field(default_factory=list)
     sandbox: SandboxStatusReadModel = Field(default_factory=SandboxStatusReadModel)
+    regression_review: RegressionReviewReadModel = Field(default_factory=RegressionReviewReadModel)
 
 
 def empty_observability_read_model(message: str | None = None) -> ObservabilityReadModel:
@@ -134,6 +215,7 @@ def build_observability_read_model(
     plan_path: str | Path,
     *,
     project_root: str | Path | None = None,
+    triage_notes: list[TriageNote] | None = None,
 ) -> ObservabilityReadModel:
     """Build UI-facing read models from an EvalRunPlan and available EvalLogs."""
 
@@ -150,7 +232,17 @@ def build_observability_read_model(
         )
         for sample_run in plan.sample_runs
     ]
-    regression_rows = _build_regression_rows(rows)
+    notes = triage_notes or []
+    regression_rows = _build_regression_rows(rows, notes)
+    regression_review = RegressionReviewReadModel(
+        rows=regression_rows,
+        failure_taxonomy_options=unique_sorted(row.failure_taxonomy for row in regression_rows),
+        solver_options=unique_sorted(row.solver_id for row in regression_rows),
+        variant_options=unique_sorted(row.variant_id for row in regression_rows),
+        status_options=unique_sorted(row.current_status for row in regression_rows),
+        export_links=_export_links(plan_file, root),
+        triage_notes=notes,
+    )
     trace_links = [row.trace for row in rows if row.trace is not None]
     handoffs = [row.playground_handoff for row in rows if row.status in {"failed", "error"}]
     sandbox = _combine_sandbox_status(row.sandbox for row in rows)
@@ -173,6 +265,7 @@ def build_observability_read_model(
             skipped_count=skipped_count,
             pass_rate=passed_count / len(completed_rows) if completed_rows else None,
             regression_count=len(regression_rows),
+            triage_note_count=len(notes),
             sandbox_denial_count=sandbox.denial_count,
             trace_link_count=len(trace_links),
             artifact_count=sum(len(row.artifacts) for row in rows),
@@ -182,7 +275,46 @@ def build_observability_read_model(
         trace_links=trace_links,
         playground_handoffs=handoffs,
         sandbox=sandbox,
+        regression_review=regression_review,
     )
+
+
+def load_triage_notes(path: str | Path) -> list[TriageNote]:
+    notes_path = Path(path)
+    if not notes_path.is_file():
+        return []
+    payload = json.loads(notes_path.read_text(encoding="utf-8"))
+    notes = payload.get("notes") if isinstance(payload, dict) else payload
+    if not isinstance(notes, list):
+        raise ValueError(f"triage note store must contain a notes list: {notes_path}")
+    return [TriageNote.model_validate(note) for note in notes]
+
+
+def save_triage_note(path: str | Path, request: TriageNoteRequest, *, now_ms: int | None = None) -> TriageNote:
+    notes_path = Path(path)
+    timestamp = now_ms if now_ms is not None else int(time.time() * 1000)
+    notes = load_triage_notes(notes_path)
+    note_id = request.id or _next_triage_note_id(notes)
+    existing = next((note for note in notes if note.id == note_id), None)
+    note = TriageNote(
+        **request.model_dump(exclude={"id"}),
+        id=note_id,
+        created_at_ms=existing.created_at_ms if existing else timestamp,
+        updated_at_ms=timestamp,
+    )
+    notes = [item for item in notes if item.id != note_id]
+    notes.append(note)
+    notes.sort(key=lambda item: (item.updated_at_ms, item.id))
+    notes_path.parent.mkdir(parents=True, exist_ok=True)
+    notes_path.write_text(
+        json.dumps({"notes": [item.model_dump(mode="json") for item in notes]}, indent=2),
+        encoding="utf-8",
+    )
+    return note
+
+
+def unique_sorted(values: Iterable[str | None]) -> list[str]:
+    return sorted({value for value in values if value})
 
 
 def find_latest_eval_plan(project_root: str | Path, runs_root: str | Path | None = None) -> Path | None:
@@ -344,13 +476,31 @@ def _combine_sandbox_status(statuses: Iterable[SandboxStatusReadModel]) -> Sandb
     )
 
 
-def _build_regression_rows(rows: list[EvalRunReadModel]) -> list[RegressionReadModel]:
+def _build_regression_rows(rows: list[EvalRunReadModel], notes: list[TriageNote]) -> list[RegressionReadModel]:
+    regressions = [
+        *_build_repeated_run_regressions(rows, notes),
+        *_build_variant_regressions(rows, notes),
+    ]
+    return sorted(
+        regressions,
+        key=lambda row: (
+            row.eval_task_id,
+            row.sample_id,
+            row.solver_id,
+            row.comparison_kind,
+            row.variant_id or "",
+            row.current_eval_run_id,
+        ),
+    )
+
+
+def _build_repeated_run_regressions(rows: list[EvalRunReadModel], notes: list[TriageNote]) -> list[RegressionReadModel]:
     grouped: dict[tuple[str, str, str, str | None], list[EvalRunReadModel]] = {}
     for row in rows:
         grouped.setdefault((row.eval_task_id, row.sample_id, row.solver_id, row.variant_id), []).append(row)
 
     regressions: list[RegressionReadModel] = []
-    for key, group in grouped.items():
+    for group in grouped.values():
         if len(group) < 2:
             continue
         sorted_group = sorted(
@@ -362,36 +512,161 @@ def _build_regression_rows(rows: list[EvalRunReadModel]) -> list[RegressionReadM
             ),
         )
         previous, current = sorted_group[-2], sorted_group[-1]
-        status_regressed = _status_rank(current.status) > _status_rank(previous.status)
-        score_regressed = (
-            previous.avg_numeric_score is not None
-            and current.avg_numeric_score is not None
-            and current.avg_numeric_score < previous.avg_numeric_score
-        )
-        if not status_regressed and not score_regressed:
-            continue
-        delta = None
-        if previous.avg_numeric_score is not None and current.avg_numeric_score is not None:
-            delta = current.avg_numeric_score - previous.avg_numeric_score
-        regressions.append(
-            RegressionReadModel(
-                key="|".join(value or "-" for value in key),
-                eval_task_id=current.eval_task_id,
-                sample_id=current.sample_id,
-                solver_id=current.solver_id,
-                variant_id=current.variant_id,
-                previous_eval_run_id=previous.eval_run_id,
-                current_eval_run_id=current.eval_run_id,
-                previous_status=previous.status,
-                current_status=current.status,
-                previous_score=previous.avg_numeric_score,
-                current_score=current.avg_numeric_score,
-                delta=delta,
-                trace_id=current.trace.trace_id if current.trace else None,
-                failure_taxonomy=current.failure_taxonomy,
+        if _row_regressed(previous, current):
+            regressions.append(
+                _regression_row(
+                    previous,
+                    current,
+                    notes,
+                    comparison_kind="repeated_run",
+                    comparison_label="Repeated run",
+                )
             )
-        )
     return regressions
+
+
+def _build_variant_regressions(rows: list[EvalRunReadModel], notes: list[TriageNote]) -> list[RegressionReadModel]:
+    grouped: dict[tuple[str, str, str], list[EvalRunReadModel]] = {}
+    for row in rows:
+        grouped.setdefault((row.eval_task_id, row.sample_id, row.solver_id), []).append(row)
+
+    regressions: list[RegressionReadModel] = []
+    for group in grouped.values():
+        latest_by_variant: dict[str | None, EvalRunReadModel] = {}
+        for row in sorted(
+            group,
+            key=lambda item: (
+                item.started_at_ms is None,
+                item.started_at_ms or 0,
+                item.eval_run_id,
+            ),
+        ):
+            latest_by_variant[row.variant_id] = row
+        if len(latest_by_variant) < 2:
+            continue
+        ordered = sorted(latest_by_variant.values(), key=_comparison_sort_key)
+        reference = ordered[0]
+        for current in ordered[1:]:
+            if _row_regressed(reference, current):
+                regressions.append(
+                    _regression_row(
+                        reference,
+                        current,
+                        notes,
+                        comparison_kind="variant",
+                        comparison_label=f"{reference.variant_id or '-'} vs {current.variant_id or '-'}",
+                    )
+                )
+    return regressions
+
+
+def _regression_row(
+    previous: EvalRunReadModel,
+    current: EvalRunReadModel,
+    notes: list[TriageNote],
+    *,
+    comparison_kind: str,
+    comparison_label: str,
+) -> RegressionReadModel:
+    delta = None
+    if previous.avg_numeric_score is not None and current.avg_numeric_score is not None:
+        delta = current.avg_numeric_score - previous.avg_numeric_score
+    matching_notes = _matching_triage_notes(notes, current)
+    latest_note = max(matching_notes, key=lambda note: (note.updated_at_ms, note.id), default=None)
+    return RegressionReadModel(
+        key="|".join(
+            [
+                comparison_kind,
+                current.eval_task_id,
+                current.sample_id,
+                current.solver_id,
+                previous.variant_id or "-",
+                current.variant_id or "-",
+                previous.eval_run_id,
+                current.eval_run_id,
+            ]
+        ),
+        comparison_kind=comparison_kind,
+        comparison_label=comparison_label,
+        eval_task_id=current.eval_task_id,
+        taskpack_id=current.taskpack_id,
+        sample_id=current.sample_id,
+        task_id=current.task_id,
+        solver_id=current.solver_id,
+        previous_variant_id=previous.variant_id,
+        variant_id=current.variant_id,
+        query=current.query,
+        previous_eval_run_id=previous.eval_run_id,
+        current_eval_run_id=current.eval_run_id,
+        current_eval_log_path=current.eval_log_path,
+        previous_status=previous.status,
+        current_status=current.status,
+        previous_score=previous.avg_numeric_score,
+        current_score=current.avg_numeric_score,
+        delta=delta,
+        trace_id=current.trace.trace_id if current.trace else None,
+        trace_path=current.trace.path if current.trace else None,
+        failure_taxonomy=current.failure_taxonomy,
+        sandbox_denial_count=current.sandbox.denial_count,
+        triage_note_count=len(matching_notes),
+        latest_triage_note=latest_note,
+    )
+
+
+def _row_regressed(previous: EvalRunReadModel, current: EvalRunReadModel) -> bool:
+    status_regressed = _status_rank(current.status) > _status_rank(previous.status)
+    score_regressed = (
+        previous.avg_numeric_score is not None
+        and current.avg_numeric_score is not None
+        and current.avg_numeric_score < previous.avg_numeric_score
+    )
+    return status_regressed or score_regressed
+
+
+def _comparison_sort_key(row: EvalRunReadModel) -> tuple[int, float, str, str]:
+    score_rank = row.avg_numeric_score if row.avg_numeric_score is not None else -1.0
+    return (
+        _status_rank(row.status),
+        -score_rank,
+        row.variant_id or "",
+        row.eval_run_id,
+    )
+
+
+def _matching_triage_notes(notes: list[TriageNote], row: EvalRunReadModel) -> list[TriageNote]:
+    return [
+        note
+        for note in notes
+        if note.eval_run_id == row.eval_run_id
+        or (
+            note.eval_task_id == row.eval_task_id
+            and note.sample_id == row.sample_id
+        )
+    ]
+
+
+def _export_links(plan_file: Path, project_root: Path) -> list[ExportLinkReadModel]:
+    plan_path = _path_for_response(plan_file, project_root)
+    plan_stem = plan_file.stem
+    links: list[ExportLinkReadModel] = []
+    for kind, label in {
+        "eval_logs": "Eval logs",
+        "eval_aggregates": "Eval aggregates",
+        "eval_findings": "Eval findings",
+    }.items():
+        for report_format in ("json", "csv"):
+            output_path = project_root / "reports" / "observability" / f"{plan_stem}_{kind}.{report_format}"
+            query = urlencode({"kind": kind, "format": report_format, "plan_path": plan_path})
+            links.append(
+                ExportLinkReadModel(
+                    label=f"{label} {report_format.upper()}",
+                    kind=kind,
+                    format=report_format,
+                    path=_path_for_response(output_path, project_root),
+                    url=f"/observability/export?{query}",
+                )
+            )
+    return links
 
 
 def _duration_ms(log: EvalLog | None) -> int | None:
@@ -421,6 +696,14 @@ def _status_rank(status: str) -> int:
         "failed": 2,
         "error": 3,
     }.get(status, 1)
+
+
+def _next_triage_note_id(notes: list[TriageNote]) -> str:
+    index = len(notes) + 1
+    existing_ids = {note.id for note in notes}
+    while f"triage.{index}" in existing_ids:
+        index += 1
+    return f"triage.{index}"
 
 
 def _metadata_string(value: Any) -> str | None:

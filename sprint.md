@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 17: Arize-Inspired Observability and Eval GUI.
+Module 18: Eval Analysis and Regression Review UI.
 
 ## Status
 
@@ -36,6 +36,7 @@ Module 17: Arize-Inspired Observability and Eval GUI.
 | Module 15 Analysis and Scanner Layer | Done | EvalRunPlan/EvalLog loading, per-sample JSON/CSV exports, aggregate summaries, local scanner findings, failure taxonomy hooks, CLI commands, and tests are implemented. |
 | Module 16 Sandbox Provider Interface | Done | Provider-level workspace, command, network, timeout, artifact, and approval/denial event contracts map onto existing guardrails without adding new execution. |
 | Module 17 Observability and Eval GUI | Done | Backend read models, `/observability`, Dashboard/Evaluate/Observe/Improve/Settings routes, eval rows, regression queue, sandbox status, and Playground handoff are implemented. |
+| Module 18 Regression Review UI | Done | Repeated-run and variant regression rows, failure/status/triage filters, local triage notes, export links, API routes, responsive styling, and focused tests are implemented. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -112,6 +113,20 @@ Module 17: Arize-Inspired Observability and Eval GUI.
 - Module 17 tests cover backend read models, API payloads, static UI assets,
   local-only assumptions, and regression ordering.
 
+## Module 18 Acceptance Criteria
+
+- Regression review supports repeated-run and variant comparisons over EvalLog
+  artifacts.
+- Regression rows show previous score, current score, delta, trace link, sample
+  metadata, solver, variant, and comparison kind.
+- Failure taxonomy, current-status, and triage-status filters work without
+  cloud graders.
+- Saved triage notes are linked to EvalTask, EvalLog, sample, trace, failure
+  taxonomy, status, and tags.
+- Export links point to local JSON/CSV eval-log, aggregate, and scanner
+  artifacts.
+- Responsive table and note layouts remain usable on laptop and narrow screens.
+
 ## Completed Post-MVP Criteria
 
 - Repeated local runs can be grouped by task and variant.
@@ -134,6 +149,6 @@ Module 17: Arize-Inspired Observability and Eval GUI.
 
 ## Next Sprint Candidate
 
-Module 18: Eval Analysis and Regression Review UI. Build on the Module 17 read
-models with repeated-run comparison, score deltas, failure taxonomy filters,
-saved triage notes, and local export links.
+Module 19: Prompt and Harness Improvement Loop UI. Build on Module 18 selected
+regressions and triage notes with Playground comparison context, candidate
+promotion artifacts, and rerun queues.

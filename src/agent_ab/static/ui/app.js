@@ -14,6 +14,12 @@ const state = {
     kind: "",
     status: "",
   },
+  regressionFilters: {
+    taxonomy: "",
+    status: "",
+    triage: "",
+  },
+  selectedRegressionKey: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -94,7 +100,9 @@ function renderObservability() {
   $("#regressionCount").textContent = `${dashboard.regression_count || 0} flagged`;
   $("#evalPlanSource").textContent = dashboard.source_plan_path || dashboard.message || "No eval plan loaded";
   renderEvalRows(observability.eval_rows || []);
-  renderRegressionRows(observability.regression_rows || []);
+  renderRegressionRows(observability.regression_review?.rows || observability.regression_rows || []);
+  renderRegressionReview(observability.regression_review || {});
+  renderExportLinks(observability.regression_review?.export_links || []);
   renderSettingsDetails(dashboard, sandbox);
 }
 
@@ -132,6 +140,113 @@ function renderRegressionRows(rows) {
       <td>${escapeHtml(row.trace_id || "-")}</td>
     </tr>
   `).join("") || emptyRow("No regressions found", 5);
+}
+
+function renderRegressionReview(review) {
+  const rows = review.rows || [];
+  syncSelectOptions("#regressionTaxonomyFilter", review.failure_taxonomy_options || [], "All taxonomies");
+  syncSelectOptions("#regressionStatusFilter", review.status_options || [], "All statuses");
+  state.regressionFilters.taxonomy = $("#regressionTaxonomyFilter").value;
+  state.regressionFilters.status = $("#regressionStatusFilter").value;
+  state.regressionFilters.triage = $("#triageStatusFilter").value;
+  const filteredRows = rows.filter(matchesRegressionFilters);
+  $("#triageSummary").textContent = `${review.triage_notes?.length || 0} saved notes`;
+  $("#regressionReviewRows").innerHTML = filteredRows.map((row) => `
+    <tr class="regression-review-row ${state.selectedRegressionKey === row.key ? "is-selected" : ""}" data-regression-key="${escapeAttribute(row.key)}" tabindex="0">
+      <td>
+        <strong>${escapeHtml(row.sample_id)}</strong>
+        <span class="table-subtext">${escapeHtml(row.task_id)}</span>
+        <span class="table-subtext">${escapeHtml(row.comparison_kind || "regression")}</span>
+      </td>
+      <td>
+        <strong>${escapeHtml(row.comparison_label || row.variant_id || "-")}</strong>
+        <span class="table-subtext">${escapeHtml(row.solver_id)}</span>
+      </td>
+      <td>
+        ${badge(row.failure_taxonomy || "unknown", row.failure_taxonomy === "sandbox_denial" ? "error" : "warn")}
+        ${row.sandbox_denial_count ? `<span class="table-subtext">${row.sandbox_denial_count} sandbox denials</span>` : ""}
+      </td>
+      <td>${statusScore(row.previous_status, row.previous_score)}</td>
+      <td>${statusScore(row.current_status, row.current_score)}</td>
+      <td>${row.delta === null || row.delta === undefined ? "-" : escapeHtml(row.delta.toFixed(3))}</td>
+      <td>${row.latest_triage_note ? badge(row.latest_triage_note.status, "neutral") : badge("missing", "warn")}</td>
+    </tr>
+  `).join("") || emptyRow("No regressions match the current filters", 7);
+  if (state.selectedRegressionKey && !filteredRows.some((row) => row.key === state.selectedRegressionKey)) {
+    state.selectedRegressionKey = null;
+    clearTriageForm();
+  }
+}
+
+function renderExportLinks(links) {
+  $("#exportLinks").innerHTML = links.map((link) => `
+    <a class="export-link" href="${escapeAttribute(link.url)}">${escapeHtml(link.label)}</a>
+  `).join("") || `<span class="empty-inline">No export links</span>`;
+}
+
+function matchesRegressionFilters(row) {
+  const latestStatus = row.latest_triage_note?.status || "missing";
+  return (!state.regressionFilters.taxonomy || row.failure_taxonomy === state.regressionFilters.taxonomy)
+    && (!state.regressionFilters.status || row.current_status === state.regressionFilters.status)
+    && (!state.regressionFilters.triage || latestStatus === state.regressionFilters.triage);
+}
+
+function selectRegression(key) {
+  const row = (state.observability?.regression_review?.rows || []).find((item) => item.key === key);
+  if (!row) return;
+  state.selectedRegressionKey = key;
+  $("#selectedRegressionLabel").textContent = `${row.sample_id} -> ${row.current_status}`;
+  $("#triageNoteStatus").value = row.latest_triage_note?.status || "open";
+  $("#triageNoteTags").value = (row.latest_triage_note?.tags || []).join(", ");
+  $("#triageNoteBody").value = row.latest_triage_note?.body || "";
+  $("#triageStatus").textContent = "";
+  renderRegressionReview(state.observability?.regression_review || {});
+}
+
+function clearTriageForm() {
+  $("#selectedRegressionLabel").textContent = "Select a regression row";
+  $("#triageNoteStatus").value = "open";
+  $("#triageNoteTags").value = "";
+  $("#triageNoteBody").value = "";
+  $("#triageStatus").textContent = "";
+}
+
+async function saveTriageNote(event) {
+  event.preventDefault();
+  const row = (state.observability?.regression_review?.rows || [])
+    .find((item) => item.key === state.selectedRegressionKey);
+  if (!row) {
+    $("#triageStatus").textContent = "Select a regression row first";
+    return;
+  }
+  const body = $("#triageNoteBody").value.trim();
+  if (!body) {
+    $("#triageStatus").textContent = "Note cannot be blank";
+    return;
+  }
+  try {
+    await fetchJson("/triage-notes", {
+      method: "POST",
+      body: JSON.stringify({
+        id: row.latest_triage_note?.id,
+        eval_task_id: row.eval_task_id,
+        sample_id: row.sample_id,
+        eval_run_id: row.current_eval_run_id,
+        eval_log_path: row.current_eval_log_path,
+        trace_id: row.trace_id,
+        failure_taxonomy: row.failure_taxonomy,
+        body,
+        status: $("#triageNoteStatus").value,
+        tags: parseList($("#triageNoteTags").value),
+      }),
+    });
+    $("#triageStatus").textContent = "Saved";
+    await loadAll({ refreshPlaygroundDefaults: false });
+    state.selectedRegressionKey = row.key;
+    selectRegression(row.key);
+  } catch (error) {
+    $("#triageStatus").textContent = error.message;
+  }
 }
 
 function renderSettingsDetails(dashboard, sandbox) {
@@ -702,6 +817,11 @@ function scoreLabel(row) {
   return `${row.avg_numeric_score.toFixed(3)} (${row.failed_scorer_count || 0} failed)`;
 }
 
+function statusScore(status, score) {
+  const scoreText = score === null || score === undefined ? "-" : score.toFixed(3);
+  return `${badge(status, statusTone(status))} <span class="table-subtext">${escapeHtml(scoreText)}</span>`;
+}
+
 function statusTone(status) {
   if (status === "passed") return "ok";
   if (status === "failed" || status === "error") return "error";
@@ -790,6 +910,39 @@ $("#evalRows").addEventListener("click", (event) => {
     applyPlaygroundHandoff(button.dataset.evalRunId);
   }
 });
+
+$("#regressionReviewRows").addEventListener("click", (event) => {
+  const row = event.target.closest(".regression-review-row");
+  if (row) {
+    selectRegression(row.dataset.regressionKey);
+  }
+});
+
+$("#regressionReviewRows").addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const row = event.target.closest(".regression-review-row");
+  if (row) {
+    event.preventDefault();
+    selectRegression(row.dataset.regressionKey);
+  }
+});
+
+$("#regressionTaxonomyFilter").addEventListener("change", (event) => {
+  state.regressionFilters.taxonomy = event.target.value;
+  renderRegressionReview(state.observability?.regression_review || {});
+});
+
+$("#regressionStatusFilter").addEventListener("change", (event) => {
+  state.regressionFilters.status = event.target.value;
+  renderRegressionReview(state.observability?.regression_review || {});
+});
+
+$("#triageStatusFilter").addEventListener("change", (event) => {
+  state.regressionFilters.triage = event.target.value;
+  renderRegressionReview(state.observability?.regression_review || {});
+});
+
+$("#triageForm").addEventListener("submit", saveTriageNote);
 
 $("#traceTree").addEventListener("click", (event) => {
   const toggle = event.target.closest(".span-toggle");

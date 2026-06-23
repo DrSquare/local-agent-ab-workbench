@@ -72,7 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 17 plus post-MVP hardening are implemented with clear
+Modules 1 through 18 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -109,6 +109,12 @@ local-first boundaries:
 - Local `/observability` API endpoint over EvalRunPlan/EvalLog artifacts
 - Dashboard, Evaluate, Observe, Improve, and Settings routes in the existing
   no-build frontend shell
+- Repeated-run and cross-variant regression review rows over EvalRunPlan and
+  EvalLog artifacts
+- Failure taxonomy, status, and triage filters in the Evaluate view
+- Local triage note persistence linked to EvalTask, EvalLog, sample, and trace
+  IDs
+- Local JSON/CSV export links for eval logs, aggregates, and scanner findings
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -651,19 +657,25 @@ Non-goals:
 
 ### Module 18: Eval Analysis and Regression Review UI
 
-Status: planned.
+Status: implemented.
 
 Goal: make repeated eval runs easier to compare, triage, and export from the
 local GUI.
 
-Deliverables:
+Implemented deliverables:
 
-- Variant and run comparison views over EvalLog aggregates
-- Regression table with previous score, current score, delta, trace link, and
-  sample metadata
-- Failure taxonomy filters and saved triage notes
-- Export links for local JSON/CSV analysis artifacts
-- Responsive table layouts that remain usable on laptop screens
+- Repeated-run regression rows over the latest two EvalLogs for the same
+  EvalTask, sample, solver, and variant
+- Cross-variant regression rows comparing each worse latest variant against the
+  best latest variant for the same EvalTask, sample, and solver
+- Regression table with previous score, current score, delta, trace link,
+  sample metadata, solver, variant, and comparison kind
+- Failure taxonomy, current-status, and triage-status filters
+- Saved triage notes stored locally under the runs root and linked to EvalTask,
+  EvalLog, sample, trace, failure taxonomy, status, and tags
+- Backend export endpoint and UI links for local JSON/CSV eval logs,
+  aggregates, and scanner findings
+- Responsive review layout using the existing no-build frontend shell
 
 ### Module 19: Prompt and Harness Improvement Loop UI
 
@@ -738,22 +750,25 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Proceed to Module 18: Eval Analysis and Regression Review UI. Module 17 now
-exposes local dashboard, eval-row, regression, trace-link, Playground handoff,
-artifact, and sandbox status read models through the API and static shell. The
-next module should make repeated eval runs easier to compare, triage, annotate,
-and export from the GUI.
+Proceed to Module 19: Prompt and Harness Improvement Loop UI. Module 18 now
+exposes local regression review rows, filters, triage notes, and export links.
+The next module should close the local Improve loop by turning selected
+regressions into Playground comparisons, candidate config changes, and rerun
+queues.
 
-Module 18 acceptance criteria:
+Module 19 acceptance criteria:
 
-- Regression review supports repeated-run and variant comparisons over EvalLog
-  aggregates.
-- Regression rows show previous score, current score, delta, trace link, sample
-  metadata, solver, and variant.
-- Failure taxonomy and sandbox-denial filters work without cloud graders.
-- Saved triage notes are linked to EvalTask, EvalLog, sample, and trace IDs.
-- Export links point to local JSON/CSV analysis artifacts.
-- Responsive table layouts remain usable on laptop and narrow screens.
+- Selected regression and failure rows can seed side-by-side Playground
+  comparison context.
+- Prompt, model parameter, tool-policy, and harness differences are visible
+  before candidate promotion.
+- Candidate promotion writes reviewable local config artifacts rather than
+  mutating source configs silently.
+- Rerun queues can be seeded from selected regressions or failure clusters.
+- Saved improvement notes link EvalTask, EvalLog, trace, triage note, and
+  Playground View IDs.
+- Guardrail reminders remain visible for any path that prepares real adapter
+  execution.
 
 Completed post-MVP hardening:
 
