@@ -25,6 +25,7 @@ from agent_ab.config import (
     validate_sandbox_provider,
     validate_taskpack_with_fixtures,
 )
+from agent_ab.eval_execution import execute_eval_run_plan
 from agent_ab.eval_runner import build_eval_run_plan, write_eval_run_plan
 from agent_ab.reporting import (
     ReportFormat,
@@ -194,6 +195,74 @@ def plan_eval_set_command(
     if output is not None:
         plan_path = write_eval_run_plan(plan, output)
         console.print(f"plan: {plan_path}")
+
+
+@app.command("run-eval-plan")
+def run_eval_plan_command(
+    plan: Annotated[Path, typer.Argument(help="Path to EvalRunPlan JSON.")],
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run/--execute", help="Preview guarded work or execute allowed mock rows."),
+    ] = True,
+    eval_task_id: Annotated[
+        list[str] | None,
+        typer.Option("--eval-task-id", help="Limit execution to EvalTask ID. May be repeated."),
+    ] = None,
+    sample_id: Annotated[
+        list[str] | None,
+        typer.Option("--sample-id", help="Limit execution to sample ID. May be repeated."),
+    ] = None,
+    solver_id: Annotated[
+        list[str] | None,
+        typer.Option("--solver-id", help="Limit execution to solver ID. May be repeated."),
+    ] = None,
+    variant_id: Annotated[
+        list[str] | None,
+        typer.Option("--variant-id", help="Limit execution to variant ID. May be repeated."),
+    ] = None,
+    max_failures: Annotated[
+        int | None,
+        typer.Option(help="Override the EvalRunPlan max failure stop threshold.", min=0),
+    ] = None,
+    resume: Annotated[
+        bool,
+        typer.Option("--resume/--no-resume", help="Skip selected rows that already have a valid EvalLog."),
+    ] = True,
+) -> None:
+    """Run selected EvalRunPlan samples through the guarded execution harness."""
+
+    try:
+        summary = execute_eval_run_plan(
+            plan,
+            dry_run=dry_run,
+            eval_task_ids=eval_task_id,
+            sample_ids=sample_id,
+            solver_ids=solver_id,
+            variant_ids=variant_id,
+            max_failures=max_failures,
+            resume=resume,
+        )
+    except (ConfigLoadError, OSError, ValueError) as exc:
+        console.print(f"[red]Eval execution failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    mode = "dry-run" if summary.dry_run else "execute"
+    console.print(f"[green]OK[/green] eval_plan={summary.plan_path} mode={mode}")
+    console.print(f"selected: {summary.selected_count}")
+    console.print(f"dry_run: {summary.dry_run_count}")
+    console.print(f"executed: {summary.executed_count}")
+    console.print(f"skipped_completed: {summary.skipped_count}")
+    console.print(f"blocked: {summary.blocked_count}")
+    console.print(f"errors: {summary.error_count}")
+    console.print(f"stopped: {summary.stopped_count}")
+    for row in summary.rows:
+        row_status = row.status.value if hasattr(row.status, "value") else str(row.status)
+        console.print(
+            f"{row_status}: {row.eval_run_id} adapter={row.adapter} "
+            f"log={row.eval_log_path}"
+        )
+        if row.reason:
+            console.print(f"  reason: {row.reason}")
 
 
 @app.command("generate-seed-taskpack")
