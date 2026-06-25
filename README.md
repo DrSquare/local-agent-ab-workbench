@@ -26,6 +26,7 @@ This repository currently implements:
 - **Module 17: Observability and eval GUI read models**
 - **Module 18: Eval analysis and regression review UI**
 - **Module 19: Prompt and harness improvement loop UI**
+- **Module 20: Guarded EvalRunPlan execution harness**
 
 ## What the implemented modules include
 
@@ -75,6 +76,11 @@ This repository currently implements:
 - Improve-view context handoff from selected regressions and failed eval rows
 - Local improvement notes, rerun queue entries, and candidate promotion artifacts
 - Guardrail reminders before promoted candidates are used for real adapter work
+- Guarded EvalRunPlan dry-run and execution harness for deterministic mock rows
+- Per-sample EvalLog writing with sandbox provider metadata and approval or
+  denial events
+- Unsupported adapter blocking for custom, OpenClaw, shell, browser, desktop,
+  model, generic CLI, and non-local network execution paths
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -140,6 +146,19 @@ agent-ab plan-eval-set evals/local_eval_set.yaml \
   --run-root runs/evals \
   --output runs/evals/local_module14_eval_set/plan.json
 ```
+
+## Run a guarded eval plan
+
+```bash
+agent-ab run-eval-plan runs/evals/local_module14_eval_set/plan.json
+agent-ab run-eval-plan runs/evals/local_module14_eval_set/plan.json \
+  --execute \
+  --sample-id rename_todo
+```
+
+The command defaults to dry-run. `--execute` runs only deterministic mock solver
+rows and writes EvalLogs. Unsupported adapters are blocked and recorded as
+sandbox denial EvalLogs when execution is requested.
 
 ## Export eval analysis reports
 
@@ -303,6 +322,7 @@ agent-ab-workbench/
     cli.py
     config.py
     eval_runner.py
+    eval_execution.py
     improvement.py
     guardrails.py
     observability.py
@@ -339,6 +359,7 @@ agent-ab-workbench/
     test_module4_runner.py
     test_module5_server.py
     test_module6_playground.py
+    test_module20_eval_execution.py
     test_module7_frontend.py
     test_module8_trace_ui.py
     test_module9_playground_ui.py

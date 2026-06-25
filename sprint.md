@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 19: Prompt and Harness Improvement Loop UI.
+Module 20: Guarded Eval Execution Harness.
 
 ## Status
 
@@ -38,6 +38,7 @@ Module 19: Prompt and Harness Improvement Loop UI.
 | Module 17 Observability and Eval GUI | Done | Backend read models, `/observability`, Dashboard/Evaluate/Observe/Improve/Settings routes, eval rows, regression queue, sandbox status, and Playground handoff are implemented. |
 | Module 18 Regression Review UI | Done | Repeated-run and variant regression rows, failure/status/triage filters, local triage notes, export links, API routes, responsive styling, and focused tests are implemented. |
 | Module 19 Improvement Loop UI | Done | Selected regression/failure handoff, improvement notes, rerun queue entries, candidate promotion artifacts, guardrail reminders, API routes, and focused tests are implemented. |
+| Module 20 Guarded Eval Execution Harness | Done | `agent-ab run-eval-plan`, dry-run summaries, deterministic mock EvalLog execution, blocked unsupported adapters, sandbox provider metadata, resume/filter/max-failure handling, and focused tests are implemented. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -141,6 +142,22 @@ Module 19: Prompt and Harness Improvement Loop UI.
 - Guardrail reminders remain visible for workflows that prepare future real
   adapter execution.
 
+## Module 20 Acceptance Criteria
+
+- EvalRunPlan samples can execute through the deterministic mock solver and
+  write EvalLogs without changing existing analysis contracts.
+- Execution can be limited by eval task, sample ID, solver, variant, max
+  failures, and resume state.
+- Sandbox provider policy is resolved before each sample run and recorded in
+  EvalLog metadata.
+- Dry-run mode reports planned workspaces, commands, and guardrail decisions
+  without launching adapters.
+- Unsupported custom, OpenClaw, shell, browser, desktop, model, generic CLI, and
+  non-local network paths remain blocked unless a later module adds explicit
+  policy and call-site opt-in.
+- Module 15 reports, Module 17 observability, Module 18 review, and Module 19
+  improvement flows can consume the generated EvalLogs.
+
 ## Completed Post-MVP Criteria
 
 - Repeated local runs can be grouped by task and variant.
@@ -163,6 +180,6 @@ Module 19: Prompt and Harness Improvement Loop UI.
 
 ## Next Sprint Candidate
 
-Module 20: Guarded Eval Execution Harness. Bind EvalRunPlan samples to solver
-execution through sandbox provider policy, starting with deterministic mock
-execution and dry-run support while keeping real adapters explicitly gated.
+Module 21: Guarded Execution Queue and Run Controls. Expose the Module 20
+harness through local API/UI controls and consume Improve-view rerun queue
+entries while keeping real adapters explicitly gated.

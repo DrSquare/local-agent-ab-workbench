@@ -72,7 +72,7 @@ the core offline workbench.
 
 ## Current State
 
-Modules 1 through 19 plus post-MVP hardening are implemented with clear
+Modules 1 through 20 plus post-MVP hardening are implemented with clear
 local-first boundaries:
 
 - Experiment config
@@ -121,13 +121,22 @@ local-first boundaries:
   artifacts
 - Guardrail reminders before promoted candidates are used for real adapter
   execution
+- Guarded EvalRunPlan execution through the deterministic mock adapter
+- `agent-ab run-eval-plan` dry-run and execute modes with eval task, sample,
+  solver, variant, resume, and max-failure filters
+- Per-sample EvalLogs written from guarded mock execution, including sandbox
+  provider metadata and approval events
+- Unsupported solver adapters recorded as sandbox denial EvalLogs while real
+  OpenClaw, shell, browser, desktop, model, and non-local network execution stay
+  blocked
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
-Real OpenClaw execution is available only behind explicit opt-in and guardrail
-checks. Additional real shell, browser, desktop, non-local network, and model
-execution remain out of scope until future runner modules explicitly bind solver
-and sandbox provider policy.
+Deterministic mock execution is available through the guarded EvalRunPlan
+harness. Real OpenClaw execution is available only behind explicit opt-in and
+guardrail checks. Additional real shell, browser, desktop, non-local network,
+and model execution remain out of scope until future runner modules explicitly
+bind solver and sandbox provider policy.
 
 ## Primary User Story
 
@@ -706,25 +715,34 @@ Implemented deliverables:
 
 ### Module 20: Guarded Eval Execution Harness
 
-Status: planned.
+Status: implemented.
 
 Goal: bind EvalRunPlan samples to solver adapters through explicit sandbox
 provider policy while preserving deterministic mock execution and keeping real
 adapter execution opt-in.
 
-Deliverables:
+Implemented deliverables:
 
 - EvalRunPlan execution command that can run selected samples through the
   deterministic mock solver first
-- Solver adapter dispatch contract shared by mock, prepared OpenClaw, generic
-  CLI, and future local HTTP adapters
-- Sandbox provider resolution for each EvalTask or sample run
-- Per-sample EvalLog writing compatible with Modules 15 through 19
-- Resume, skip-completed, and max-failure handling during execution
+- Solver adapter dispatch decision model for mock execution and blocked
+  unsupported adapters
+- Sandbox provider resolution for each selected sample run
+- Per-sample EvalLog writing compatible with Modules 15 through 19, including
+  trace artifacts, scorer results, sandbox provider metadata, and approval or
+  denial events
+- Resume, skip-completed, selection-filter, and max-failure handling during
+  execution
 - Dry-run and plan-only modes that show commands, workspaces, and guardrail
   decisions before any real adapter is invoked
 - Tests proving real OpenClaw, shell, browser, desktop, model, and non-local
   network execution remain blocked unless explicitly policy-gated
+
+Non-goals:
+
+- No real OpenClaw CLI execution
+- No generic shell, browser, desktop, model, or non-local network execution
+- No background scheduler or UI run button yet
 
 ## Metric Strategy
 
@@ -784,26 +802,25 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Proceed to Module 20: Guarded Eval Execution Harness. Module 19 now closes the
-local review loop from selected regressions to Playground comparison, local
-notes, rerun queues, and promotion artifacts. The next module should bind
-EvalRunPlan samples to solver execution through sandbox provider policy, with
-mock execution first and all real adapter execution staying explicitly gated.
+Proceed to Module 21: Guarded Execution Queue and Run Controls. Module 20 now
+binds EvalRunPlan samples to guarded deterministic mock execution and writes
+EvalLogs that the existing analysis and GUI read models can consume. The next
+module should expose that harness through local API/UI controls and rerun queue
+consumption while keeping real adapters blocked behind explicit future gates.
 
-Module 20 acceptance criteria:
+Module 21 acceptance criteria:
 
-- EvalRunPlan samples can execute through the deterministic mock solver and
-  write EvalLogs without changing existing analysis contracts.
-- Execution can be limited by eval task, sample ID, solver, variant, max
-  failures, and resume state.
-- Sandbox provider policy is resolved before each sample run and recorded in
-  EvalLog metadata.
-- Dry-run mode reports planned workspaces, commands, and guardrail decisions
-  without launching adapters.
+- Local API endpoints can dry-run or execute selected EvalRunPlan rows through
+  the Module 20 harness.
+- Improve-view rerun queue entries can be resolved into EvalRunPlan filters
+  without launching unsupported adapters.
+- The Evaluate or Improve UI shows execution summaries, blocked-adapter reasons,
+  sandbox decisions, and links to generated EvalLogs.
+- UI controls default to dry-run and clearly separate deterministic mock
+  execution from future real adapter execution.
 - Real OpenClaw, shell, browser, desktop, model, and non-local network paths
-  remain blocked unless explicitly enabled by policy and call-site opt-in.
-- Module 15 reports, Module 17 observability, Module 18 review, and Module 19
-  improvement flows can consume the generated EvalLogs.
+  remain blocked unless a later module adds explicit policy and call-site
+  opt-in.
 
 Completed post-MVP hardening:
 

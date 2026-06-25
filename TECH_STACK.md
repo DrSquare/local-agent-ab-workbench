@@ -140,6 +140,25 @@ These choices are active for the implemented local improve-loop surface.
 | Notes | Filesystem JSON under the runs root | Links EvalTask, EvalLog, trace, triage note, and Playground View IDs without a database dependency |
 | Guardrail posture | Static reminders in the read model and UI | Keeps real-adapter risk visible before future execution work |
 
+## Module 20 Guarded Execution Harness Stack
+
+These choices are active for guarded EvalRunPlan execution.
+
+| Need | Choice | Reason |
+|---|---|---|
+| Execution harness | `agent_ab.eval_execution` | Wraps EvalRunPlan rows with adapter dispatch, sandbox policy resolution, and EvalLog writing |
+| CLI | `agent-ab run-eval-plan` | Provides dry-run by default plus explicit `--execute` for deterministic mock rows |
+| Solver dispatch | Pydantic decision models | Makes mock execution and unsupported-adapter blocking reviewable and testable |
+| Adapter artifacts | Existing deterministic mock runner | Reuses tested workspace, validator, trace JSONL, and SQLite artifact behavior |
+| EvalLog output | Existing EvalLog schema | Keeps Module 15 reports and Module 17-19 GUI read models compatible |
+| Sandbox posture | Per-sample `SandboxProvider` and `SandboxEvent` metadata | Records approval and denial decisions without adding a new runtime dependency |
+| Windows path handling | Compact adapter run IDs under EvalLog directories | Avoids long nested run paths while preserving full EvalRunPlan IDs in EvalLogs |
+
+Real OpenClaw, shell, browser, desktop, model, generic CLI, and non-local
+network execution remain blocked in Module 20. Future adapter work must add an
+explicit policy gate and call-site opt-in before launching anything outside the
+deterministic mock runner.
+
 ## Current Core Stack
 
 This is the base stack that remains active for config validation, CLI workflows,
@@ -277,6 +296,7 @@ maintain than replace.
 | Local models | Ollama-compatible registry contract | Already in schema |
 | Mock testing | Deterministic mock adapter | Module 4 |
 | First real agent target | OpenClaw CLI adapter preparation and trace wrapping | Module 10 |
+| Guarded eval execution | EvalRunPlan harness over deterministic mock only | Module 20 |
 | Generic support | CLI and local HTTP adapter interface | Module 4+ |
 | Tool layer | MCP-aware tool specs and telemetry attributes | Contract now, runtime later |
 
@@ -441,6 +461,7 @@ Coverage expectations by phase:
 | Module 18 | Regression tables, score deltas, failure filters, export links, saved triage notes |
 | Module 19 | Prompt/harness comparison, Playground handoff, candidate promotion, rerun queue behavior |
 | Module 20 | Guarded EvalRunPlan execution, solver dispatch, sandbox policy resolution, EvalLog writing |
+| Module 21 | Local run controls, rerun queue consumption, dry-run summaries, blocked-adapter UX |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 Module 17 fixture expectations:
@@ -486,6 +507,7 @@ agent-ab-workbench/
     analysis.py
     cli.py
     config.py
+    eval_execution.py
     eval_runner.py
     improvement.py
     observability.py
@@ -530,6 +552,7 @@ agent-ab-workbench/
     test_module17_observability_gui.py
     test_module18_regression_review_ui.py
     test_module19_improvement_loop_ui.py
+    test_module20_eval_execution.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and
