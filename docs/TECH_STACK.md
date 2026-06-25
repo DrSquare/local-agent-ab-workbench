@@ -159,6 +159,24 @@ network execution remain blocked in Module 20. Future adapter work must add an
 explicit policy gate and call-site opt-in before launching anything outside the
 deterministic mock runner.
 
+## Module 21 Offline Model and Docker Sandbox Contract Stack
+
+These choices are active for offline A/B sandbox planning contracts.
+
+| Need | Choice | Reason |
+|---|---|---|
+| Offline provider contracts | `agent_ab.schemas.offline.OfflineModelProvider` | Represents Ollama, Docker Model Runner, local OpenAI-compatible, and mock providers without probing endpoints |
+| Provider examples | `model_providers/*.yaml` | Keeps local model assumptions reviewable and separate from execution |
+| Docker A/B plans | `OfflineDockerABRunPlan` | Binds model providers, variants, containers, mounts, network policy, and tool orchestration in one strict contract |
+| Tool orchestration | `ToolOrchestrationPolicy` | Makes sequential, parallel, and native parallel tool-calling changes comparable |
+| Container isolation | `DockerContainerPlan`, `DockerMount`, `DockerNetworkPolicy` | Rejects privileged containers, Docker socket mounts, secret-like env vars, writable shared inputs, and external network access |
+| CLI validation | `validate-offline-model-provider`, `validate-offline-ab-plan` | Validates local configs without Docker, model pulls, endpoint probes, or container launches |
+| Tests | `tests/test_module21_offline_sandbox_contracts.py` | Covers strict schemas, unsafe rejection paths, example configs, and CLI validators |
+
+This module still does not add Docker as a Python dependency and does not shell
+out to Docker. Compose generation, preflight reporting, and any guarded
+container execution are separate future modules.
+
 ## Current Core Stack
 
 This is the base stack that remains active for config validation, CLI workflows,
@@ -297,6 +315,8 @@ maintain than replace.
 | Mock testing | Deterministic mock adapter | Module 4 |
 | First real agent target | OpenClaw CLI adapter preparation and trace wrapping | Module 10 |
 | Guarded eval execution | EvalRunPlan harness over deterministic mock only | Module 20 |
+| Offline model providers | Contract-only Ollama, Docker Model Runner, local OpenAI-compatible provider configs | Module 21 |
+| Docker A/B isolation | Contract-only Docker run plans with no compose generation or execution yet | Module 21 |
 | Generic support | CLI and local HTTP adapter interface | Module 4+ |
 | Tool layer | MCP-aware tool specs and telemetry attributes | Contract now, runtime later |
 
@@ -461,7 +481,8 @@ Coverage expectations by phase:
 | Module 18 | Regression tables, score deltas, failure filters, export links, saved triage notes |
 | Module 19 | Prompt/harness comparison, Playground handoff, candidate promotion, rerun queue behavior |
 | Module 20 | Guarded EvalRunPlan execution, solver dispatch, sandbox policy resolution, EvalLog writing |
-| Module 21 | Local run controls, rerun queue consumption, dry-run summaries, blocked-adapter UX |
+| Module 21 | Offline model provider contracts, Docker A/B run-plan contracts, tool orchestration policy validation |
+| Module 22 | Docker Compose preview generation, preflight artifacts, no Docker execution |
 | Frontend | Core flows with Playwright as the UI becomes interactive enough to need browser automation |
 
 Module 17 fixture expectations:
@@ -485,6 +506,11 @@ agent-ab-workbench/
     PLAN.md
     TECH_STACK.md
     WORKFLOW.md
+  model_providers/
+    docker_model_runner.yaml
+    local_ollama.yaml
+  sandbox_runs/
+    offline_docker_ab_plan.yaml
   evals/
     desktop_basics_eval.yaml
     local_eval_set.yaml
@@ -526,6 +552,7 @@ agent-ab-workbench/
       eval.py
       experiment.py
       metrics.py
+      offline.py
       playground.py
       prompt_object.py
       run.py
@@ -553,6 +580,7 @@ agent-ab-workbench/
     test_module18_regression_review_ui.py
     test_module19_improvement_loop_ui.py
     test_module20_eval_execution.py
+    test_module21_offline_sandbox_contracts.py
 ```
 
 Later modules can add `runner/`, `tracing/`, `storage/`, `playground/`, and

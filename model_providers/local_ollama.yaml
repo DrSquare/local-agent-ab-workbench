@@ -1,0 +1,25 @@
+id: local_ollama
+version: 1
+kind: ollama
+endpoint: http://localhost:11434/v1
+openai_compatible: true
+require_preloaded_models: true
+allow_model_pull: false
+disable_remote_tracking: true
+models:
+  - id: llama3_8b
+    name: llama3:8b
+    context_window: 8192
+    tags:
+      - control
+  - id: mistral_7b
+    name: mistral:7b
+    context_window: 8192
+    tags:
+      - variant
+default_model: llama3_8b
+tags:
+  - offline
+  - ollama
+metadata:
+  note: Models must be pulled or imported before offline eval execution.

@@ -129,6 +129,11 @@ local-first boundaries:
 - Unsupported solver adapters recorded as sandbox denial EvalLogs while real
   OpenClaw, shell, browser, desktop, model, and non-local network execution stay
   blocked
+- Offline model provider contracts for Ollama, Docker Model Runner, and local
+  OpenAI-compatible endpoints without endpoint probes or model pulls
+- Contract-only Docker A/B run plans for isolated control/variant containers,
+  read-only shared inputs, writable per-run outputs, local model service hosts,
+  and tool orchestration policies
 - CLI validators and local server command
 - pytest coverage for schema, runner, persistence, and API contracts
 
@@ -744,6 +749,41 @@ Non-goals:
 - No generic shell, browser, desktop, model, or non-local network execution
 - No background scheduler or UI run button yet
 
+### Module 21: Offline Model and Docker Sandbox Contracts
+
+Status: implemented.
+
+Goal: turn offline A/B research into reviewable contracts for local model
+providers and isolated Docker run plans without launching containers, pulling
+models, or probing endpoints.
+
+Implemented deliverables:
+
+- `OfflineModelProvider` contract for Ollama, Docker Model Runner,
+  local OpenAI-compatible, and mock providers
+- Offline endpoint validation for localhost, Docker internal hosts, and
+  single-label container service hosts
+- Preloaded-model and remote-tracking safety flags that must remain offline-safe
+- Tool orchestration policy contract for sequential, parallel, and native
+  parallel tool-calling comparisons
+- Docker container, mount, and network policy contracts that reject privileged
+  containers, Docker socket mounts, secret-like static environment variables,
+  writable shared inputs, and external network access
+- `OfflineDockerABRunPlan` contract that binds model providers, variants,
+  container plans, shared inputs, result mounts, and network policy
+- Example provider configs in `model_providers/`
+- Example contract-only Docker A/B plan in `sandbox_runs/`
+- `agent-ab validate-offline-model-provider` command
+- `agent-ab validate-offline-ab-plan` command
+- Focused tests for strict schema rules, unsafe plan rejection, and CLI
+  validators
+
+Non-goals:
+
+- No Docker Compose generation yet
+- No Docker image build, model pull, endpoint probe, or container execution
+- No OpenClaw, shell, browser, desktop, model, or non-local network execution
+
 ## Metric Strategy
 
 The metric registry is AgentEval-inspired and local-first, but Module 13 should
@@ -802,25 +842,26 @@ evaluation concepts while adapting them to offline desktop-agent traces.
 
 ## Immediate Next Work
 
-Proceed to Module 21: Guarded Execution Queue and Run Controls. Module 20 now
-binds EvalRunPlan samples to guarded deterministic mock execution and writes
-EvalLogs that the existing analysis and GUI read models can consume. The next
-module should expose that harness through local API/UI controls and rerun queue
-consumption while keeping real adapters blocked behind explicit future gates.
+Proceed to Module 22: Offline Docker Compose and Preflight Artifacts. Module 21
+now defines offline model provider and Docker A/B run-plan contracts. The next
+module should generate reviewable Docker Compose/preflight artifacts from those
+contracts while still avoiding image builds, model pulls, endpoint probes, or
+container execution.
 
-Module 21 acceptance criteria:
+Module 22 acceptance criteria:
 
-- Local API endpoints can dry-run or execute selected EvalRunPlan rows through
-  the Module 20 harness.
-- Improve-view rerun queue entries can be resolved into EvalRunPlan filters
-  without launching unsupported adapters.
-- The Evaluate or Improve UI shows execution summaries, blocked-adapter reasons,
-  sandbox decisions, and links to generated EvalLogs.
-- UI controls default to dry-run and clearly separate deterministic mock
-  execution from future real adapter execution.
-- Real OpenClaw, shell, browser, desktop, model, and non-local network paths
-  remain blocked unless a later module adds explicit policy and call-site
-  opt-in.
+- A local command can render a Docker Compose YAML preview from an
+  `OfflineDockerABRunPlan`.
+- Preflight output lists required local images/build contexts, declared models,
+  read-only input mounts, writable result mounts, allowed service hosts, and
+  blocked risky settings.
+- Compose output keeps shared inputs read-only, writes each variant into
+  isolated result directories, and blocks host networking, privileged mode,
+  Docker socket mounts, and external endpoints.
+- The command defaults to preview/report mode and does not run `docker compose`,
+  build images, pull models, probe endpoints, or launch adapters.
+- Generated artifacts are consumable by future guarded execution and GUI run
+  control modules.
 
 Completed post-MVP hardening:
 

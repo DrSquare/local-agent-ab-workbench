@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-Module 20: Guarded Eval Execution Harness.
+Module 21: Offline Model and Docker Sandbox Contracts.
 
 ## Status
 
@@ -39,6 +39,7 @@ Module 20: Guarded Eval Execution Harness.
 | Module 18 Regression Review UI | Done | Repeated-run and variant regression rows, failure/status/triage filters, local triage notes, export links, API routes, responsive styling, and focused tests are implemented. |
 | Module 19 Improvement Loop UI | Done | Selected regression/failure handoff, improvement notes, rerun queue entries, candidate promotion artifacts, guardrail reminders, API routes, and focused tests are implemented. |
 | Module 20 Guarded Eval Execution Harness | Done | `agent-ab run-eval-plan`, dry-run summaries, deterministic mock EvalLog execution, blocked unsupported adapters, sandbox provider metadata, resume/filter/max-failure handling, and focused tests are implemented. |
+| Module 21 Offline Model and Docker Sandbox Contracts | Done | Offline model provider schemas, Docker A/B run-plan schemas, tool orchestration policy contracts, example configs, CLI validators, and unsafe-plan rejection tests are implemented without Docker execution. |
 
 ## Module 13 Seed Generation Acceptance Criteria
 
@@ -158,6 +159,23 @@ Module 20: Guarded Eval Execution Harness.
 - Module 15 reports, Module 17 observability, Module 18 review, and Module 19
   improvement flows can consume the generated EvalLogs.
 
+## Module 21 Acceptance Criteria
+
+- Offline model provider configs can represent Ollama, Docker Model Runner,
+  local OpenAI-compatible, and mock providers without probing endpoints.
+- Provider configs require preloaded models, disabled remote tracking, and no
+  model pulls.
+- Docker A/B run plans can represent control and variant containers for model
+  swaps and tool orchestration changes.
+- Shared input mounts must remain read-only and result mounts must be writable.
+- Container plans reject privileged mode, Docker socket mounts, secret-like
+  static environment variables, and external network access.
+- Tool orchestration policies distinguish sequential, parallel, and native
+  parallel modes with argument-schema and loop-detection safeguards.
+- CLI validators check model provider and offline A/B run-plan configs without
+  Docker Compose generation, image builds, model pulls, endpoint probes, or
+  container execution.
+
 ## Completed Post-MVP Criteria
 
 - Repeated local runs can be grouped by task and variant.
@@ -180,6 +198,6 @@ Module 20: Guarded Eval Execution Harness.
 
 ## Next Sprint Candidate
 
-Module 21: Guarded Execution Queue and Run Controls. Expose the Module 20
-harness through local API/UI controls and consume Improve-view rerun queue
-entries while keeping real adapters explicitly gated.
+Module 22: Offline Docker Compose and Preflight Artifacts. Generate reviewable
+Compose and preflight outputs from Module 21 contracts while continuing to
+avoid Docker execution, image builds, model pulls, and endpoint probes.
