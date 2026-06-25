@@ -1,0 +1,120 @@
+id: offline_docker_model_tool_ab
+version: 1
+description: Contract-only offline Docker A/B plan for model and tool orchestration variants.
+offline: true
+eval_run_plan: runs/evals/local_module14_eval_set/plan.json
+model_providers:
+  - id: local_ollama_bridge
+    version: 1
+    kind: ollama
+    endpoint: http://llm-server:11434/v1
+    openai_compatible: true
+    require_preloaded_models: true
+    allow_model_pull: false
+    disable_remote_tracking: true
+    models:
+      - id: llama3_8b
+        name: llama3:8b
+        context_window: 8192
+      - id: mistral_7b
+        name: mistral:7b
+        context_window: 8192
+    default_model: llama3_8b
+variants:
+  - id: control
+    label: Control model with sequential tool orchestration
+    solver_adapter: openclaw_cli
+    model_provider_id: local_ollama_bridge
+    model_id: llama3_8b
+    prompt_variant_id: baseline
+    container:
+      build_context: ./agent_base
+      working_directory: /app
+      command:
+        - openclaw
+        - run
+        - --config
+        - /app/config/control.json
+      env:
+        LLM_API_BASE: http://llm-server:11434/v1
+        LLM_MODEL: llama3:8b
+        CONFIG_PATH: /app/config/control.json
+      mounts:
+        - source: ./data/prompts.jsonl
+          target: /app/data/prompts.jsonl
+          read_only: true
+          purpose: input
+        - source: ./runs/offline_ab/control
+          target: /app/results
+          read_only: false
+          purpose: output
+      network_mode: isolated_bridge
+      privileged: false
+      allow_docker_socket: false
+    tool_orchestration:
+      mode: sequential
+      max_tool_calls: 20
+      max_retries: 2
+      max_parallel_tools: 1
+      require_argument_schema: true
+      detect_tool_loops: true
+      allow_native_parallel_calls: false
+  - id: variant
+    label: Variant model with native parallel tool orchestration
+    solver_adapter: openclaw_cli
+    model_provider_id: local_ollama_bridge
+    model_id: mistral_7b
+    prompt_variant_id: candidate
+    container:
+      build_context: ./agent_variant
+      working_directory: /app
+      command:
+        - openclaw
+        - run
+        - --config
+        - /app/config/variant.json
+      env:
+        LLM_API_BASE: http://llm-server:11434/v1
+        LLM_MODEL: mistral:7b
+        CONFIG_PATH: /app/config/variant.json
+      mounts:
+        - source: ./data/prompts.jsonl
+          target: /app/data/prompts.jsonl
+          read_only: true
+          purpose: input
+        - source: ./runs/offline_ab/variant
+          target: /app/results
+          read_only: false
+          purpose: output
+      network_mode: isolated_bridge
+      privileged: false
+      allow_docker_socket: false
+    tool_orchestration:
+      mode: native_parallel
+      max_tool_calls: 20
+      max_retries: 2
+      max_parallel_tools: 4
+      require_argument_schema: true
+      detect_tool_loops: true
+      allow_native_parallel_calls: true
+shared_mounts:
+  - source: ./data/prompts.jsonl
+    target: /app/data/prompts.jsonl
+    read_only: true
+    purpose: input
+result_mount:
+  source: ./runs/offline_ab
+  target: /app/results
+  read_only: false
+  purpose: output
+network:
+  mode: isolated_bridge
+  allow_external_network: false
+  allowed_service_hosts:
+    - llm-server
+tags:
+  - module21
+  - offline
+  - docker
+metadata:
+  execution: Contract only; this file must not launch Docker or pull models.

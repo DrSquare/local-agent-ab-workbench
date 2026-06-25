@@ -1,0 +1,21 @@
+id: docker_model_runner
+version: 1
+kind: docker_model_runner
+endpoint: http://model-runner.docker.internal/engines/v1
+openai_compatible: true
+require_preloaded_models: true
+allow_model_pull: false
+disable_remote_tracking: true
+models:
+  - id: local_llama
+    name: ai/llama3.2:latest
+    context_window: 8192
+  - id: local_qwen
+    name: ai/qwen2.5:latest
+    context_window: 32768
+default_model: local_llama
+tags:
+  - offline
+  - docker-model-runner
+metadata:
+  note: Docker Model Runner assets must be available locally before eval execution.

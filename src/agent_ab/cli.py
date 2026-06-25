@@ -22,6 +22,8 @@ from agent_ab.config import (
     validate_eval_set_with_tasks,
     validate_eval_task_with_taskpack,
     validate_experiment_bundle,
+    validate_offline_docker_ab_run_plan,
+    validate_offline_model_provider,
     validate_sandbox_provider,
     validate_taskpack_with_fixtures,
 )
@@ -168,6 +170,44 @@ def validate_sandbox_provider_command(
     console.print(f"allowed paths: {', '.join(provider.workspace.allowed_paths)}")
     console.print(f"network: {'allowed' if provider.network.allow_network else 'local-only'}")
     console.print(f"max seconds: {provider.timeout.max_seconds_per_task}")
+
+
+@app.command("validate-offline-model-provider")
+def validate_offline_model_provider_command(
+    path: Annotated[Path, typer.Argument(help="Path to offline model provider YAML.")],
+) -> None:
+    """Validate an offline local model provider contract without network probes."""
+
+    try:
+        provider = validate_offline_model_provider(path)
+    except ConfigLoadError as exc:
+        console.print(f"[red]Validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] offline_model_provider={provider.id}@v{provider.version}")
+    console.print(f"kind: {provider.kind}")
+    console.print(f"endpoint: {provider.endpoint or '(none)'}")
+    console.print(f"models: {', '.join(model.id for model in provider.models)}")
+    console.print(f"default_model: {provider.default_model}")
+
+
+@app.command("validate-offline-ab-plan")
+def validate_offline_ab_plan_command(
+    path: Annotated[Path, typer.Argument(help="Path to offline Docker A/B run-plan YAML.")],
+) -> None:
+    """Validate an offline Docker A/B run plan without launching containers."""
+
+    try:
+        plan = validate_offline_docker_ab_run_plan(path)
+    except ConfigLoadError as exc:
+        console.print(f"[red]Validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[green]OK[/green] offline_ab_plan={plan.id}@v{plan.version}")
+    console.print(f"model providers: {', '.join(provider.id for provider in plan.model_providers)}")
+    console.print(f"variants: {', '.join(variant.id for variant in plan.variants)}")
+    console.print(f"network: {plan.network.mode}")
+    console.print(f"external network: {'allowed' if plan.network.allow_external_network else 'blocked'}")
 
 
 @app.command("plan-eval-set")

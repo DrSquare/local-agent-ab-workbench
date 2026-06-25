@@ -27,6 +27,7 @@ This repository currently implements:
 - **Module 18: Eval analysis and regression review UI**
 - **Module 19: Prompt and harness improvement loop UI**
 - **Module 20: Guarded EvalRunPlan execution harness**
+- **Module 21: Offline model and Docker sandbox contracts**
 
 ## What the implemented modules include
 
@@ -81,6 +82,13 @@ This repository currently implements:
   denial events
 - Unsupported adapter blocking for custom, OpenClaw, shell, browser, desktop,
   model, generic CLI, and non-local network execution paths
+- Offline model provider contracts for Ollama, Docker Model Runner, local
+  OpenAI-compatible, and mock providers
+- Contract-only Docker A/B run plans for isolated model and tool orchestration
+  comparisons
+- Offline safety validation for read-only shared inputs, writable result mounts,
+  Docker internal model hosts, no Docker socket mounts, no privileged
+  containers, no static secret env vars, and no external network access
 - CLI validation commands
 - Example OpenClaw-style experiment and prompt configs
 - Example desktop basics taskpack
@@ -173,6 +181,17 @@ agent-ab scan-eval-logs runs/evals/local_module14_eval_set/plan.json
 ```bash
 agent-ab validate-sandbox-provider sandboxes/local_workspace.yaml
 ```
+
+## Validate offline model and Docker A/B contracts
+
+```bash
+agent-ab validate-offline-model-provider model_providers/local_ollama.yaml
+agent-ab validate-offline-model-provider model_providers/docker_model_runner.yaml
+agent-ab validate-offline-ab-plan sandbox_runs/offline_docker_ab_plan.yaml
+```
+
+These commands validate contracts only. They do not pull models, probe
+endpoints, build images, generate Docker Compose files, or launch containers.
 
 ## Generate an expert seed taskpack
 
@@ -293,6 +312,11 @@ agent-ab-workbench/
     PLAN.md
     TECH_STACK.md
     WORKFLOW.md
+  model_providers/
+    docker_model_runner.yaml
+    local_ollama.yaml
+  sandbox_runs/
+    offline_docker_ab_plan.yaml
   evals/
     desktop_basics_eval.yaml
     local_eval_set.yaml
@@ -341,6 +365,7 @@ agent-ab-workbench/
       eval.py
       experiment.py
       metrics.py
+      offline.py
       playground.py
       prompt_object.py
       run.py
@@ -360,6 +385,7 @@ agent-ab-workbench/
     test_module5_server.py
     test_module6_playground.py
     test_module20_eval_execution.py
+    test_module21_offline_sandbox_contracts.py
     test_module7_frontend.py
     test_module8_trace_ui.py
     test_module9_playground_ui.py

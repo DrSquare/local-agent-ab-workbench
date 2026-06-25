@@ -9,6 +9,7 @@ from pydantic import BaseModel, ValidationError
 
 from agent_ab.schemas.eval import EvalSample, EvalSet, EvalTask
 from agent_ab.schemas.experiment import ExperimentConfig
+from agent_ab.schemas.offline import OfflineDockerABRunPlan, OfflineModelProvider
 from agent_ab.schemas.prompt_object import PromptObject
 from agent_ab.schemas.sandbox import SandboxProvider
 from agent_ab.schemas.task import TaskPack
@@ -60,10 +61,30 @@ def load_sandbox_provider(path: str | Path) -> SandboxProvider:
     return load_model(path, SandboxProvider)
 
 
+def load_offline_model_provider(path: str | Path) -> OfflineModelProvider:
+    return load_model(path, OfflineModelProvider)
+
+
+def load_offline_docker_ab_run_plan(path: str | Path) -> OfflineDockerABRunPlan:
+    return load_model(path, OfflineDockerABRunPlan)
+
+
 def validate_sandbox_provider(path: str | Path) -> SandboxProvider:
     """Validate a sandbox provider config without executing the provider."""
 
     return load_sandbox_provider(path)
+
+
+def validate_offline_model_provider(path: str | Path) -> OfflineModelProvider:
+    """Validate an offline model provider config without probing endpoints."""
+
+    return load_offline_model_provider(path)
+
+
+def validate_offline_docker_ab_run_plan(path: str | Path) -> OfflineDockerABRunPlan:
+    """Validate an offline Docker A/B run plan without launching containers."""
+
+    return load_offline_docker_ab_run_plan(path)
 
 
 def validate_taskpack_with_fixtures(path: str | Path) -> TaskPack:
